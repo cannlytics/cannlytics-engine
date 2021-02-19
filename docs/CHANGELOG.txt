@@ -1,0 +1,5 @@
+# Change Log
+
+## 2/14/2021
+
+Added Firebase functionality.
