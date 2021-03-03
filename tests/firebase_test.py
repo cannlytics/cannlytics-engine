@@ -85,6 +85,27 @@ def test_firestore():
     firebase.export_data(db, ref, output_xlsx_file)
 
 
+
+def test_create_log():
+    """Test create a log."""
+    
+    # Initialize Firebase.
+    env = environ.Env()
+    env.read_env("../.env")
+    credentials = env("GOOGLE_APPLICATION_CREDENTIALS")
+    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = credentials
+    db = firebase.initialize_firebase()
+
+    # Create a test log.
+    user = {
+        "uid": "test",
+        "display_name": "CannBot",
+        "email": "bot@cannlytics.com",
+        "photo_url": "https://robohash.org/bot@cannlytics.com",
+    }
+    logs = "tests/test_collections/logs"
+    firebase.create_log(logs, user, "Test log.", "test", "create_log")
+
 #------------------------------------------------------------#
 # Test Firebase Storage
 #------------------------------------------------------------#

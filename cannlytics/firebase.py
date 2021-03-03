@@ -1,12 +1,7 @@
 """
 Firebase Module | Cannlytics
-Copyright © 2021 Cannlytics
 Author: Keegan Skeate <contact@cannlytics.com>
 Created: 2/7/2021
-
-License GPLv3+: GNU GPL version 3 or later <https://gnu.org/licenses/gpl.html>
-This is free software: you are free to change and redistribute it.
-There is NO WARRANTY, to the extent permitted by law.
 
 Resources:
     https://firebase.google.com/docs/
@@ -15,6 +10,7 @@ Description:
     A wrapper of firebase_admin to make interacting with the Firestore database
     and Firebase Storage buckets even easier.
 """
+from datetime import datetime
 from os import listdir
 from os.path import isfile, join
 from re import sub, findall
@@ -158,7 +154,7 @@ def get_collection(ref, limit=None, order_by=None, desc=False, filters=[]):
         order_by (str): A field to order the documents by, with the default being none.
         desc (bool): The direction to order the documents by the order_by field.
         filters (list): Filters are dictionaries of the form
-            `{"key": "", "operator": "", "value": ""}`.
+            `{"key": "", "operation": "", "value": ""}`.
             Filters apply [Firebase queries](https://firebase.google.com/docs/firestore/query-data/queries)
             to the given `key` for the given `value`.
             Operators include: `==`, `>=`, `<=`, `>`, `<`, `!=`,
@@ -574,6 +570,34 @@ def rename_file(bucket_name, bucket_folder, file_name, newfile_name, verbose=Tru
 # ------------------------------------------------------------#
 # Misc
 # ------------------------------------------------------------#
+
+
+def create_log(ref, claims, action, log_type, key, changes=[]):
+    """Create an activity log.
+    
+    Args:
+        ref (str): Path to a collection of logs.
+        claims (dict): A dict with user fields or a Firestore user object.
+        action (str): The activity that took place.
+        log_type (str): The log type.
+        key (str): A key to recognize the action.
+        changes (list): An optional list of changes that took place.
+    """
+    now = datetime.now()
+    timestamp = datetime.now().isoformat()
+    log_id = now.strftime("%Y-%m-%d_%H-%M-%S")
+    log_entry = {
+        "action": action,
+        "type": log_type,
+        "key": key,
+        "created_at": timestamp,
+        "user": claims.get("uid"),
+        "user_name": claims.get("display_name"),
+        "user_email": claims.get("email"),
+        "user_photo_url": claims.get("photo_url"),
+        "changes": changes,
+    }
+    update_document(f"{ref}/{log_id}", log_entry)
 
 
 def get_keywords(name):
