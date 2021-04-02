@@ -92,3 +92,11 @@ def export_csv(self, file_id, data):
     #     },
     #     headers=headers,
     # )
+
+
+#------------------------------------------------------------------
+# Constants
+#------------------------------------------------------------------
+
+# TODO: Add analyses by sample type
+analyses = {}

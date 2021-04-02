@@ -29,6 +29,8 @@ class Client(object):
     """
 
     def __init__(self, api_key, mme_code):
+        self.base = LEAF_API_BASE_URL
+        self.test_api = LEAF_API_BASE_URL_TEST
         self.headers = {
             'x-mjf-key': api_key,
             'x-mjf-mme-code': mme_code,
@@ -50,7 +52,7 @@ class Client(object):
         )
 
         if response.ok:
-            return response
+            return response.json()
         else:
             raise APIError(response)
     

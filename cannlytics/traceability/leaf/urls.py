@@ -5,8 +5,8 @@ cannlytics.traceability.leaf.urls
 Leaf Data Systems API urls.
 """
 
-LEAF_API_BASE_URL = 'https://watest.leafdatazone.com/api/v1/' # PRODUCTION: https://traceability.lcb.wa.gov/api/v1/
-LEAF_API_BASE_URL_TEST = 'https://watest.leafdatazone.com/api/v1/'
+LEAF_API_BASE_URL = 'https://watest.leafdatazone.com/api/v1' # PRODUCTION: https://traceability.lcb.wa.gov/api/v1/
+LEAF_API_BASE_URL_TEST = 'https://watest.leafdatazone.com/api/v1'
 
 LEAF_AREAS_URL = LEAF_API_BASE_URL + '/areas'
 LEAF_AREAS_UPDATE_URL = LEAF_API_BASE_URL + '/areas/update'
