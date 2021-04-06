@@ -10,10 +10,14 @@ class TraceabilityException(Exception):
     """A base class for traceability system exceptions."""
 
 
-class APIError(TraceabilityException):
-    def __init__(self, response):
+class MetrcAPIError(TraceabilityException):
+    """A primary error raised by the API.
+    Insufficient permissions for a request typically
+    result in a 401 unauthorized error.
+    """
 
-        super(APIError, self).__init__(self._extract_text(response))
+    def __init__(self, response):
+        super(MetrcAPIError, self).__init__(self._extract_text(response))
         self.response = response
 
     def _extract_text(self, response):
@@ -22,6 +26,9 @@ class APIError(TraceabilityException):
     def _text_from_detail(self, response):
         try:
             errors = response.json()
-            return errors['error']
+            if isinstance(errors, list):
+                return errors
+            else:
+                return errors['Message']
         except (AttributeError, KeyError, ValueError):
             return None

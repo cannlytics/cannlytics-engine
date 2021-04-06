@@ -5,9 +5,23 @@ cannlytics.traceability.metrc.client
 This module contains the Client class responsible for
 communicating with the Metrc API.
 """
+
+# FIXME:
+# https://stackoverflow.com/questions/6578986/how-to-convert-json-data-into-a-python-object
+# https://pynative.com/python-convert-json-data-into-custom-python-object/
+# encode Object it
+# studentJson = json.dumps(student, cls=StudentEncoder, indent=4)
+
+# Decode JSON
+# resultDict = json.loads(studentJson)
+
 import requests
 
-from .exceptions import APIError
+from json import dumps, loads # DEV
+from requests import Session
+
+from .exceptions import MetrcAPIError
+from .models import *
 from .urls import *
 from .utils import format_params
 
@@ -24,8 +38,10 @@ class Client(object):
         user_api_key (str): A licensee's user's secret obtained
         from the Metrc user interface. The user's permissions
         determine the level of access to the Metrc API.
+    
+    Example:
         
-        Usage: trace = metrc.Client(vendor_api_key='abc', user_api_key='xyz')
+        track = metrc.Client(vendor_api_key='abc', user_api_key='xyz')
     """
 
     def __init__(self, vendor_api_key, user_api_key):
@@ -33,26 +49,47 @@ class Client(object):
         self.test_api = METRC_API_BASE_URL_TEST
         self.user_api_key = user_api_key
         self.vendor_api_key = vendor_api_key
+        # self.session = Session()
+        # self.session.auth = (vendor_api_key, user_api_key)
+        # self.headers = {'Content-Type': 'application/json'}
 
     def request(
         self,
         method,
         endpoint,
-        params=None,
         data=None,
+        params=None,
     ):
         """Make a request to the Metrc API."""
+        # TODO: See if session is optimal
+        # https://stackoverflow.com/questions/26745462/basic-authentication-not-working-with-requests-library
+        # session = Session()
+        # session.auth = (self.vendor_api_key, self.user_api_key)
         response = getattr(requests, method)(
             endpoint,
-            data=data,
             auth=(self.vendor_api_key, self.user_api_key),
+            json=data,
+            # headers=self.headers,
             params=params,
         )
-        if response.ok:
-            return response.json()
+        print('\n\nREQUEST:', response.request.url)
+        print('\n\nBODY:\n\n', response.request.body)
+        print('\n\nSTATUS CODE:', response.status_code)
+        try:
+            print('\n\nRESPONSE:\n\n', dumps(response.json()), '\n\n')
+        except ValueError:
+            print('\n\nRESPONSE:\n\n', response.text, '\n\n')
+        if response.status_code == 200:
+            try:
+                return response.json()
+            except ValueError:
+                return response.text
         else:
-            raise APIError(response)
-    
+            raise MetrcAPIError(response)
+
+    def parse(self, data, custom_object):
+        """Parse JSON response into a given object type."""
+        return loads(data, object_hook=custom_object)
 
     #------------------------------------------------------------------
     # Employees and facilities
@@ -65,13 +102,15 @@ class Client(object):
         """
         url = METRC_EMPLOYEES_URL
         params = format_params(license_number=license_number)
-        return self.request('get', url, params=params)
+        response = self.request('get', url, params=params)
+        return [Employee(self, x) for x in response]
 
 
     def get_facilities(self):
         """Get all facilities."""
         url = METRC_FACILITIES_URL
-        return self.request('get', url)
+        response = self.request('get', url)
+        return [Facility(self, x) for x in response]
     
 
     #------------------------------------------------------------------
@@ -99,14 +138,19 @@ class Client(object):
         """
         if uid:
             url = METRC_HARVESTS_URL % uid
-        elif action:
+        else:
             url = METRC_HARVESTS_URL % action
         params = format_params(license_number=license_number, start=start, end=end)
-        return self.request('get', url, params=params)
+        response = self.request('get', url, params=params)
+        try:
+            return Harvest(self, response, license_number)
+        except AttributeError:
+            return [Harvest(self, x, license_number) for x in response]
     
 
     def finish_harvest(self, data, license_number=''):
         """Finish a harvests.
+        Args:
             data (list): A list of packages (dict) to finish.
             license_number (str): A specific license number.
         """
@@ -117,6 +161,7 @@ class Client(object):
 
     def unfinish_harvest(self, data, license_number=''):
         """Unfinish a harvests.
+        Args:
             data (list): A list of packages (dict) to unfinish.
             license_number (str): A specific license number.
         """
@@ -127,6 +172,7 @@ class Client(object):
 
     def remove_waste(self, data, license_number=''):
         """Remove's waste from a harvest.
+        Args:
             data (list): A list of waste (dict) to unfinish.
             license_number (str): A specific license number.
         """
@@ -137,6 +183,7 @@ class Client(object):
 
     def move_harvest(self, data, license_number=''):
         """Move a harvests.
+        Args:
             data (list): A list of harvests (dict) to move.
             license_number (str): A specific license number.
         """
@@ -147,6 +194,7 @@ class Client(object):
 
     def create_harvest_packages(self, data, license_number=''):
         """Create packages from a harvest.
+        Args:
             data (list): A list of packages (dict) to create.
             license_number (str): A specific license number.
         """
@@ -157,6 +205,7 @@ class Client(object):
 
     def create_harvest_testing_packages(self, data, license_number=''):
         """Create packages from a harvest for testing.
+        Args:
             data (list): A list of testing packages (dict) to create.
             license_number (str): A specific license number.
         """
@@ -172,7 +221,7 @@ class Client(object):
     def get_items(
         self,
         uid='',
-        action='',
+        action='active',
         license_number='',
     ):
         """Get items.
@@ -184,37 +233,44 @@ class Client(object):
         """
         if uid:
             url = METRC_ITEMS_URL % uid
-        elif action:
+        else:
             url = METRC_ITEMS_URL % action
         params = format_params(license_number=license_number)
-        return self.request('get', url, params=params)
+        response = self.request('get', url, params=params)
+        try:
+            return Item(self, response, license_number)
+        except AttributeError:
+            return [Item(self, x, license_number) for x in response]
 
 
-    def create_items(self, data):
+    def create_items(self, data, license_number=''):
         """Create items.
         Args:
             data (list): A list of items (dict) to create.
         """
         url = METRC_ITEMS_URL % 'create'
-        return self.request('post', url, data=data)
+        params = format_params(license_number=license_number)
+        return self.request('post', url, data=data, params=params)
 
 
-    def update_item(self, data):
+    def update_items(self, data, license_number=''):
         """Update items.
         Args:
             data (list): A list of items (dict) to update.
         """
         url = METRC_ITEMS_URL % 'update'
-        return self.request('post', url, data=data)
+        params = format_params(license_number=license_number)
+        return self.request('post', url, data=data, params=params)
 
 
-    def delete_item(self, uid):
+    def delete_item(self, uid, license_number=''):
         """Delete item.
         Args:
             uid (str): The UID of an item to delete.
         """
         url = METRC_ITEMS_URL % uid
-        return self.request('delete', url)
+        params = format_params(license_number=license_number)
+        return self.request('delete', url, params=params)
 
 
     #------------------------------------------------------------------
@@ -236,7 +292,8 @@ class Client(object):
             license_number=license_number,
             package_id=uid
         )
-        return self.request('get', url, params=params)
+        response = self.request('get', url, params=params)
+        return [LabResult(self, x) for x in response]
 
 
     def get_analyses(self):
@@ -285,7 +342,7 @@ class Client(object):
     def get_locations(
         self,
         uid='',
-        action='',
+        action='active',
         license_number='',
     ):
         """Get locations.
@@ -297,34 +354,44 @@ class Client(object):
         """
         if uid:
             url = METRC_LOCATIONS_URL % uid
-        elif action:
+        else:
             url = METRC_LOCATIONS_URL % action
         params = format_params(license_number=license_number)
-        return self.request('get', url, params=params)
+        response = self.request('get', url, params=params)
+        try:
+            return Location(self, response, license_number)
+        except AttributeError:
+            return [Location(self, x, license_number) for x in response]
 
-    def create_locations(self, data):
+    def create_locations(self, data, license_number=''):
         """Create location(s).
         Args:
             data (list): A list of locations (dict) to create.
+            license_number (str): Optional license number filter.
         """
         url = METRC_LOCATIONS_URL % 'create'
-        return self.request('post', url, data=data)
+        params = format_params(license_number=license_number)
+        return self.request('post', url, data=data, params=params)
 
-    def update_locations(self, data):
+    def update_locations(self, data, license_number=''):
         """Update location(s).
         Args:
             data (list): A list of locations (dict) to update.
+            license_number (str): Optional license number filter.
         """
         url = METRC_LOCATIONS_URL % 'update'
-        return self.request('post', url, data=data)
+        params = format_params(license_number=license_number)
+        return self.request('post', url, data=data, params=params)
 
-    def delete_location(self, uid):
+    def delete_location(self, uid, license_number=''):
         """Delete location.
         Args:
             uid (str): The UID of a location to delete.
+            license_number (str): Optional license number filter.
         """
         url = METRC_LOCATIONS_URL % uid
-        return self.request('delete', url)
+        params = format_params(license_number=license_number)
+        return self.request('delete', url, params=params)
 
     #------------------------------------------------------------------
     # Packages
@@ -345,10 +412,14 @@ class Client(object):
         """
         if uid:
             url = METRC_PACKAGES_URL % uid
-        elif action:
+        else:
             url = METRC_PACKAGES_URL % action
         params = format_params(license_number=license_number)
-        return self.request('get', url, params=params)
+        response = self.request('get', url, params=params)
+        try:
+            return Package(self, response, license_number)
+        except AttributeError:
+            return [Package(self, x, license_number) for x in response]
 
 
     def create_packages(self, data, qa=False, plantings=False):
@@ -426,12 +497,50 @@ class Client(object):
     # Patients
     #------------------------------------------------------------------
 
-    # TODO:
-    # GET /patients/v1/{id}
-    # GET /patients/v1/active
-    # POST /patients/v1/add
-    # POST /patients/v1/update
-    # DELETE /patients/v1/{id}
+    def get_patients(self, uid='', action='', license_number=''):
+        """Get licensee member patients.
+        Args:
+            uid (str): A UID for a patient.
+            action (str): An optional filter to apply: `active`.
+            license_number (str): A licensee's license number to filter by.
+        """
+        if uid:
+            url = METRC_PATIENTS_URL % uid
+        else:
+            url = METRC_PATIENTS_URL % action
+        params = format_params(license_number=license_number)
+        response = self.request('get', url, params=params)
+        try:
+            return Patient(self, response, license_number)
+        except AttributeError:
+            return [Patient(self, x, license_number) for x in response]
+
+
+    def create_patient(self, data):
+        """Create patient(s).
+        Args:
+            data (list): A list of patient (dict) to add.
+        """
+        url = METRC_PATIENTS_URL % 'add'
+        return self.request('post', url, data=data)
+
+
+    def update_patients(self, data):
+        """Update strain(s).
+        Args:
+            data (list): A list of patients (dict) to update.
+        """
+        url = METRC_PATIENTS_URL % 'update'
+        return self.request('put', url, data=data)
+
+
+    def delete_patient(self, uid):
+        """Delete patient.
+        Args:
+            uid (str): The UID of a patient to delete.
+        """
+        url = METRC_PATIENTS_URL % uid
+        return self.request('delete', url)
 
     #------------------------------------------------------------------
     # Plant Batches
@@ -459,13 +568,17 @@ class Client(object):
         """
         if uid:
             url = METRC_BATCHES_URL % uid
-        elif action:
+        else:
             url = METRC_BATCHES_URL % action
         params = format_params(license_number=license_number, start=start, end=end)
-        return self.request('get', url, params=params)
+        response = self.request('get', url, params=params)
+        try:
+            return PlantBatch(self, response, license_number)
+        except AttributeError:
+            return [PlantBatch(self, x, license_number) for x in response]
 
 
-    def manage_batches(self, data, action):
+    def manage_batches(self, data, action, from_mother=False):
         """Manage plant batch(es) by applying a given action.
         Args:
             data (list): A list of plants (dict) to manage.
@@ -473,9 +586,12 @@ class Client(object):
                 `createplantings`, `createpackages`, `split`,
                 `/create/packages/frommotherplant`, `changegrowthphase`,
                 `additives`, `destroy`.
+            from_mother (bool): An optional parameter for the
+                `createpackages` action.
         """
         url = METRC_BATCHES_URL % action
-        return self.request('post', url, data=data)
+        params = format_params(from_mother=from_mother)
+        return self.request('post', url, data=data, params=params)
     
 
     def move_batch(self, data):
@@ -518,10 +634,14 @@ class Client(object):
             url = METRC_PLANTS_URL % uid
         elif label:
             url = METRC_PLANTS_URL % label
-        elif action:
+        else:
             url = METRC_PLANTS_URL % action
         params = format_params(license_number=license_number, start=start, end=end)
-        return self.request('get', url, params=params)
+        response = self.request('get', url, params=params)
+        try:
+            return Plant(self, response, license_number)
+        except AttributeError:
+            return [Plant(self, x, license_number) for x in response]
 
 
     def manage_plants(self, data, action):
@@ -569,7 +689,7 @@ class Client(object):
         """
         if uid:
             url = METRC_RECEIPTS_URL % uid
-        elif action:
+        else:
             url = METRC_RECEIPTS_URL % action
         params = format_params(
             license_number=license_number,
@@ -578,7 +698,11 @@ class Client(object):
             sales_start=sales_start,
             sales_end=sales_end,
         )
-        return self.request('get', url, params=params)
+        response = self.request('get', url, params=params)
+        try:
+            return Sale(self, response, license_number)
+        except AttributeError:
+            return [Sale(self, x, license_number) for x in response]
 
 
     def get_transactions(
@@ -660,7 +784,7 @@ class Client(object):
     # Strains
     #------------------------------------------------------------------
 
-    def get_strains(self, uid='', action='', license_number=''):
+    def get_strains(self, uid='', action='active', license_number=''):
         """Get strains.
         Args:
             uid (str): A UID for a strain.
@@ -669,37 +793,44 @@ class Client(object):
         """
         if uid:
             url = METRC_STRAINS_URL % uid
-        elif action:
+        else:
             url = METRC_STRAINS_URL % action
         params = format_params(license_number=license_number)
-        return self.request('get', url, params=params)
+        response = self.request('get', url, params=params)
+        try:
+            return Strain(self, response, license_number)
+        except AttributeError:
+            return [Strain(self, x, license_number) for x in response]
 
 
-    def create_strains(self, data):
+    def create_strains(self, data, license_number=''):
         """Create strain(s).
         Args:
             data (list): A list of strains (dict) to create.
         """
         url = METRC_STRAINS_URL % 'create'
-        return self.request('post', url, data=data)
+        params = format_params(license_number=license_number)
+        return self.request('post', url, data=data, params=params)
 
 
-    def update_strains(self, data):
+    def update_strains(self, data, license_number=''):
         """Update strain(s).
         Args:
             data (list): A list of strains (dict) to update.
         """
         url = METRC_STRAINS_URL % 'update'
-        return self.request('put', url, data=data)
+        params = format_params(license_number=license_number)
+        return self.request('post', url, data=data, params=params)
 
 
-    def delete_strain(self, uid):
+    def delete_strain(self, uid, license_number=''):
         """Delete strain.
         Args:
             uid (str): The UID of a strain to delete.
         """
         url = METRC_STRAINS_URL % uid
-        return self.request('delete', url)
+        params = format_params(license_number=license_number)
+        return self.request('delete', url, params=params)
 
 
     #------------------------------------------------------------------
@@ -731,7 +862,11 @@ class Client(object):
         else:
             url = METRC_TRANSFERS_URL % transfer_type
         params = format_params(license_number=license_number, start=start, end=end)
-        return self.request('get', url, params=params)
+        response = self.request('get', url, params=params)
+        try:
+            return Transfer(self, response, license_number)
+        except AttributeError:
+            return [Transfer(self, x, license_number) for x in response]
     
 
     def get_transfer_packages(
@@ -823,7 +958,11 @@ class Client(object):
         else:
             url = (METRC_TRANSFER_TEMPLATE_URL % '').rstrip('/')
         params = format_params(license_number=license_number, start=start, end=end)
-        return self.request('get', url, params=params)
+        response = self.request('get', url, params=params)
+        try:
+            return TransferTemplate(self, response, license_number)
+        except AttributeError:
+            return [TransferTemplate(self, x, license_number) for x in response]
 
 
     def create_transfer_templates(self, data):

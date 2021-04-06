@@ -5,8 +5,8 @@ cannlytics.traceability.metrc.urls
 Metrc API URLs.
 """
 
-METRC_API_BASE_URL = 'https://watest.leafdatazone.com/api/v1/'
-METRC_API_BASE_URL_TEST = 'https://watest.leafdatazone.com/api/v1/'
+METRC_API_BASE_URL = 'https://sandbox-api-ok.metrc.com'
+METRC_API_BASE_URL_TEST = 'https://sandbox-api-ok.metrc.com'
 
 METRC_BATCHES_URL = METRC_API_BASE_URL + '/plantbatches/v1/%s'
 METRC_EMPLOYEES_URL = METRC_API_BASE_URL + '/employees/v1/'

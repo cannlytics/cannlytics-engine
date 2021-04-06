@@ -5,29 +5,98 @@ cannlytics.traceability.metrc.utils
 This module contains common Metrc utility functions
 and constants.
 """
+from re import sub
 
 #------------------------------------------------------------------
 # Utility functions
 #------------------------------------------------------------------
 
-PARAMETERS = {
-    'license_number': 'licenseNumber',
-    'sales_start': 'salesDateStart',
-    'sales_end': 'salesDateEnd',
-    'start': 'lastModifiedStart',
-    'end': 'lastModifiedEnd',
-    'package_id': 'packageId',
-}
+def camel_to_snake(s):
+    """Turn a camel-case string to a snake-case string.
+    Args:
+        s (str): The string to convert to snake-case.
+    """
+    return sub(r'(?<!^)(?=[A-Z])', '_', s).lower()
+
+
+def snake_to_camel(s):
+    """Turn a snake-case string to a camel-case string.
+    Args:
+        s (str): The string to convert to camel-case.
+    """
+    return ''.join([*map(str.title, s.split('_'))])
+
+
+def clean_dictionary(d, function=camel_to_snake):
+    """Format dictionary keys with given function, snake case by default.
+    Args:
+        d (dict): A dictionary to clean.
+        function (function): A function to apply to each key.
+    """
+    return {function(k): v for k, v in d.items()}
+
+
+def clean_nested_dictionary(d, function=camel_to_snake):
+    """Format nested (at most 2 levels) dictionary keys with a given function,
+    snake case by default.
+    Args:
+        d (dict): A dictionary to clean, allowing dictionaries as values.
+        function (function): A function to apply to each key.
+    """
+    clean = clean_dictionary(d, function)
+    for k, v in clean.items():
+        # if isinstance(v, dict):
+        try:
+            clean[k] = clean_dictionary(v, function)
+        except AttributeError:
+            pass
+    return clean
 
 
 def format_params(**kwargs):
     """Format Metrc request parameters."""
     params = {}
     for param in kwargs:
-        if param:
+        if kwargs[param]:
             key = PARAMETERS[param]
             params[key] = kwargs[param]
     return params
+
+
+def remove_dict_fields(d, fields):
+    """Remove multiple keys from a dictionary.
+    Args:
+        d (dict): The dictionary to clean.
+        fields (list): A list of keys (str) to remove.
+    """
+    for key in fields:
+        if key in d:
+            del d[key]
+    return d
+
+
+def remove_dict_nulls(d):
+    """Return a shallow copy of a dictionary with all `None` values excluded.
+    Args:
+        d (dict): The dictionary to reduce.
+    """
+    return {k: v for k, v in d.items() if v is not None}
+
+
+def update_context(context, function=snake_to_camel, **kwargs):
+    """Update context with keyword arguments.
+    Args:
+        function (function): Function to apply to final dictionary keys.
+    """
+    entry = {}
+    for key in kwargs:
+        entry[key] = kwargs[key]
+    data = {
+        **clean_nested_dictionary(context, function),
+        **clean_nested_dictionary(entry, function)
+    }
+    return data
+
 
 #------------------------------------------------------------------
 # Optional: Add data import / export functionality.
@@ -64,110 +133,120 @@ def format_params(**kwargs):
 # Constants
 #------------------------------------------------------------------
 
+PARAMETERS = {
+    'license_number': 'licenseNumber',
+    'start': 'lastModifiedStart',
+    'end': 'lastModifiedEnd',
+    'sales_start': 'salesDateStart',
+    'sales_end': 'salesDateEnd',
+    'package_id': 'packageId',
+    'from_mother': 'isFromMotherPlant',
+}
+
 item_types = [
   {
     "Name": "Buds",
     "ProductCategoryType": "Buds",
     "QuantityType": "WeightBased",
-    "RequiresStrain": true,
-    "RequiresItemBrand": false,
-    "RequiresAdministrationMethod": false,
-    "RequiresUnitCbdPercent": false,
-    "RequiresUnitCbdContent": false,
-    "RequiresUnitCbdContentDose": false,
-    "RequiresUnitThcPercent": false,
-    "RequiresUnitThcContent": false,
-    "RequiresUnitThcContentDose": false,
-    "RequiresUnitVolume": false,
-    "RequiresUnitWeight": false,
-    "RequiresServingSize": false,
-    "RequiresSupplyDurationDays": false,
-    "RequiresNumberOfDoses": false,
-    "RequiresPublicIngredients": false,
-    "RequiresDescription": false,
+    "RequiresStrain": True,
+    "RequiresItemBrand": False,
+    "RequiresAdministrationMethod": False,
+    "RequiresUnitCbdPercent": False,
+    "RequiresUnitCbdContent": False,
+    "RequiresUnitCbdContentDose": False,
+    "RequiresUnitThcPercent": False,
+    "RequiresUnitThcContent": False,
+    "RequiresUnitThcContentDose": False,
+    "RequiresUnitVolume": False,
+    "RequiresUnitWeight": False,
+    "RequiresServingSize": False,
+    "RequiresSupplyDurationDays": False,
+    "RequiresNumberOfDoses": False,
+    "RequiresPublicIngredients": False,
+    "RequiresDescription": False,
     "RequiresProductPhotos": 0,
     "RequiresLabelPhotos": 0,
     "RequiresPackagingPhotos": 0,
-    "CanContainSeeds": true,
-    "CanBeRemediated": true
+    "CanContainSeeds": True,
+    "CanBeRemediated": True
   },
   {
     "Name": "Immature Plants",
     "ProductCategoryType": "Plants",
     "QuantityType": "CountBased",
-    "RequiresStrain": true,
-    "RequiresItemBrand": false,
-    "RequiresAdministrationMethod": false,
-    "RequiresUnitCbdPercent": false,
-    "RequiresUnitCbdContent": false,
-    "RequiresUnitCbdContentDose": false,
-    "RequiresUnitThcPercent": false,
-    "RequiresUnitThcContent": false,
-    "RequiresUnitThcContentDose": false,
-    "RequiresUnitVolume": false,
-    "RequiresUnitWeight": false,
-    "RequiresServingSize": false,
-    "RequiresSupplyDurationDays": false,
-    "RequiresNumberOfDoses": false,
-    "RequiresPublicIngredients": false,
-    "RequiresDescription": false,
+    "RequiresStrain": True,
+    "RequiresItemBrand": False,
+    "RequiresAdministrationMethod": False,
+    "RequiresUnitCbdPercent": False,
+    "RequiresUnitCbdContent": False,
+    "RequiresUnitCbdContentDose": False,
+    "RequiresUnitThcPercent": False,
+    "RequiresUnitThcContent": False,
+    "RequiresUnitThcContentDose": False,
+    "RequiresUnitVolume": False,
+    "RequiresUnitWeight": False,
+    "RequiresServingSize": False,
+    "RequiresSupplyDurationDays": False,
+    "RequiresNumberOfDoses": False,
+    "RequiresPublicIngredients": False,
+    "RequiresDescription": False,
     "RequiresProductPhotos": 0,
     "RequiresLabelPhotos": 0,
     "RequiresPackagingPhotos": 0,
-    "CanContainSeeds": true,
-    "CanBeRemediated": false
+    "CanContainSeeds": True,
+    "CanBeRemediated": False
   },
   {
     "Name": "Infused",
     "ProductCategoryType": "InfusedEdible",
     "QuantityType": "CountBased",
-    "RequiresStrain": false,
-    "RequiresItemBrand": false,
-    "RequiresAdministrationMethod": false,
-    "RequiresUnitCbdPercent": false,
-    "RequiresUnitCbdContent": false,
-    "RequiresUnitCbdContentDose": false,
-    "RequiresUnitThcPercent": false,
-    "RequiresUnitThcContent": true,
-    "RequiresUnitThcContentDose": false,
-    "RequiresUnitVolume": false,
-    "RequiresUnitWeight": true,
-    "RequiresServingSize": false,
-    "RequiresSupplyDurationDays": false,
-    "RequiresNumberOfDoses": false,
-    "RequiresPublicIngredients": false,
-    "RequiresDescription": false,
+    "RequiresStrain": False,
+    "RequiresItemBrand": False,
+    "RequiresAdministrationMethod": False,
+    "RequiresUnitCbdPercent": False,
+    "RequiresUnitCbdContent": False,
+    "RequiresUnitCbdContentDose": False,
+    "RequiresUnitThcPercent": False,
+    "RequiresUnitThcContent": True,
+    "RequiresUnitThcContentDose": False,
+    "RequiresUnitVolume": False,
+    "RequiresUnitWeight": True,
+    "RequiresServingSize": False,
+    "RequiresSupplyDurationDays": False,
+    "RequiresNumberOfDoses": False,
+    "RequiresPublicIngredients": False,
+    "RequiresDescription": False,
     "RequiresProductPhotos": 0,
     "RequiresLabelPhotos": 0,
     "RequiresPackagingPhotos": 0,
-    "CanContainSeeds": false,
-    "CanBeRemediated": true
+    "CanContainSeeds": False,
+    "CanBeRemediated": True
   },
   {
     "Name": "Infused Liquid",
     "ProductCategoryType": "InfusedEdible",
     "QuantityType": "CountBased",
-    "RequiresStrain": false,
-    "RequiresItemBrand": false,
-    "RequiresAdministrationMethod": false,
-    "RequiresUnitCbdPercent": false,
-    "RequiresUnitCbdContent": false,
-    "RequiresUnitCbdContentDose": false,
-    "RequiresUnitThcPercent": false,
-    "RequiresUnitThcContent": true,
-    "RequiresUnitThcContentDose": false,
-    "RequiresUnitVolume": true,
-    "RequiresUnitWeight": false,
-    "RequiresServingSize": false,
-    "RequiresSupplyDurationDays": false,
-    "RequiresNumberOfDoses": false,
-    "RequiresPublicIngredients": false,
-    "RequiresDescription": false,
+    "RequiresStrain": False,
+    "RequiresItemBrand": False,
+    "RequiresAdministrationMethod": False,
+    "RequiresUnitCbdPercent": False,
+    "RequiresUnitCbdContent": False,
+    "RequiresUnitCbdContentDose": False,
+    "RequiresUnitThcPercent": False,
+    "RequiresUnitThcContent": True,
+    "RequiresUnitThcContentDose": False,
+    "RequiresUnitVolume": True,
+    "RequiresUnitWeight": False,
+    "RequiresServingSize": False,
+    "RequiresSupplyDurationDays": False,
+    "RequiresNumberOfDoses": False,
+    "RequiresPublicIngredients": False,
+    "RequiresDescription": False,
     "RequiresProductPhotos": 0,
     "RequiresLabelPhotos": 0,
     "RequiresPackagingPhotos": 0,
-    "CanContainSeeds": false,
-    "CanBeRemediated": true
+    "CanContainSeeds": False,
+    "CanBeRemediated": True
   }
 ]
 

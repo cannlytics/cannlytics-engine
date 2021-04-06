@@ -33,15 +33,16 @@ from .client import Client
 # )
 
 
-def authorize(api_key, mme_code, client_class=Client):
+def authorize(vendor_api_key, user_api_key, client_class=Client):
     """Authorize use of the Leaf Data Systems API
     using an API key and MME (licensee) code.
 
     This is a shortcut function which
     instantiates `client_class`.
     By default :class:`cannlytics.traceability.leaf.Client` is used.
-    :returns: `client_class` instance.
+    
+    Returns: `client_class` instance.
     """
 
-    client = client_class(api_key, mme_code)
+    client = client_class(vendor_api_key, user_api_key)
     return client

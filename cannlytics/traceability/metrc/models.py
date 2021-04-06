@@ -5,41 +5,69 @@ cannlytics.traceability.metrc.models
 This module contains common Metrc models.
 """
 
+from .exceptions import MetrcAPIError
+from .utils import (
+    clean_nested_dictionary,
+    camel_to_snake,
+    snake_to_camel,
+    update_context,
+    remove_dict_fields,
+    remove_dict_nulls,
+)
 
-class Employee(object):
-    """An organization's employee or team member. E.g.
+
+class Model(object):
+    """Base class for all Metrc models."""
+
+    def __init__(
+        self,
+        client,
+        context,
+        license_number='',
+        function=camel_to_snake
+    ):
+        """Initialize the model, setting keys as properties."""
+        self.client = client
+        self._license = license_number
+        properties = clean_nested_dictionary(context, function)
+        for key in properties:
+            self.__dict__[key] = properties[key]
+    
+    def __getattr__(self, key):
+        return self.__dict__[key]
+    
+    def __setattr__(self, key, value):
+        self.__dict__[key] = value
+    
+    @property
+    def uid(self):
+        """The model's unique ID."""
+        return self.__dict__.get('id')
+
+    def to_dict(self):
+        """Returns the model's properties as a dictionary."""
+        data = vars(self).copy()
+        [data.pop(x, None) for x in ['_license', 'client']]
+        return data
+
+
+class Employee(Model):
+    """An organization's employee or team member.
+    
+    E.g.
         {
             "FullName": "Keegan Skeate",
             "License": None
-        },
+        }
     """
-
-    def __init__(self, client, properties):
-        self.client = client
-        self._properties = properties
-
-    @property
-    def id(self):
-        """Employee's ID."""
-        return self._properties['id']
-    
-    @property
-    def name(self):
-        """Employee's name."""
-        return self._properties.get('FullName', '')
-    
-    @property
-    def license_number(self):
-        """Employee's license number."""
-        return self._properties.get('License', '')
-    
-    def to_dict(self):
-        return self._properties
+    pass
 
 
-class Facility(object):
+class Facility(Model):
     """A Facility represents a building licensed for the growing,
-    processing, and/or selling of product. E.g.
+    processing, and/or selling of product. Facilities are created
+    and have their permissions determined by a state.
+    E.g.
         {
             "HireDate": "0001-01-01",
             "IsOwner": false,
@@ -59,70 +87,85 @@ class Facility(object):
                 "EndDate": "2015-12-28",
                 "LicenseType": "Medical Cultivation"
             }
-        },
+        }
     """
-
-    def __init__(self, client, properties):
-        self.client = client
-        self._properties = properties
-
-    @property
-    def id(self):
-        """Facility's ID."""
-        return self._properties['License']['Number']
     
-    @property
-    def name(self):
-        """Employee's name."""
-        return self._properties.get('DisplayName', '')
+    def get_locations(self, uid='', action=''):
+        """Get locations at the facility.
+        Args:
+            uid (str): The UID of a location, takes precedent over action.
+            action (str): A specific filter to apply, with options: `active`, `types`.
+        """
+        response = self.client.get_locations(uid=uid, action=action, license_number=self.license_number)
+        return response
     
-    @property
-    def license_number(self):
-        """Employee's license number."""
-        return self._properties['License']['Number']
+    def create_locations(self, names, types=[]):
+        """Create locations at the facility.
+        Args:
+            names (list): A list of location names.
+            types (list): A list of location types:
+                `default`, `planting`, or `packing`.
+        """
+        data = []
+        for i in range(len(names)):
+            try:
+                location_type = types[i]
+            except IndexError:
+                location_type = 'Default Location Type'
+            data.append({
+                'Name': names[i],
+                'LocationTypeName': location_type
+            })
+        response = self.client.create_locations(
+            data,
+            license_number=self.license_number
+        )
+        return response
     
-    def create_location(self):
-        """Create a location at the facility."""
-        # self.license_number
-        return NotImplementedError
-    
-    def update_location(self):
-        """Create a location at the facility."""
-        # self.license_number
-        return NotImplementedError
+    def update_locations(self, ids, names, types=[]):
+        """Update locations at the facility.
+        Args:
+            uids (list): A list of location IDs.
+            names (list): A list of location names.
+            types (list): A list of location types:
+                `default`, `planting`, or `packing`.
+        """
+        data = []
+        for i in range(len(ids)):
+            try:
+                location_type = types[i]
+            except IndexError:
+                location_type = 'Default Location Type'
+            data.append({
+                'Id': ids[i],
+                'Name': names[i],
+                'LocationTypeName': location_type
+            })
+        response = self.client.update_locations(
+            data,
+            license_number=self.license_number
+        )
+        return response
 
-    def delete_location(self):
-        """Create a location at the facility."""
-        # self.license_number
-        return NotImplementedError
+    def delete_location(self, uid):
+        """Delete a location at the facility.
+        Args:
+            uid (str): The UID of a location to delete.
+        """
+        response = self.client.delete_location(
+            uid,
+            license_number=self.license_number
+        )
+        return response
     
-    def to_dict(self):
-        return self._properties
-    
-    # Employee permissions include:
-    # • Administration – Provides the capability to perform all administrative functions,
-    # including ordering tags, setting up strains, locations, and items, and adding
-    # employees (it is recommended that the number of users granted administrative
-    # permissions be limited).
-    # • Plants – Provides the capability to create plantings, move plants, change growth
-    # phase, log waste, and create harvests in Metrc.
-    # • Packages – Provides the capability to create, adjust, and re-package packages into
-    # smaller or larger quantities, as well as create packages of production batches.
-    # • Transfers – Provides the capability to create, modify, void, and receive/reject
-    # transfers.
-    # • Transfer Hub – Provides the capability to view a manifest, edit transporter
-    # information, and record actual departure, arrival, layover check-in, and layover
-    # check-out dates/times.
-    # • Sales – Provides the capability to input sales data or initiate sales uploads.
-    # • Reports – Provides the capability to generate pre-defined reports.
-
-    # The Account Manager can use Facilities to grant each employee access to one
-    # or more facilities at once instead of entering that person into each individual
-    # facility’s license number.
+    # TODO:
+    # Get / Create / Update / Delete strains
+    # Get / Create / Update / Delete items
 
 
-class Location(object):
-    """A class that represents a cannabis-production location. E.g.
+class Location(Model):
+    """A class that represents a cannabis-production location.
+    E.g.
         {
             "Id": 1,
             "Name": "Harvest Location",
@@ -135,9 +178,8 @@ class Location(object):
         }
     """
 
-    def __init__(self, client, properties):
-        self.client = client
-        self._properties = properties
+    def __init__(self, client, properties, license_number=''):
+        super().__init__(client, properties, license_number)
         self._parameters = {
             'name': 'Name',
             'location_type': 'LocationTypeName',
@@ -146,25 +188,11 @@ class Location(object):
             'harvests': 'ForHarvests',
             'packages': 'ForPackages'
         }
-    
-    @property
-    def uid(self):
-        """Location ID."""
-        return self._properties['Id']
-
-    @property
-    def name(self):
-        """Location name."""
-        return self._properties['Name']
-    
-    @property
-    def location_type(self):
-        """Location type."""
-        return self._properties['LocationTypeName']
 
     def update(self, **kwargs):
         """Update location."""
-        update = self._properties
+        data = self.to_dict()
+        update = clean_nested_dictionary(data, snake_to_camel)
         for param in kwargs:
             key = self._parameters.get(param, param)
             update[key] = kwargs[param]
@@ -172,17 +200,16 @@ class Location(object):
 
     def delete(self):
         """Delete location."""
-        self.client.delete_location(self.uid)
-
-    def to_dict(self):
-        return self._properties
+        self.client.delete_location(self.id)
 
 
-class Strain(object):
-    """A class that represents a cannabis strain. E.g.
+class Strain(Model):
+    """A class that represents a cannabis strain.
+    
+    E.g.
         {
             "Id": 1,
-            "Name": "Spring Hill Kush",
+            "Name": "Old-time Moonshine",
             "TestingStatus": "InHouse",
             "ThcLevel": 0.1865,
             "CbdLevel": 0.1075,
@@ -191,86 +218,129 @@ class Strain(object):
         }
     """
 
-    def __init__(self, client, properties):
-        self.client = client
-        self._properties = properties
-        self._parameters = {
-            'name': 'Name',
-            'testing_status': 'TestingStatus',
-            'thc': 'ThcLevel',
-            'cbd': 'CbdLevel',
-            'percent_indica': 'IndicaPercentage',
-            'percent_sativa': 'SativaPercentage',
-        }
+    @classmethod
+    def create_from_json(cls, client, json):
+        obj = cls(client, json)
+        obj.create()
+        return obj
 
-    @property
-    def id(self):
-        """Global ID."""
-        return self._properties['global_id']
+    def create(self):
+        """Create a strain record in Metrc."""
+        context = self.to_dict()
+        data = clean_nested_dictionary(context, snake_to_camel)
+        self.client.create_strains([data])
     
     def update(self, **kwargs):
         """Update the strain given parameters as keyword arguments."""
-        update = self._properties
-        for param in kwargs:
-            key = self._parameters.get(param, param)
-            update[key] = kwargs[param]
-        self.client.update_strains([update])
+        context = self.to_dict()
+        data = update_context(context, **kwargs)
+        self.client.update_strains([data], license_number=self._license)
 
     def delete(self):
         """Delete the strain."""
-        self.client.delete_strain(self.uid)
-    
-    def to_dict(self):
-        return self._properties
+        self.client.delete_strain(self.id, license_number=self._license)
 
 
-class Inventory(object):
-    """ """
+class Item(Model):
+    """Items are used to track a licensee's inventory at a given facility.
+    Items belong to a single facility
+    Each item has a unique item name, category, and strain.
+    Item Names are used for identification, so an item name
+    should not simply be a category name. Item names are
+    specific to the item in that package or production batch.
+    Categories are pre-defined. The item name
+    identifies what is in the package and categories
+    are used for grouping similar items for reporting purposes.    
+    An item will retain its name unless it is re-packaged.
 
-    def __init__(self, client, properties):
-        self.client = client
-        self._properties = properties
-
-    @property
-    def id(self):
-        """Global ID."""
-        return self._properties['global_id']
-
-
-class Item(object):
-    """Items are used to track the licensee’s inventory through the supply chain life cycle. The
-    Item Names are used to identify what type of item is packed into a package. An
-    inventory list of a licensee’s current plants or packaged product is a good starting point
-    to create the items in Metrc.
-    An item name cannot be just simply a category name. It must be specific to the
-    item in that package or production batch.
-    Items cannot be created for multiple
-    facilities at one time.
-    Each facility creates its own items that are unique with item name, category and
-    strain. A facility cannot create duplicate item names.
-    Each item requires a pre-defined category selection.
-    The purpose of the categories is for grouping similar items for reporting
-    purposes. The item name will identify what is in the package and the category the item
-    belongs in.
+    E.g.
+        {
+            "Id": 1,
+            "Name": "Buds",
+            "ProductCategoryName": "Buds",
+            "ProductCategoryType": "Buds",
+            "QuantityType": "WeightBased",
+            "DefaultLabTestingState": "NotSubmitted",
+            "UnitOfMeasureName": "Ounces",
+            "ApprovalStatus": "Approved",
+            "ApprovalStatusDateTime": "0001-01-01T00:00:00+00:00",
+            "StrainId": 1,
+            "StrainName": "Spring Hill Kush",
+            "AdministrationMethod": null,
+            "UnitCbdPercent": null,
+            "UnitCbdContent": null,
+            "UnitCbdContentUnitOfMeasureName": null,
+            "UnitCbdContentDose": null,
+            "UnitCbdContentDoseUnitOfMeasureName": null,
+            "UnitThcPercent": null,
+            "UnitThcContent": null,
+            "UnitThcContentUnitOfMeasureName": null,
+            "UnitThcContentDose": null,
+            "UnitThcContentDoseUnitOfMeasureName": null,
+            "UnitVolume": null,
+            "UnitVolumeUnitOfMeasureName": null,
+            "UnitWeight": null,
+            "UnitWeightUnitOfMeasureName": null,
+            "ServingSize": null,
+            "SupplyDurationDays": null,
+            "NumberOfDoses": null,
+            "UnitQuantity": null,
+            "UnitQuantityUnitOfMeasureName": null,
+            "PublicIngredients": null,
+            "Description": null,
+            "IsUsed": false
+        }
     """
 
-    def __init__(self, client, properties):
-        self.client = client
-        self._properties = properties
+    RETURNED_VALUES = {
+        'ProductCategoryName': 'item_category',
+        'StrainName': 'strain',
+        'UnitOfMeasureName': 'unit_of_measure',
+        'QuantityType': [],
+        'DefaultLabTestingState': [],
+        'ApprovalStatus': [],
+        'ApprovalStatusDateTime': [],
+        'StrainId': [],
+        'AdministrationMethod': [],
+        'UnitQuantity': [],
+        'UnitQuantityUnitOfMeasureName': [],
+        
+    }
 
-    @property
-    def id(self):
-        """Global ID."""
-        return self._properties['global_id']
+    def __init__(self, client, properties, license_number=''):
+        super().__init__(client, properties, license_number)
+        for k, v in self.RETURNED_VALUES.items():
+            try:
+                self.__dict__[v] = properties[k]
+            except (KeyError, TypeError):
+                pass
+
+    @classmethod
+    def create_from_json(cls, client, license_number, json):
+        new_obj = cls(client, json, license_number)
+        new_obj.create(license_number)
+        return new_obj
+    
+    def create(self, license_number):
+        """Create an item record in Metrc."""
+        context = self.to_dict()
+        data = clean_nested_dictionary(context, snake_to_camel)
+        self.client.create_items([data], license_number)
+    
+    def update(self, **kwargs):
+        """Update the item given parameters as keyword arguments."""
+        context = self.to_dict().copy()
+        data = update_context(context, **kwargs)
+        data = remove_dict_fields(data, self.RETURNED_VALUES.keys())
+        data = remove_dict_nulls(data)
+        self.client.update_items([data], self._license)
+
+    def delete(self):
+        """Delete the item."""
+        self.client.delete_item(self.id, self._license)
 
 
-
-# The facility that packages an item will assign the item name to the package. The
-# package will retain that item name unless it is re-packaged.
-# 11.When creating a packag
-
-
-class Plant(object):
+class Plant(Model):
     """A class that represents a cannabis plant.
     
     Plants are tagged at the immature lot growth phase and at the mature / flowering growth
@@ -287,14 +357,7 @@ class Plant(object):
     canopy area, or when the plant begins flowering.
     """
 
-    def __init__(self, client, properties):
-        self.client = client
-        self._properties = properties
-
-    @property
-    def id(self):
-        """Global ID."""
-        return self._properties['global_id']
+    pass
 
 
 # HARVESTS
@@ -328,7 +391,7 @@ class Plant(object):
 # the same time.
 
 
-class Harvest(object):
+class Harvest(Model):
     """A class that represents a cannabis harvest.
     
     A harvest batch is created and given a
@@ -336,49 +399,10 @@ class Harvest(object):
     or plant material are harvested.
     """
 
-    def __init__(self, client, properties):
-        self.client = client
-        self._properties = properties
-
-    @property
-    def id(self):
-        """Global ID."""
-        return self._properties['global_id']
-    
-
-class Waste(object):
-    """A class that represents a cannabis waste.
-    
-    A harvest batch is created and given a
-    unique Harvest Name when plants
-    or plant material are harvested.
-
-    Plant waste must be recorded within three business days of destruction. In Metrc
-    plant waste can be recorded by Immature Plant Lot, Flowering Plant or by
-    Location.
-    2. Waste can also be recorded by Harvest Batch. See Metrc User Guide for details.
-    3. When recording Flowering Plant waste, the waste from multiple plants can be
-    recorded as a single waste event but the flowering plants contributing to the
-    waste must be individually identified.
-    4. If a plant is no longer viable, the waste must be recorded prior to recording its
-    destruction.
-    5. The reason for the waste must be identified using the Waste Reasons defined by
-    the State of California as listed in Exhibit 38 below. Use of some Waste
-    Reasons may be limited to certain license types, as determined by the State.
-
-    """
-
-    def __init__(self, client, properties):
-        self.client = client
-        self._properties = properties
-
-    @property
-    def id(self):
-        """Global ID."""
-        return self._properties['global_id']
+    pass
 
 
-class Package(object):
+class Package(Model):
     """A class that represents a cannabis package.
     
     Immature plants and seeds can be packaged by a nursery and transported by a
@@ -403,17 +427,21 @@ class Package(object):
     8. Package tags may only be used once and may not be reused.
     """
 
-    def __init__(self, client, properties):
-        self.client = client
-        self._properties = properties
-
-    @property
-    def id(self):
-        """Global ID."""
-        return self._properties['global_id']
+    pass
 
 
-class LabResult(object):
+class Patient(Model):
+    """A class that represents a cannabis patient."""
+
+    pass
+
+class PlantBatch(Model):
+    """A class that represents a cannabis plant batch."""
+
+    pass
+
+
+class LabResult(Model):
     """A class that represents a cannabis lab result.
     
     The Lab Results tab displays the details of each individual lab test performed on
@@ -424,17 +452,10 @@ class LabResult(object):
     the laboratory staff releases the results
     """
 
-    def __init__(self, client, properties):
-        self.client = client
-        self._properties = properties
-
-    @property
-    def id(self):
-        """Global ID."""
-        return self._properties['global_id']
+    pass
 
 
-class Transfer(object):
+class Transfer(Model):
     """A class that represents a cannabis transfer.
     
     A transfer must be created anytime a package moves from one licensee to
@@ -477,17 +498,10 @@ class Transfer(object):
     Receiving a transfer is the final point of exchange in the chain of custody.
     """
 
-    def __init__(self, client, properties):
-        self.client = client
-        self._properties = properties
-
-    @property
-    def id(self):
-        """Global ID."""
-        return self._properties['global_id']
+    pass
 
 
-class TransferTemplate(object):
+class TransferTemplate(Model):
     """A class that represents a cannabis transfer template.
     
     Licensed transfers made on a regular basis to the same Destination licensee utilizing
@@ -498,56 +512,53 @@ class TransferTemplate(object):
     The template can also be copied as a starting point to create additional templates.
     """
 
-    def __init__(self, client, properties):
-        self.client = client
-        self._properties = properties
-
-    @property
-    def id(self):
-        """Global ID."""
-        return self._properties['global_id']
+    pass
 
 
-
-class Driver(object):
-    """A class that represents a cannabis transfer driver."""
-
-    def __init__(self, client, properties):
-        self.client = client
-        self._properties = properties
-
-    @property
-    def id(self):
-        """Global ID."""
-        return self._properties['global_id']
-
-
-class Vehicle(object):
-    """A class that represents a cannabis transfer driver."""
-
-    def __init__(self, client, properties):
-        self.client = client
-        self._properties = properties
-
-    @property
-    def id(self):
-        """Global ID."""
-        return self._properties['global_id']
-
-
-class Sale(object):
+class Sale(Model):
     """A class that represents a cannabis sale.
     
     Sales are reported by the industry to record the transfer of cannabis products to a
     consumer, patient or caregiver
     """
 
-    def __init__(self, client, properties):
-        self.client = client
-        self._properties = properties
+    pass
 
-    @property
-    def id(self):
-        """Global ID."""
-        return self._properties['global_id']
+
+
+# class Driver(Model):
+#     """A class that represents a cannabis transfer driver."""
+
+#     pass
+
+
+# class Vehicle(Model):
+#     """A class that represents a cannabis transfer driver."""
+
+#     pass
+
+
+# class Waste(Model):
+#     """A class that represents a cannabis waste.
+    
+#     A harvest batch is created and given a
+#     unique Harvest Name when plants
+#     or plant material are harvested.
+
+#     Plant waste must be recorded within three business days of destruction. In Metrc
+#     plant waste can be recorded by Immature Plant Lot, Flowering Plant or by
+#     Location.
+#     2. Waste can also be recorded by Harvest Batch. See Metrc User Guide for details.
+#     3. When recording Flowering Plant waste, the waste from multiple plants can be
+#     recorded as a single waste event but the flowering plants contributing to the
+#     waste must be individually identified.
+#     4. If a plant is no longer viable, the waste must be recorded prior to recording its
+#     destruction.
+#     5. The reason for the waste must be identified using the Waste Reasons defined by
+#     the State of California as listed in Exhibit 38 below. Use of some Waste
+#     Reasons may be limited to certain license types, as determined by the State.
+
+#     """
+
+#     pass
 
