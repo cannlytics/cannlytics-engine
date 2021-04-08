@@ -5,8 +5,11 @@ cannlytics.traceability.metrc.models
 This module contains common Metrc models.
 """
 
-from .exceptions import MetrcAPIError
+from datetime import datetime
+
+# from .exceptions import MetrcAPIError
 from .utils import (
+    clean_dictionary,
     clean_nested_dictionary,
     camel_to_snake,
     snake_to_camel,
@@ -53,7 +56,6 @@ class Model(object):
 
 class Employee(Model):
     """An organization's employee or team member.
-    
     E.g.
         {
             "FullName": "Keegan Skeate",
@@ -159,8 +161,8 @@ class Facility(Model):
         return response
     
     # TODO:
-    # Get / Create / Update / Delete strains
-    # Get / Create / Update / Delete items
+    # Get / Create / Update / Delete strains from facility
+    # Get / Create / Update / Delete items from facility
 
 
 class Location(Model):
@@ -192,7 +194,7 @@ class Location(Model):
     def update(self, **kwargs):
         """Update location."""
         data = self.to_dict()
-        update = clean_nested_dictionary(data, snake_to_camel)
+        update = clean_dictionary(data, snake_to_camel)
         for param in kwargs:
             key = self._parameters.get(param, param)
             update[key] = kwargs[param]
@@ -205,7 +207,6 @@ class Location(Model):
 
 class Strain(Model):
     """A class that represents a cannabis strain.
-    
     E.g.
         {
             "Id": 1,
@@ -227,7 +228,7 @@ class Strain(Model):
     def create(self):
         """Create a strain record in Metrc."""
         context = self.to_dict()
-        data = clean_nested_dictionary(context, snake_to_camel)
+        data = clean_dictionary(context, snake_to_camel)
         self.client.create_strains([data])
     
     def update(self, **kwargs):
@@ -252,7 +253,6 @@ class Item(Model):
     identifies what is in the package and categories
     are used for grouping similar items for reporting purposes.    
     An item will retain its name unless it is re-packaged.
-
     E.g.
         {
             "Id": 1,
@@ -296,14 +296,14 @@ class Item(Model):
         'ProductCategoryName': 'item_category',
         'StrainName': 'strain',
         'UnitOfMeasureName': 'unit_of_measure',
-        'QuantityType': [],
-        'DefaultLabTestingState': [],
-        'ApprovalStatus': [],
-        'ApprovalStatusDateTime': [],
-        'StrainId': [],
-        'AdministrationMethod': [],
-        'UnitQuantity': [],
-        'UnitQuantityUnitOfMeasureName': [],
+        'QuantityType': 'quantity_type',
+        'DefaultLabTestingState': 'default_lab_testing_state',
+        'ApprovalStatus': 'approval_status',
+        'ApprovalStatusDateTime': 'approval_status_date_time',
+        'StrainId': 'strain_id',
+        'AdministrationMethod': 'administration_method',
+        'UnitQuantity': 'unit_quantity',
+        'UnitQuantityUnitOfMeasureName': 'unit_quantity_unit_of_measure_name',
         
     }
 
@@ -312,7 +312,7 @@ class Item(Model):
         for k, v in self.RETURNED_VALUES.items():
             try:
                 self.__dict__[v] = properties[k]
-            except (KeyError, TypeError):
+            except KeyError:
                 pass
 
     @classmethod
@@ -324,9 +324,9 @@ class Item(Model):
     def create(self, license_number):
         """Create an item record in Metrc."""
         context = self.to_dict()
-        data = clean_nested_dictionary(context, snake_to_camel)
+        data = clean_dictionary(context, snake_to_camel)
         self.client.create_items([data], license_number)
-    
+
     def update(self, **kwargs):
         """Update the item given parameters as keyword arguments."""
         context = self.to_dict().copy()
@@ -361,7 +361,7 @@ class Plant(Model):
 
 
 # HARVESTS
-# A plant can be destroyed anytime during the growth phases shown in Exhibit 37.
+# A plant can be destroyed anytime during the growth phases.
 # Any waste produced by the plant should be recorded prior to the destruction.
 # 2. Any waste created during the immature growth phase must be recorded as waste
 # using the Plant Waste function and destroyed.
@@ -405,40 +405,169 @@ class Harvest(Model):
 class Package(Model):
     """A class that represents a cannabis package.
     
-    Immature plants and seeds can be packaged by a nursery and transported by a
-    distributor to a cultivator, distributor or retailer for sale.
+    Immature plants and seeds can be packaged by a nursery and
+    transported by a distributor to a cultivator,
+    distributor or retailer for sale.
+
     2. When a manufacturer is creating a concentrate that will then be used in multiple
     infused production batches, the concentrate must be created as a new package.
     The infused production batches will then be created from the concentrate
     package.
+
     A. The new package of concentrate is a production batch and will then be
     partially used in an infused product or sold to a customer.
+
     B. This makes it more easily recorded as connected to the finished infused
     product package.
+
     3. Packages made at a manufacturer facility that creates concentrates must be
     created by pulling from other packages.
-    4. A package must exist in order for it to be selected for transfer. Transfers are realtime inventory dependent.
+
+    4. A package must exist in order for it to be selected for transfer.
+    Transfers are realtime inventory dependent.
+
     5. There must be a contents section for each new package created from an existing
     package.
+
     6. When adjusting a package, use the appropriate adjustment reason.
-    7. In order for a distributor to send a sample for testing, a test sample package must
-    be created. A new test sample must have a new RFID package tag and be pulled
+
+    7. In order for a distributor to send a sample for testing,
+    a test sample package must be created. A new test sample must
+    have a new RFID package tag and be pulled
     from an existing package.
+
     8. Package tags may only be used once and may not be reused.
     """
 
-    pass
+    @classmethod
+    def create_from_json(cls, client, license_number, json):
+        new_obj = cls(client, json, license_number)
+        new_obj.create(license_number)
+        return new_obj
+    
+    def create(self, license_number):
+        """Create a package record in Metrc."""
+        context = self.to_dict()
+        data = clean_nested_dictionary(context, snake_to_camel)
+        self.client.create_items([data], license_number)
+
+    def change_item(self, license_number):
+        """Change the item of the package."""
+        context = self.to_dict()
+        data = clean_nested_dictionary(context, snake_to_camel)
+        self.client.create_items([data], license_number)
+    
+    # TODO: adjust, finish, unfinish, remediate, update_note, change_location
+    # update_items, update, delete, finish, unfinish
 
 
 class Patient(Model):
     """A class that represents a cannabis patient."""
-
+    # TODO: create, update, delete
     pass
 
 class PlantBatch(Model):
-    """A class that represents a cannabis plant batch."""
+    """A class that represents a cannabis plant batch.
+    E.g.
+        {
+            "Id": 5,
+            "Name": "Demo Plant Batch 1",
+            "Type": "Seed",
+            "LocationId": null,
+            "LocationName": null,
+            "LocationTypeName": null,
+            "StrainId": 1,
+            "StrainName": "Spring Hill Kush",
+            "PatientLicenseNumber": null,
+            "UntrackedCount": 80,
+            "TrackedCount": 10,
+            "PackagedCount": 0,
+            "HarvestedCount": 0,
+            "DestroyedCount": 40,
+            "SourcePackageId": null,
+            "SourcePackageLabel": null,
+            "SourcePlantId": null,
+            "SourcePlantLabel": null,
+            "SourcePlantBatchId": null,
+            "SourcePlantBatchName": null,
+            "PlantedDate": "2014-10-10",
+            "LastModified": "0001-01-01T00:00:00+00:00"
+        }
+        {
+            "Name": "B. Kush 5-30",
+            "Type": "Clone",
+            "Count": 25,
+            "Strain": "Spring Hill Kush",
+            "Location": null,
+            "PatientLicenseNumber": "X00001",
+            "ActualDate": "2015-12-15"
+        }
+    """
 
-    pass
+    RETURNED_VALUES = {
+        'TrackedCount': 'count',
+        'StrainName': 'strain',
+        'LocationName': 'location',
+        'QuantityType': 'quantity_type',
+        'DefaultLabTestingState': 'default_lab_testing_state',
+        'ApprovalStatus': 'approval_status',
+        'ApprovalStatusDateTime': 'approval_status_date_time',
+        'StrainId': 'strain_id',
+        'AdministrationMethod': 'administration_method',
+        'UnitQuantity': 'unit_quantity',
+        'UnitQuantityUnitOfMeasureName': 'unit_quantity_unit_of_measure_name',
+        
+    }
+
+    def __init__(self, client, properties, license_number=''):
+        super().__init__(client, properties, license_number)
+        for k, v in self.RETURNED_VALUES.items():
+            try:
+                self.__dict__[v] = properties[k]
+            except KeyError:
+                pass
+
+    @classmethod
+    def create_from_json(cls, client, license_number, json):
+        new_obj = cls(client, json, license_number)
+        new_obj.create(license_number)
+        return new_obj
+    
+    def create(self, license_number):
+        """Create a plant batch record in Metrc."""
+        context = self.to_dict()
+        data = clean_dictionary(context, snake_to_camel)
+        self.client.manage_batches([data], 'createplantings', license_number)
+
+    def create_package(self, data):
+        """Create a package from the plant batch."""
+        data = clean_dictionary(data, snake_to_camel)
+        self.client.manage_batches([data], 'createpackages', self._license) # , from_mother=True
+    
+    def create_package_from_plants(self, data):
+        """Create a package from the plant batch."""
+        data = clean_dictionary(data, snake_to_camel)
+        self.client.manage_batches([data], '/create/packages/frommotherplant', self._license)
+    
+    def change_growth_phase(self, data):
+        """Change the growth phase of the batch."""
+        data = clean_dictionary(data, snake_to_camel)
+        self.client.manage_batches([data], 'changegrowthphase', self._license)
+
+    def destroy_plants(self, count, reason):
+        """Destroy a number of plants for a given reason.
+        Args:
+            count (int): The number of plants to destroy.
+            reason (str): The reason for the destruction.
+        """
+        date = datetime.now().strftime('%Y-%m-%d')
+        data = {
+            'PlantBatch': self.name,
+            'Count': count,
+            'ReasonNote': reason,
+            'ActualDate': date
+        }
+        self.client.manage_batches([data], 'destroy', self._license)
 
 
 class LabResult(Model):
@@ -452,7 +581,29 @@ class LabResult(Model):
     the laboratory staff releases the results
     """
 
-    pass
+    @classmethod
+    def create_from_json(cls, client, license_number, json):
+        new_obj = cls(client, json, license_number)
+        new_obj.post(license_number)
+        return new_obj
+
+    def post(self, data={}):
+        """Post lab result data."""
+        context = self.to_dict()
+        result = clean_dictionary(data, snake_to_camel)
+        self.client.post_lab_results([{**context, **result}], self._license)
+
+    def upload_coa(self, data={}):
+        """Upload lab result CoA."""
+        context = self.to_dict()
+        result = clean_dictionary(data, snake_to_camel)
+        self.client.upload_coas([{**context, **result}], self._license)
+
+    def release(self, data={}):
+        """Release lab results."""
+        context = self.to_dict()
+        result = clean_dictionary(data, snake_to_camel)
+        self.client.release_lab_results([{**context, **result}], self._license)
 
 
 class Transfer(Model):
@@ -498,6 +649,8 @@ class Transfer(Model):
     Receiving a transfer is the final point of exchange in the chain of custody.
     """
 
+    # TODO: create, update, delete, get_packages
+
     pass
 
 
@@ -512,6 +665,8 @@ class TransferTemplate(Model):
     The template can also be copied as a starting point to create additional templates.
     """
 
+    # TODO: Create, update, delete
+
     pass
 
 
@@ -521,6 +676,8 @@ class Sale(Model):
     Sales are reported by the industry to record the transfer of cannabis products to a
     consumer, patient or caregiver
     """
+
+    # TODO: create, update, delete, get_transactions, create_transaction, update_transaction
 
     pass
 

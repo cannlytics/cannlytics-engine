@@ -6,15 +6,6 @@ This module contains the Client class responsible for
 communicating with the Metrc API.
 """
 
-# FIXME:
-# https://stackoverflow.com/questions/6578986/how-to-convert-json-data-into-a-python-object
-# https://pynative.com/python-convert-json-data-into-custom-python-object/
-# encode Object it
-# studentJson = json.dumps(student, cls=StudentEncoder, indent=4)
-
-# Decode JSON
-# resultDict = json.loads(studentJson)
-
 import requests
 
 from json import dumps, loads # DEV
@@ -87,9 +78,9 @@ class Client(object):
         else:
             raise MetrcAPIError(response)
 
-    def parse(self, data, custom_object):
-        """Parse JSON response into a given object type."""
-        return loads(data, object_hook=custom_object)
+    # def parse(self, data, custom_object):
+    #     """Parse JSON response into a given object type."""
+    #     return loads(data, object_hook=custom_object)
 
     #------------------------------------------------------------------
     # Employees and facilities
@@ -145,7 +136,10 @@ class Client(object):
         try:
             return Harvest(self, response, license_number)
         except AttributeError:
-            return [Harvest(self, x, license_number) for x in response]
+            try:
+                return [Harvest(self, x, license_number) for x in response]
+            except AttributeError:
+                return response
     
 
     def finish_harvest(self, data, license_number=''):
@@ -240,13 +234,17 @@ class Client(object):
         try:
             return Item(self, response, license_number)
         except AttributeError:
-            return [Item(self, x, license_number) for x in response]
+            try:
+                return [Item(self, x, license_number) for x in response]
+            except AttributeError:
+                return response
 
 
     def create_items(self, data, license_number=''):
         """Create items.
         Args:
             data (list): A list of items (dict) to create.
+            license_number (str): A specific license number.
         """
         url = METRC_ITEMS_URL % 'create'
         params = format_params(license_number=license_number)
@@ -257,6 +255,7 @@ class Client(object):
         """Update items.
         Args:
             data (list): A list of items (dict) to update.
+            license_number (str): A specific license number.
         """
         url = METRC_ITEMS_URL % 'update'
         params = format_params(license_number=license_number)
@@ -267,6 +266,7 @@ class Client(object):
         """Delete item.
         Args:
             uid (str): The UID of an item to delete.
+            license_number (str): A specific license number.
         """
         url = METRC_ITEMS_URL % uid
         params = format_params(license_number=license_number)
@@ -296,43 +296,57 @@ class Client(object):
         return [LabResult(self, x) for x in response]
 
 
-    def get_analyses(self):
-        """Get required quality assurance analyses."""
-        url = METRC_LAB_RESULTS_URL % 'states'
-        return self.request('get', url)
+    def get_analyses(self, license_number=''):
+        """Get required quality assurance analyses.
+        Args:
+            license_number (str): A specific license number.
+        """
+        url = METRC_LAB_RESULTS_URL % 'types'
+        params = format_params(license_number=license_number)
+        return self.request('get', url, params=params)
     
 
-    def get_lab_statuses(self):
-        """Get pre-defined lab statuses."""
+    def get_lab_statuses(self, license_number=''):
+        """Get pre-defined lab statuses.
+        Args:
+            license_number (str): A specific license number.
+        """
         url = METRC_LAB_RESULTS_URL % 'states'
-        return self.request('get', url)
+        params = format_params(license_number=license_number)
+        return self.request('get', url, params=params)
 
 
-    def post_lab_results(self, data):
+    def post_lab_results(self, data, license_number=''):
         """Post lab result(s).
         Args:
             data (list): A list of lab results (dict) to create or update.
+            license_number (str): A specific license number.
         """
         url = METRC_LAB_RESULTS_URL % 'record'
-        return self.request('post', url, data=data)
+        params = format_params(license_number=license_number)
+        return self.request('post', url, data=data, params=params)
 
 
-    def upload_coas(self, data):
+    def upload_coas(self, data, license_number=''):
         """Upload lab result CoA(s).
         Args:
             data (list): A list of CoAs (dict) to upload.
+            license_number (str): A specific license number.
         """
         url = METRC_LAB_RESULTS_URL % 'labtestdocument'
-        return self.request('put', url, data=data)
+        params = format_params(license_number=license_number)
+        return self.request('put', url, data=data, params=params)
 
 
-    def release_lab_results(self, data):
+    def release_lab_results(self, data, license_number=''):
         """Release lab result(s).
         Args:
             data (list): A list of package labels (dict) to release lab results.
+            license_number (str): A specific license number.
         """
         url = METRC_LAB_RESULTS_URL % 'results/release'
-        return self.request('put', url, data=data)
+        params = format_params(license_number=license_number)
+        return self.request('put', url, data=data, params=params)
 
 
     #------------------------------------------------------------------
@@ -419,13 +433,17 @@ class Client(object):
         try:
             return Package(self, response, license_number)
         except AttributeError:
-            return [Package(self, x, license_number) for x in response]
+            try:
+                return [Package(self, x, license_number) for x in response]
+            except AttributeError:
+                return response
 
 
-    def create_packages(self, data, qa=False, plantings=False):
+    def create_packages(self, data, license_number='', qa=False, plantings=False):
         """Create packages.
         Args:
             data (list): A list of packages (dict) to create.
+            license_number (str): A specific license number.
             qa (bool): If the packages are for QA testing.
             plantings (bool): If the packages are for planting.
         """
@@ -434,63 +452,76 @@ class Client(object):
             url += '/testing'
         elif plantings:
             url += '/plantings'
-        return self.request('post', url, data=data)
+        params = format_params(license_number=license_number)
+        return self.request('post', url, data=data, params=params)
 
 
-    def update_packages(self, data):
+    def update_packages(self, data, license_number=''):
         """Update packages
         Args:
             data (list): A list of packages (dict) to update.
+            license_number (str): A specific license number.
         """
         url = METRC_PACKAGES_URL % 'update'
-        return self.request('post', url, data=data)
+        params = format_params(license_number=license_number)
+        return self.request('post', url, data=data, params=params)
 
 
-    def delete_package(self, uid):
+    def delete_package(self, uid, license_number=''):
         """Delete a package.
         Args:
             uid (str): The UID of a package to delete.
+            license_number (str): A specific license number.
         """
         url = METRC_PACKAGES_URL % uid
-        return self.request('delete', url)
+        params = format_params(license_number=license_number)
+        return self.request('delete', url, params=params)
 
 
-    def update_package_items(self, data):
+    def update_package_items(self, data, license_number=''):
         """Update package items.
         Args:
             data (list): A list of package items (dict) to update.
+            license_number (str): A specific license number.
         """
         url = METRC_PACKAGES_URL % 'change/item'
-        return self.request('post', url, data=data)
+        params = format_params(license_number=license_number)
+        return self.request('post', url, data=data, params=params)
     
 
-    def update_package_item_locations(self, data):
+    def update_package_item_locations(self, data, license_number=''):
         """Update package item location(s).
         Args:
             data (list): A list of package items (dict) to move.
+            license_number (str): A specific license number.
         """
         url = METRC_PACKAGES_URL % 'change/locations'
-        return self.request('post', url, data=data)
+        params = format_params(license_number=license_number)
+        return self.request('post', url, data=data, params=params)
     
 
-    def manage_packages(self, data, action='adjust'):
+    def manage_packages(self, data, action='adjust', license_number=''):
         """Adjust package(s).
         Args:
             data (list): A list of packages (dict) to manage.
+            license_number (str): A specific license number.
             action (str): The action to apply to the packages, with options:
                 `adjust`, `finish`, `unfinish`, `remediate`.
         """
-        url = METRC_PACKAGES_URL % 'change/locations'
-        return self.request('post', url, data=data)
+        url = METRC_PACKAGES_URL % action
+        params = format_params(license_number=license_number)
+        return self.request('post', url, data=data, params=params)
     
 
-    def update_package_note(self, data):
+    def update_package_note(self, data, license_number=''):
         """Update package note(s).
         Args:
             data (list): A list of package notes (dict) to update.
+            license_number (str): A specific license number.
         """
         url = METRC_PACKAGES_URL % 'change/note'
-        return self.request('put', url, data=data)
+        params = format_params(license_number=license_number)
+        return self.request('put', url, data=data, params=params)
     
 
     #------------------------------------------------------------------
@@ -516,31 +547,34 @@ class Client(object):
             return [Patient(self, x, license_number) for x in response]
 
 
-    def create_patient(self, data):
+    def create_patient(self, data, license_number=''):
         """Create patient(s).
         Args:
             data (list): A list of patient (dict) to add.
         """
         url = METRC_PATIENTS_URL % 'add'
-        return self.request('post', url, data=data)
+        params = format_params(license_number=license_number)
+        return self.request('post', url, data=data, params=params)
 
 
-    def update_patients(self, data):
+    def update_patients(self, data, license_number=''):
         """Update strain(s).
         Args:
             data (list): A list of patients (dict) to update.
         """
         url = METRC_PATIENTS_URL % 'update'
-        return self.request('put', url, data=data)
+        params = format_params(license_number=license_number)
+        return self.request('put', url, data=data, params=params)
 
 
-    def delete_patient(self, uid):
+    def delete_patient(self, uid, license_number=''):
         """Delete patient.
         Args:
             uid (str): The UID of a patient to delete.
         """
         url = METRC_PATIENTS_URL % uid
-        return self.request('delete', url)
+        params = format_params(license_number=license_number)
+        return self.request('delete', url, params=params)
 
     #------------------------------------------------------------------
     # Plant Batches
@@ -550,7 +584,7 @@ class Client(object):
     def get_batches(
         self,
         uid='',
-        action='',
+        action='active',
         license_number='',
         start='',
         end=''
@@ -575,10 +609,13 @@ class Client(object):
         try:
             return PlantBatch(self, response, license_number)
         except AttributeError:
-            return [PlantBatch(self, x, license_number) for x in response]
+            try:
+                return [PlantBatch(self, x, license_number) for x in response]
+            except AttributeError:
+                return response
 
 
-    def manage_batches(self, data, action, from_mother=False):
+    def manage_batches(self, data, action, license_number='', from_mother=False):
         """Manage plant batch(es) by applying a given action.
         Args:
             data (list): A list of plants (dict) to manage.
@@ -590,7 +627,7 @@ class Client(object):
                 `createpackages` action.
         """
         url = METRC_BATCHES_URL % action
-        params = format_params(from_mother=from_mother)
+        params = format_params(from_mother=from_mother, license_number=license_number)
         return self.request('post', url, data=data, params=params)
     
 
@@ -641,7 +678,10 @@ class Client(object):
         try:
             return Plant(self, response, license_number)
         except AttributeError:
-            return [Plant(self, x, license_number) for x in response]
+            try:
+                return [Plant(self, x, license_number) for x in response]
+            except AttributeError:
+                return response
 
 
     def manage_plants(self, data, action):
@@ -727,57 +767,71 @@ class Client(object):
         return self.request('get', url, params=params)
     
 
-    def get_customer_types(self):
-        """Get all facilities."""
+    def get_customer_types(self, license_number=''):
+        """Get all facilities.
+        Args:
+            license_number (str): A specific license number.
+        """
         url = METRC_SALES_URL % 'customertypes'
-        return self.request('get', url)
+        params = format_params(license_number=license_number)
+        return self.request('get', url, params=params)
     
 
-    def create_receipts(self, data):
+    def create_receipts(self, data, license_number=''):
         """Create receipt(s).
         Args:
             data (list): A list of receipts (dict) to create.
+            license_number (str): A specific license number.
         """
         url = METRC_SALES_URL % 'receipts'
-        return self.request('post', url, data=data)
+        params = format_params(license_number=license_number)
+        return self.request('post', url, data=data, params=params)
 
 
-    def update_receipts(self, data):
+    def update_receipts(self, data, license_number=''):
         """Update receipt(s).
         Args:
             data (list): A list of receipts (dict) to update.
+            license_number (str): A specific license number.
         """
         url = METRC_SALES_URL % 'receipts'
-        return self.request('put', url, data=data)
+        params = format_params(license_number=license_number)
+        return self.request('put', url, data=data, params=params)
 
 
-    def delete_receipt(self, uid):
+    def delete_receipt(self, uid, license_number=''):
         """Delete receipt.
         Args:
             uid (str): The UID of a receipt to delete.
+            license_number (str): A specific license number.
         """
         url = METRC_SALES_URL % f'receipts/{uid}'
-        return self.request('delete', url)
+        params = format_params(license_number=license_number)
+        return self.request('delete', url, params=params)
 
 
-    def create_transactions(self, data, date):
+    def create_transactions(self, data, date, license_number=''):
         """Create transaction(s).
         Args:
             data (list): A list of transactions (dict) to create.
             date (str): An ISO 8601 formatted string of the transaction date.
+            license_number (str): A specific license number.
         """
         url = METRC_TRANSACTIONS_URL % date
-        return self.request('post', url, data=data)
+        params = format_params(license_number=license_number)
+        return self.request('post', url, data=data, params=params)
 
 
-    def update_transactions(self, data, date):
+    def update_transactions(self, data, date, license_number=''):
         """Update transaction(s).
         Args:
             data (list): A list of transactions (dict) to update.
             date (str): An ISO 8601 formatted string of the transaction date.
+            license_number (str): A specific license number.
         """
         url = METRC_TRANSACTIONS_URL % date
-        return self.request('put', url, data=data)
+        params = format_params(license_number=license_number)
+        return self.request('put', url, data=data, params=params)
 
 
     #------------------------------------------------------------------
@@ -807,6 +861,7 @@ class Client(object):
         """Create strain(s).
         Args:
             data (list): A list of strains (dict) to create.
+            license_number (str): A specific license number.
         """
         url = METRC_STRAINS_URL % 'create'
         params = format_params(license_number=license_number)
@@ -817,6 +872,7 @@ class Client(object):
         """Update strain(s).
         Args:
             data (list): A list of strains (dict) to update.
+            license_number (str): A specific license number.
         """
         url = METRC_STRAINS_URL % 'update'
         params = format_params(license_number=license_number)
@@ -827,6 +883,7 @@ class Client(object):
         """Delete strain.
         Args:
             uid (str): The UID of a strain to delete.
+            license_number (str): A specific license number.
         """
         url = METRC_STRAINS_URL % uid
         params = format_params(license_number=license_number)
@@ -869,14 +926,11 @@ class Client(object):
             return [Transfer(self, x, license_number) for x in response]
     
 
-    def get_transfer_packages(
-        self,
-        uid,
-        action='packages',
-    ):
+    def get_transfer_packages(self, uid, license_number='', action='packages'):
         """Get shipments.
         Args:
             uid (str): Required UID of a shipment.
+            license_number (str): A specific license number.
             action (str): The filter to apply to transfers:
                 `packages`, `packages/wholesale`, `requiredlabtestbatches`.
         """
@@ -884,46 +938,61 @@ class Client(object):
             url = METRC_TRANSFER_PACKAGES_URL % (f'package/{uid}', action)
         else:
             url = METRC_TRANSFER_PACKAGES_URL % (uid, action)
-        return self.request('get', url)
+        params = format_params(license_number=license_number)
+        return self.request('get', url, params=params)
     
 
-    def get_transfer_types(self):
-        """Get all transfer types."""
+    def get_transfer_types(self, license_number=''):
+        """Get all transfer types.
+        Args:
+            license_number (str): A specific license number.
+        """
         url = METRC_TRANSFERS_URL % 'types'
-        return self.request('get', url)
+        params = format_params(license_number=license_number)
+        return self.request('get', url, params=params)
 
 
-    def get_package_statuses(self):
-        """Get all package status choices."""
+    def get_package_statuses(self, license_number=''):
+        """Get all package status choices.
+        Args:
+            license_number (str): A specific license number.
+        """
         url = METRC_TRANSFERS_URL % 'delivery/packages/states'
-        return self.request('get', url)
+        params = format_params(license_number=license_number)
+        return self.request('get', url, params=params)
 
     
-    def create_transfers(self, data):
+    def create_transfers(self, data, license_number=''):
         """Create transfer(s).
         Args:
             data (list): A list of transfers (dict) to create.
+            license_number (str): A specific license number.
         """
         url = METRC_TRANSFERS_URL % 'external/incoming'
-        return self.request('post', url, data=data)
+        params = format_params(license_number=license_number)
+        return self.request('post', url, data=data, params=params)
 
 
-    def update_transfers(self, data):
+    def update_transfers(self, data, license_number=''):
         """Update transfer(s).
         Args:
             data (list): A list of transfers (dict) to update.
+            license_number (str): A specific license number.
         """
         url = METRC_TRANSFERS_URL % 'external/incoming'
-        return self.request('put', url, data=data)
+        params = format_params(license_number=license_number)
+        return self.request('put', url, data=data, params=params)
 
 
-    def delete_transfer(self, uid):
+    def delete_transfer(self, uid, license_number=''):
         """Delete transfer.
         Args:
             uid (str): The UID of a transfer to delete.
+            license_number (str): A specific license number.
         """
         url = METRC_TRANSFERS_URL % f'external/incoming/{uid}'
-        return self.request('delete', url)
+        params = format_params(license_number=license_number)
+        return self.request('delete', url, params=params)
 
 
     #------------------------------------------------------------------
@@ -965,39 +1034,43 @@ class Client(object):
             return [TransferTemplate(self, x, license_number) for x in response]
 
 
-    def create_transfer_templates(self, data):
+    def create_transfer_templates(self, data, license_number=''):
         """Create transfer_template(s).
         Args:
             data (list): A list of transfer templates (dict) to create.
         """
         url = METRC_TRANSFER_TEMPLATE_URL
-        return self.request('post', url, data=data)
+        params = format_params(license_number=license_number)
+        return self.request('post', url, data=data, params=params)
 
 
-    def update_transfer_templates(self, data):
+    def update_transfer_templates(self, data, license_number=''):
         """Update transfer template(s).
         Args:
             data (list): A list of transfer templates (dict) to update.
         """
         url = METRC_TRANSFER_TEMPLATE_URL
-        return self.request('put', url, data=data)
+        params = format_params(license_number=license_number)
+        return self.request('put', url, data=data, params=params)
 
 
-    def delete_transfer_template(self, uid):
+    def delete_transfer_template(self, uid, license_number=''):
         """Delete transfer template.
         Args:
             uid (str): The UID of a transfer template to delete.
         """
         url = METRC_TRANSFER_TEMPLATE_URL % uid
-        return self.request('delete', url)
+        params = format_params(license_number=license_number)
+        return self.request('delete', url, params=params)
 
 
     #------------------------------------------------------------------
     # Miscellaneous
     #------------------------------------------------------------------
 
-    def get_uom(self):
+    def get_uom(self, license_number=''):
         """Get all units of measurement."""
         url = METRC_UOM_URL
-        return self.request('get', url)
+        params = format_params(license_number=license_number)
+        return self.request('get', url, params=params)
 

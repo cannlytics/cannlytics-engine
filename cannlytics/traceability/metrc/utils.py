@@ -6,6 +6,7 @@ This module contains common Metrc utility functions
 and constants.
 """
 from re import sub
+from pandas import read_excel
 
 #------------------------------------------------------------------
 # Utility functions
@@ -97,10 +98,15 @@ def update_context(context, function=snake_to_camel, **kwargs):
     }
     return data
 
-
 #------------------------------------------------------------------
 # Optional: Add data import / export functionality.
 #------------------------------------------------------------------
+
+def import_tags(file_path):
+    """Import plant and package tags."""
+    df = read_excel(file_path, sep=',')
+    data = df.to_dict('records')
+    return clean_dictionary(data)
 
 # Data import
 # 1. Create Plantings / Plantings from Plants / Plantings from Packages
@@ -142,6 +148,39 @@ PARAMETERS = {
     'package_id': 'packageId',
     'from_mother': 'isFromMotherPlant',
 }
+
+categories = [
+    'Flower & Buds',
+    'Immature Plants',
+# Concentrate (Non-Solvent Based) (Count-Volume)
+# Concentrate (Non-Solvent Based) (Count-Weight)
+# Concentrate (Weight Based)
+# Edibles (Count-Volume)
+# Edibles (Count-Weight)
+# Extracts (Solvent Based) (Count-Volume)
+# Extracts (Solvent Based) (Count-Weight)
+# Flower & Buds
+# Immature Plants
+# Kief
+# Mature Plants
+# Metered Dose Nasal Spray Products
+# MMJ Waste
+# Pre-Roll (Flower Only)
+# Pre-Roll (Infused)
+# Pressurized Metered Dose Inhaler Products
+# Rectal/Vaginal Administration Products (Count-Volume)
+# Rectal/Vaginal Administration Products (Count-Weight)
+# Seeds
+# Shake/Trim
+# Shake/Trim (by Strain)
+# Tinctures (Count-Volume)
+# Tinctures (Count-Weight)
+# Topicals (Count-Volume)
+# Topicals (Count-Weight)
+# Transdermal Patches
+# Vape Cartridges
+# Whole Wet Plant
+]
 
 item_types = [
   {
@@ -350,28 +389,15 @@ transfer_types = [
   }
 ]
 
-growth_phases = [
-  'Young',
-  'Vegetative',
-  'Flowering'
-]
+batch_types = ['Seed', 'Clone']
 
-additive_types = [
-  'Fertilizer',
-  'Pesticide',
-  'Other'
-]
+growth_phases = ['Young', 'Vegetative', 'Flowering']
+
+additive_types = ['Fertilizer', 'Pesticide','Other']
 
 harvest_waste_types = ['Plant Material', 'Fibrous', 'Root Ball']
 
-waste_methods = [
-  {
-    'Name': 'Grinder'
-  },
-  {
-    'Name': 'Compost'
-  }
-]
+waste_methods = [{'Name': 'Grinder'}, {'Name': 'Compost'}]
 
 waste_reasons = [
   {
