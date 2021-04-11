@@ -5,9 +5,13 @@ cannlytics.traceability.metrc.models
 This module contains common Metrc models.
 """
 
+# External imports
 from datetime import datetime
 
-# from .exceptions import MetrcAPIError
+# Internal imports
+from cannlytics.firebase import get_document, update_document
+
+# Local imports
 from .utils import (
     clean_dictionary,
     clean_nested_dictionary,
@@ -16,6 +20,7 @@ from .utils import (
     update_context,
     remove_dict_fields,
     remove_dict_nulls,
+    get_timestamp,
 )
 
 
@@ -42,6 +47,17 @@ class Model(object):
     def __setattr__(self, key, value):
         self.__dict__[key] = value
     
+    @classmethod
+    def from_fb(cls, client, ref):
+        """Initialize a class from Firebase data.
+        Args:
+            client (Client): A Metrc client instance.
+            ref (str): The reference to the document in Firestore.
+        """
+        data = get_document(ref)
+        obj = cls(client, data)
+        return obj
+    
     @property
     def uid(self):
         """The model's unique ID."""
@@ -52,6 +68,21 @@ class Model(object):
         data = vars(self).copy()
         [data.pop(x, None) for x in ['_license', 'client']]
         return data
+    
+    def to_fb(self, ref='', col=''):
+        """Upload the model's properties as a dictionary to Firestore.
+        Args:
+            ref (str): The Firestore document reference.
+            col (str): A Firestore collection, with the UID as document ID.
+        """
+        data = vars(self).copy()
+        [data.pop(x, None) for x in ['_license', 'client']]
+        if col:
+            update_document(f'{col}/{self.uid}', data)
+        else:
+            update_document(ref, data)
+
+    # TODO: Add create_from_json to all models.
 
 
 class Employee(Model):
@@ -163,6 +194,8 @@ class Facility(Model):
     # TODO:
     # Get / Create / Update / Delete strains from facility
     # Get / Create / Update / Delete items from facility
+    
+    # TODO: Create transfers from the facility
 
 
 class Location(Model):
@@ -355,40 +388,157 @@ class Plant(Model):
 
     Plant tags are assigned to individual plants when they are moved to a designated
     canopy area, or when the plant begins flowering.
+
+    A plant can be destroyed anytime during the growth phases.
+    Any waste produced by the plant should be recorded prior to the destruction.
+    2. Any waste created during the immature growth phase must be recorded as waste
+    using the Plant Waste function and destroyed.
+    3. When immature plants begin to flower, select the Change Growth Phase button
+    to record the change and associate the new Plant Tag ID to the plant(s).
+    4. In Metrc, anytime something is trimmed from a flowering plant during growing
+    with the intent to sell it, process it, or perform a partial harvest, a Manicure batch
+    must be created.
     """
 
-    pass
+    # TODO: `create/plantings`,
+    # TODO: `create/plantbatch/packages`,
 
+    def flower(self, tag, location_name=None):
+        """Change the growth phase of the plant to flowering.
+        Args:
+            tag (str): A tag to assign to the flowering plant.
+            location_name (str): An optional new location for the plant.
+        """
+        if location_name is None:
+            location_name = self.location_name
+        data = {
+            'Label': self.label,
+            'NewTag': tag,
+            'GrowthPhase': 'Flowering',
+            'NewLocation': location_name,
+            'GrowthDate': get_timestamp()
+        }
+        self.client.manage_plants(
+            [data],
+            action='changegrowthphases',
+            license_number=self._license
+        )
 
-# HARVESTS
-# A plant can be destroyed anytime during the growth phases.
-# Any waste produced by the plant should be recorded prior to the destruction.
-# 2. Any waste created during the immature growth phase must be recorded as waste
-# using the Plant Waste function and destroyed.
-# 3. When immature plants begin to flower, select the Change Growth Phase button
-# to record the change and associate the new Plant Tag ID to the plant(s).
-# 4. In Metrc, anytime something is trimmed from a flowering plant during growing
-# with the intent to sell it, process it, or perform a partial harvest, a Manicure batch
-# must be created.
-# 5. Harvest steps include the following:
-# A. Harvest Name – Harvests must be strain specific. The Harvest Name must be
-# unique. It is a best practice for the harvest name to include the Strain Name
-# and Harvest Date, but it is not required by the State.
-# B. Weight – The plant is weighed individually in its entirety after being cut from
-# root ball (stem, stalk, bud/flower, leaves, trim leaves, etc.).
-# C. Waste – This can be recorded using multiple entries but must be reported
-# within three days of destruction.
-# D. Package – Package and tag the product from the Harvest Batch (Fresh
-# Cannabis Plant, Flower, Leaf or Kief). These packages must be strain
-# specific.
-# E. Transfer – Licensee must create transfer manifest to move product to a
-# Processor, Distributor, or Manufacturer.
-# F. Finish – When the Harvest Batch (HB) has been fully packaged, there should
-# be remaining wet weight to account for moisture loss. Selecting Finish
-# Harvest will attribute any remaining weight to moisture loss.
-# 6. A Harvest Batch package of Flower, Leaf, Kief or Fresh Cannabis Plant can only
-# be created from the Harvested Tab using a single strain from plants harvested at
-# the same time.
+    def move(self, location_name):
+        """Move the plant to a new location.
+        Args:
+            location_name (str): The destination's name.
+        """
+        data = {
+            'Id': self.id,
+            'Location': location_name,
+            'ActualDate': get_timestamp()
+        }
+        self.client.manage_plants(
+            [data],
+            action='moveplants',
+            license_number=self._license
+        )
+
+    def destroy(
+        self,
+        weight,
+        method='Compost',
+        material='Soil',
+        note='n/a',
+        reason='Contamination',
+        uom='grams',
+        ):
+        """Destroy the plant.
+        Args:
+            weight (float): Required weight of the waste.
+            material (str): The waste material, e.g soil.
+            method (str): The mechanism of destruction:
+                `Grinder` or `Compost`.
+            reason (str): The reason for destruction:
+                `Contamination` or `Male Plants`.
+        """
+        data = {
+            'Id': self.id,
+            'WasteMethodName': method,
+            'WasteMaterialMixed': material,
+            'WasteWeight': weight,
+            'WasteUnitOfMeasureName': uom,
+            'WasteReasonName': reason,
+            'ReasonNote': note,
+            'ActualDate': get_timestamp()
+        }
+        self.client.manage_plants(
+            [data],
+            action='destroyplants',
+            license_number=self._license
+        )
+    
+    def manicure(
+        self,
+        weight,
+        harvest_name=None,
+        location_name=None,
+        patient_license=None,
+        uom='Grams',
+    ):
+        """Manicure the plant.
+        Args:
+            weight (float): Required harvest weight.
+            harvest_name (str): Optional harvest name.
+            location_name (str): The drying location's name.
+            patient_license (str): A patient's license number.
+            uom (str): The unit of measure
+        """
+        if location_name is None:
+            location_name = self.location_name
+        data = {
+            'Plant': self.label,
+            'Weight': weight,
+            'UnitOfWeight': uom,
+            'DryingLocation': location_name,
+            'HarvestName': harvest_name,
+            'PatientLicenseNumber': patient_license,
+            'ActualDate': get_timestamp()
+        }
+        self.client.manage_plants(
+            [data],
+            action='manicureplants',
+            license_number=self._license
+        )
+
+    def harvest(
+        self,
+        harvest_name,
+        weight,
+        location_name=None,
+        patient_license=None,
+        uom='Grams',
+    ):
+        """Harvest the plant.
+        Args:
+            harvest_name (str): Required harvest name.
+            weight (float): Required harvest weight.
+            location_name (str): The harvest location's name.
+            patient_license (str): A patient's license number.
+            uom (str): The unit of measure.
+        """
+        if location_name is None:
+            location_name = self.location_name
+        data = {
+            'Plant': self.label,
+            'Weight': weight,
+            'UnitOfWeight': uom,
+            'DryingLocation': location_name,
+            'HarvestName': harvest_name,
+            'PatientLicenseNumber': patient_license,
+            'ActualDate': get_timestamp()
+        }
+        self.client.manage_plants(
+            [data],
+            action='harvestplants',
+            license_number=self._license
+        )
 
 
 class Harvest(Model):
@@ -397,9 +547,87 @@ class Harvest(Model):
     A harvest batch is created and given a
     unique Harvest Name when plants
     or plant material are harvested.
-    """
 
-    pass
+    A. Harvest Name – Harvests must be strain specific. The Harvest Name must be
+    unique. It is a best practice for the harvest name to include the Strain Name
+    and Harvest Date, but it is not required by the State.
+
+    B. Weight – The plant is weighed individually in its entirety after being cut from
+    root ball (stem, stalk, bud/flower, leaves, trim leaves, etc.).
+    
+    C. Waste – This can be recorded using multiple entries but must be reported
+    within three days of destruction.
+    
+    D. Package – Package and tag the product from the Harvest Batch (Fresh
+    Cannabis Plant, Flower, Leaf or Kief). These packages must be strain
+    specific.
+    
+    E. Transfer – Licensee must create transfer manifest to move product to a
+    Processor, Distributor, or Manufacturer.
+    
+    F. Finish – When the Harvest Batch (HB) has been fully packaged, there should
+    be remaining wet weight to account for moisture loss. Selecting Finish
+    Harvest will attribute any remaining weight to moisture loss.
+    
+    6. A Harvest Batch package of Flower, Leaf, Kief or Fresh Cannabis Plant can only
+    be created from the Harvested Tab using a single strain from plants harvested at
+    the same time.
+    """
+    
+    def create_packages(self, data):
+        """Create packages from a harvest.
+        Args:
+            data (list): The package data.
+        """
+        self.client.create_harvest_packages(data, license_number=self._license)
+
+    # FIXME: create testing package
+    def create_testing_packages(self, data):
+        """Create testing packages from a harvest.
+        Args:
+            data (list): The package data.
+        """
+        self.client.create_harvest_packages(data, license_number=self._license)
+
+    def remove_waste(self, weight, waste_type='Waste', uom='Grams'):
+        """Remove waste from the harvest.
+        Args:
+            weight (float): Required harvest weight.
+            waste_type (str): The type of waste.
+            uom (str): The unit of measure.
+        """
+        data = {
+            'Id': self.uid,
+            'WasteType': waste_type,
+            'UnitOfWeight': uom,
+            'WasteWeight': weight,
+            'ActualDate': get_timestamp()
+        }
+        self.client.remove_waste([data], license_number=self._license)
+    
+    def finish(self):
+        """Finish a harvest."""
+        data = {'Id': self.uid, 'ActualDate': get_timestamp()}
+        self.client.finish_harvests([data], license_number=self._license)
+    
+
+    def unfinish(self):
+        """Unfinish a harvest."""
+        self.client.unfinish_harvests([{'Id': self.uid}], license_number=self._license)
+
+    def move(self, destination, harvest_name=None):
+        """Move a harvest.
+        Args:
+            destination (str): THe name of the destination location.
+            harvest_name (str): An optional harvest name.
+        """
+        data = {
+            "Id": self.uid,
+            "HarvestName": harvest_name,
+            "DryingLocation": destination,
+            "ActualDate": get_timestamp()
+        }
+        self.client.move_harvest([data], license_number=self._license)
 
 
 class Package(Model):
@@ -439,32 +667,100 @@ class Package(Model):
     8. Package tags may only be used once and may not be reused.
     """
 
-    @classmethod
-    def create_from_json(cls, client, license_number, json):
-        new_obj = cls(client, json, license_number)
-        new_obj.create(license_number)
-        return new_obj
+    # @classmethod
+    # def create_from_json(cls, client, license_number, json):
+    #     new_obj = cls(client, json, license_number)
+    #     new_obj.create_package(new_obj.to_dict(), license_number)
+    #     return new_obj
     
-    def create(self, license_number):
+    def create_package(self, data):
         """Create a package record in Metrc."""
-        context = self.to_dict()
-        data = clean_nested_dictionary(context, snake_to_camel)
-        self.client.create_items([data], license_number)
+        data = clean_nested_dictionary(data, snake_to_camel)
+        self.client.create_packages([data], self._license)
 
-    def change_item(self, license_number):
+    def change_item(self, item_name):
         """Change the item of the package."""
-        context = self.to_dict()
-        data = clean_nested_dictionary(context, snake_to_camel)
-        self.client.create_items([data], license_number)
+        data = {'Label': self.label, 'Item': item_name}
+        self.client.change_package_items([data], self._license)
     
-    # TODO: adjust, finish, unfinish, remediate, update_note, change_location
-    # update_items, update, delete, finish, unfinish
+    def finish(self):
+        """Finish a package."""
+        data = {'Label': self.label, 'ActualDate': get_timestamp()}
+        self.client.manage_packages([data], action='finish', license_number=self._license)
+
+    def unfinish(self):
+        """Unfinish a package."""
+        self.client.manage_packages([{'Label': self.label}], action='unfinish', license_number=self._license)
+
+    def adjust(
+        self,
+        weight,
+        note='',
+        reason='Mandatory State Destruction',
+        uom='Grams'
+    ):
+        """Adjust the package.
+        Args:
+            weight (float): Required adjustment weight.
+            note (str): Required note for certain reasons.
+            reason (str): The reason for adjustment.
+            uom (str): The unit of measure.
+        """
+        data = {
+            'Label': self.label,
+            'Quantity': weight,
+            'UnitOfMeasure': uom,
+            'AdjustmentReason': reason,
+            'AdjustmentDate': get_timestamp(),
+            'ReasonNote': note
+        }
+        self.client.manage_packages([data], action='adjust', license_number=self._license)
+
+    
+    # TODO:  remediate, update_note, change_location
+    # update_items, update, delete
 
 
 class Patient(Model):
-    """A class that represents a cannabis patient."""
-    # TODO: create, update, delete
-    pass
+    """A class that represents a cannabis patient.
+    e.g
+    {
+        'PatientId': 1,
+        'LicenseNumber': '000001',
+        'RegistrationDate': '2015-01-08',
+        'LicenseEffectiveStartDate': '2014-07-12',
+        'LicenseEffectiveEndDate': '2015-07-07',
+        'RecommendedPlants': 6,
+        'RecommendedSmokableQuantity': 2.0,
+        'HasSalesLimitExemption': false,
+        'OtherFacilitiesCount': 1
+    }
+    """
+
+    @classmethod
+    def create_from_json(cls, client, json):
+        obj = cls(client, json)
+        obj.create()
+        return obj
+
+    def create(self):
+        """Create a patient record in Metrc."""
+        context = self.to_dict()
+        context['actual_date'] = get_timestamp()
+        data = clean_nested_dictionary(context, snake_to_camel)
+        self.client.create_patients([data], license_number=self._license)
+
+    def update(self, **kwargs):
+        """Update the patient given parameters as keyword arguments."""
+        context = self.to_dict().copy()
+        data = update_context(context, **kwargs)
+        data = remove_dict_nulls(data)
+        self.client.update_patients([data], self._license)
+
+    def delete(self):
+        """Delete the patient."""
+        self.client.delete_patient(self.id, self._license)
+
 
 class PlantBatch(Model):
     """A class that represents a cannabis plant batch.
@@ -608,38 +904,43 @@ class LabResult(Model):
 
 class Transfer(Model):
     """A class that represents a cannabis transfer.
+    Transfers are a key component of the chain of custody process.
     
     A transfer must be created anytime a package moves from one licensee to
     another, even if the two facilities are located on the same property.
-    2. To print a manifest, select the manifest number to highlight it in orange, then
-    select the View Manifest button and select Print.
-    3. Packages can only be transported from one licensee to another by a licensed
+
+    Packages can only be transported from one licensee to another by a licensed
     Distributor. A Testing Laboratory is allowed to transport test samples for official
     state testing. Distributors and Testing Laboratories are required to record the
     actual departure time from the origin facility and the actual arrival time at the
     destination facility in Metrc real-time.
-    4. A package must be received in its entirety (the system DOES NOT allow
-    receiving a partial package).
-    5. A transfer can be rejected by individual package, or in whole by rejecting all
-    packages.
-    6. A rejected package requires the originating Licensee to receive the package
-    back into inventory.
-    7. A package must exist in order to be selected for transfer. Transfers are done in
-    real time and are inventory dependent.
-    8. When receiving a package, any adjustments to the weight, volume, or count may
-    be reported to the State.
-    9. If there are any questions about a transfer, reject it.
 
-    A transfer can be modified as shown in Exhibit 64, or voided, up until the time that the
+    A package must be received in its entirety (the system DOES NOT allow
+    receiving a partial package).
+    
+    A transfer can be rejected by individual package, or in whole by rejecting all
+    packages.
+    
+    A rejected package requires the originating Licensee to receive the package
+    back into inventory.
+    
+    A package must exist in order to be selected for transfer. Transfers are done in
+    real time and are inventory dependent.
+    
+    When receiving a package, any adjustments to the weight, volume, or count may
+    be reported to the State.
+    
+    If there are any questions about a transfer, reject it.
+
+    A transfer can be modified , or voided, up until the time that the
     Distributor or Testing Laboratory marks that it has departed the facility. Once the
     transfer process has begun, the transfer may not be modified except by the Distributor
     or Testing Laboratory to edit estimated departure and arrival times, or driver and vehicle
     information (see Edit Transporter Info below).
+    
     When modifying transfers, each of the transfer fields may be modified at the same level
     of detail as when the transfer was created. Edits may be completed for a variety of
-    reasons including: error correction, changes in destination, changes in product, etc. The
-    transfer process is a key component of the chain of custody process, and modifying a
-    transfer manifest should be handled appropriately.
+    reasons including: error correction, changes in destination, changes in product, etc.
 
     Voiding a transfer can only be completed by the originating business. Voiding a transfer
     permanently eliminates it and moves the product back into the originator’s inventory.
@@ -649,49 +950,235 @@ class Transfer(Model):
     Receiving a transfer is the final point of exchange in the chain of custody.
     """
 
-    # TODO: create, update, delete, get_packages
+    RETURNED_VALUES = {}
 
-    pass
+    @classmethod
+    def create_from_json(cls, client, json):
+        obj = cls(client, json)
+        obj.create()
+        return obj
+
+    def create(self):
+        """Create a transfer record in Metrc."""
+        context = self.to_dict()
+        data = clean_nested_dictionary(context, snake_to_camel)
+        self.client.create_transfers([data], license_number=self._license)
+
+    def update(self, **kwargs):
+        """Update the transfer given parameters as keyword arguments."""
+        context = self.to_dict().copy()
+        data = update_context(context, **kwargs)
+        data = remove_dict_fields(data, self.RETURNED_VALUES.keys())
+        data = remove_dict_nulls(data)
+        self.client.update_transfers([data], self._license)
+
+    def delete(self):
+        """Delete the transfer."""
+        self.client.delete_transfer(self.id, self._license)
+
 
 
 class TransferTemplate(Model):
     """A class that represents a cannabis transfer template.
-    
-    Licensed transfers made on a regular basis to the same Destination licensee utilizing
-    the same Planned Route, Transporter(s), Driver(s) and/or Vehicle(s) can be recorded in
-    Metrc most efficiently when a transfer template is employed.
-    A template can be used to record these types of transfers with minimal data input to suit
-    the circumstances of a particular transfer and specify the packages to be transferred.
-    The template can also be copied as a starting point to create additional templates.
+    Transfer templates can be used for transfers to the same
+    destination licensee utilizing the same:
+
+        - Planned Route
+        - Transporter(s)
+        - Driver(s)
+        - Vehicle(s)
+        - Package
+
+    The template can be copied to create other templates.
     """
 
-    # TODO: Create, update, delete
+    RETURNED_VALUES = {}
 
-    pass
+    @classmethod
+    def create_from_json(cls, client, json):
+        obj = cls(client, json)
+        obj.create()
+        return obj
+
+    def create(self):
+        """Create a transfer template record in Metrc."""
+        context = self.to_dict()
+        data = clean_nested_dictionary(context, snake_to_camel)
+        self.client.create_transfer_templates([data], license_number=self._license)
+
+    def update(self, **kwargs):
+        """Update the transfer template given parameters as keyword arguments."""
+        context = self.to_dict().copy()
+        data = update_context(context, **kwargs)
+        data = remove_dict_fields(data, self.RETURNED_VALUES.keys())
+        data = remove_dict_nulls(data)
+        self.client.update_transfer_templates([data], self._license)
+
+    def delete(self):
+        """Delete the transfer template."""
+        self.client.delete_transfer_template(self.id, self._license)
 
 
-class Sale(Model):
-    """A class that represents a cannabis sale.
+class Transaction(Model):
+    """A class that represents a cannabis sale transaction.
+    Get:
+    {
+        "SalesDate": "2015-01-08",
+        "TotalTransactions": 40,
+        "TotalPackages": 40,
+        "TotalPrice": 399.6
+    }
+    {
+        "PackageId": 71,
+        "PackageLabel": "ABCDEF012345670000010331",
+        "ProductName": "Shake",
+        "ProductCategoryName": null,
+        "ItemStrainName": null,
+        "ItemUnitCbdPercent": null,
+        "ItemUnitCbdContent": null,
+        "ItemUnitCbdContentUnitOfMeasureName": null,
+        "ItemUnitCbdContentDose": null,
+        "ItemUnitCbdContentDoseUnitOfMeasureName": null,
+        "ItemUnitThcPercent": null,
+        "ItemUnitThcContent": null,
+        "ItemUnitThcContentUnitOfMeasureName": null,
+        "ItemUnitThcContentDose": null,
+        "ItemUnitThcContentDoseUnitOfMeasureName": null,
+        "ItemUnitVolume": null,
+        "ItemUnitVolumeUnitOfMeasureName": null,
+        "ItemUnitWeight": null,
+        "ItemUnitWeightUnitOfMeasureName": null,
+        "ItemServingSize": null,
+        "ItemSupplyDurationDays": null,
+        "ItemUnitQuantity": null,
+        "ItemUnitQuantityUnitOfMeasureName": null,
+        "QuantitySold": 1.0,
+        "UnitOfMeasureName": "Ounces",
+        "UnitOfMeasureAbbreviation": "oz",
+        "TotalPrice": 9.99,
+        "SalesDeliveryState": null,
+        "ArchivedDate": null,
+        "RecordedDateTime": "0001-01-01T00:00:00+00:00",
+        "RecordedByUserName": null,
+        "LastModified": "0001-01-01T00:00:00+00:00"
+    }
+    Post:
+    {
+        "PackageLabel": "ABCDEF012345670000010331",
+        "Quantity": 1.0,
+        "UnitOfMeasure": "Ounces",
+        "TotalAmount": 9.99
+    }
+    """
     
-    Sales are reported by the industry to record the transfer of cannabis products to a
-    consumer, patient or caregiver
+
+    RETURNED_VALUES = {}
+
+    @classmethod
+    def create_from_json(cls, client, json):
+        obj = cls(client, json)
+        obj.create()
+        return obj
+
+    def create(self):
+        """Create a transaction record in Metrc."""
+        context = self.to_dict()
+        data = clean_nested_dictionary(context, snake_to_camel)
+        self.client.create_transactions([data], license_number=self._license)
+
+    def update(self, **kwargs):
+        """Update the transaction given parameters as keyword arguments."""
+        context = self.to_dict().copy()
+        data = update_context(context, **kwargs)
+        data = remove_dict_fields(data, self.RETURNED_VALUES.keys())
+        data = remove_dict_nulls(data)
+        self.client.update_transactions([data], self._license)
+
+
+
+class Receipt(Model):
+    """A class that represents a cannabis sale receipt.
+    Sales are reported to record the transfer of cannabis
+    products to a consumer, patient or caregiver.
+
+    Retrived:
+
+    {
+        "Id": 1,
+        "ReceiptNumber": null,
+        "SalesDateTime": "2016-01-01T17:35:45.000",
+        "SalesCustomerType": "Consumer",
+        "PatientLicenseNumber": null,
+        "CaregiverLicenseNumber": null,
+        "IdentificationMethod": null,
+        "TotalPackages": 0,
+        "TotalPrice": 0.0,
+        "Transactions": [],
+        "IsFinal": false,
+        "ArchivedDate": null,
+        "RecordedDateTime": "0001-01-01T00:00:00+00:00",
+        "RecordedByUserName": null,
+        "LastModified": "0001-01-01T00:00:00+00:00"
+    }
+
+    Post:
+
+    {
+        "SalesDateTime": "2016-10-04T16:44:53.000",
+        "SalesCustomerType": "Consumer",
+        "PatientLicenseNumber": null,
+        "CaregiverLicenseNumber": null,
+        "IdentificationMethod": null,
+        "Transactions": [
+            {
+                "PackageLabel": "ABCDEF012345670000010331",
+                "Quantity": 1.0,
+                "UnitOfMeasure": "Ounces",
+                "TotalAmount": 9.99
+            }
+        ]
+    }
+
     """
 
-    # TODO: create, update, delete, get_transactions, create_transaction, update_transaction
+    @classmethod
+    def create_from_json(cls, client, json):
+        obj = cls(client, json)
+        obj.create()
+        return obj
 
-    pass
+    def create(self):
+        """Create a receipt record in Metrc."""
+        context = self.to_dict()
+        data = clean_nested_dictionary(context, snake_to_camel)
+        self.client.create_receipts([data], license_number=self._license)
+
+    def update(self, **kwargs):
+        """Update the receipt given parameters as keyword arguments."""
+        context = self.to_dict().copy()
+        data = update_context(context, **kwargs)
+        data = remove_dict_nulls(data)
+        self.client.update_receipts([data], self._license)
+
+    def delete(self):
+        """Delete the receipt."""
+        self.client.delete_receipt(self.id, self._license)
 
 
+
+
+
+#------------------------
+# Unused | Needed?
+#------------------------
 
 # class Driver(Model):
 #     """A class that represents a cannabis transfer driver."""
-
 #     pass
 
 
 # class Vehicle(Model):
 #     """A class that represents a cannabis transfer driver."""
-
 #     pass
 
 

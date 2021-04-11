@@ -26,7 +26,7 @@ LEAF_DISPOSAL_DISPOSE_URL = LEAF_API_BASE_URL + '/disposal/dispose'
 LEAF_PLANTS_URL = LEAF_API_BASE_URL + '/plants'
 LEAF_PLANTS_UPDATE_URL = LEAF_API_BASE_URL + '/plants/update'
 LEAF_PLANTS_DELETE_URL = LEAF_API_BASE_URL + '/plants/%s'
-LEAF_PLANTS_HARVEST_URL = LEAF_API_BASE_URL + '/batches/harvest_plants'
+LEAF_PLANTS_HARVEST_URL = LEAF_API_BASE_URL + '/plants/harvest_plants'
 LEAF_PLANTS_AREAS_URL = LEAF_API_BASE_URL + '/plants_by_area'
 LEAF_PLANTS_MOVE_URL = LEAF_API_BASE_URL + '/move_plants_to_inventory'
 

@@ -4,12 +4,31 @@ Author: Keegan Skeate <contact@cannlytics.com>
 Created: 2/7/2021
 
 Resources:
+
     https://firebase.google.com/docs/
 
 Description:
+
     A wrapper of firebase_admin to make interacting with the Firestore database
     and Firebase Storage buckets even easier.
+
+Example:
+
+    import os
+    import environ
+
+    # Get and set all credentials.
+    env = environ.Env()
+    env.read_env(".env")
+    credentials = env("GOOGLE_APPLICATION_CREDENTIALS")
+    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = credentials
+    bucket_name = environ.get("FIREBASE_STORAGE_BUCKET")
+
+    # Initialize Firebase
+    db = initialize_firebase()
+
 """
+
 from datetime import datetime
 from os import listdir
 from os.path import isfile, join
@@ -20,21 +39,6 @@ from google.cloud.firestore import ArrayUnion, ArrayRemove, Increment
 from google.cloud.firestore_v1.collection import CollectionReference
 from pandas import notnull, read_csv, read_excel, DataFrame, Series
 from uuid import uuid4
-
-
-# ------------------------------------------------------------#
-# Example credentials
-# ------------------------------------------------------------#
-
-# Get credentials
-# import os
-# import environ
-# env = environ.Env()
-# env.read_env("../.env")
-# credentials = env("GOOGLE_APPLICATION_CREDENTIALS")
-# os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = credentials
-# bucket_name = environ.get("FIREBASE_STORAGE_BUCKET")
-
 
 # ------------------------------------------------------------#
 # Firestore

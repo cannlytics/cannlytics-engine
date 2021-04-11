@@ -25,3 +25,20 @@ check-out dates/times.
 Sales – Provides the capability to input sales data or initiate sales uploads.
 
 Reports – Provides the capability to generate pre-defined reports.
+
+## Initializing the Metrc Client
+
+Here is an example of how to initialize a Metrc API client with the `dotenv` module.
+
+```py
+from dotenv import dotenv_values
+
+# Initialize Metrc client.
+config = dotenv_values('.env')
+vendor_api_key = config['METRC_TEST_VENDOR_API_KEY']
+user_api_key = config['METRC_TEST_USER_API_KEY']
+track = metrc.authorize(vendor_api_key, user_api_key)
+```
+
+The client is powerful and capable of performing all actions. Models with certain convenience actions implemented are returned by `GET` requests or are initialized from JSON as an argument to the class or with a `create_from_json` method. The `create_from_json` method also creates a record in Metrc. 
+

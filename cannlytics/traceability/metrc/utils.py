@@ -5,6 +5,9 @@ cannlytics.traceability.metrc.utils
 This module contains common Metrc utility functions
 and constants.
 """
+
+from base64 import b64encode, decodebytes
+from datetime import datetime, timedelta
 from re import sub
 from pandas import read_excel
 
@@ -54,6 +57,28 @@ def clean_nested_dictionary(d, function=camel_to_snake):
     return clean
 
 
+def decode_pdf(data: str, destination: str):
+    """Save an base-64 encoded string as a PDF.
+    Args:
+        data (str): Base-64 encoded string representing a PDF.
+        destination (str): The destination for the PDF file.
+    """
+    bits = decodebytes(data)
+    with open(destination, 'wb') as pdf:
+        pdf.write(bits)
+
+
+def encode_pdf(filename):
+    """Open a PDF file in binary mode.
+    Args:
+        filename (str): The full file path of a PDF to encode.
+    Returns:
+        A string encoded in base-64.
+    """
+    with open(filename, 'rb') as pdf:
+        return b64encode(pdf.read())
+
+
 def format_params(**kwargs):
     """Format Metrc request parameters."""
     params = {}
@@ -63,6 +88,22 @@ def format_params(**kwargs):
             params[key] = kwargs[param]
     return params
 
+
+def get_timestamp(past=0, future=0, tz='local'):
+    """Get an ISO formatted timestamp.
+    Args:
+        past (int): Number of minutes in the past to get a timestamp.
+        future (int): Number of minutes into the future to get a timestamp.
+
+    # TODO: Set time in timezone of state (e.g. {'state': 'OK'} -> CDT)
+    """
+    now = datetime.now()
+    now += timedelta(minutes=future)
+    now -= timedelta(minutes=past)
+    if tz is None:
+        return now.isoformat()[:19]
+    else:
+        return now.isoformat()
 
 def remove_dict_fields(d, fields):
     """Remove multiple keys from a dictionary.
@@ -136,7 +177,7 @@ def import_tags(file_path):
 # additional Data Import assistance.
 
 #------------------------------------------------------------------
-# Constants
+# Constants TODO: Clean up constants
 #------------------------------------------------------------------
 
 PARAMETERS = {
@@ -147,6 +188,7 @@ PARAMETERS = {
     'sales_end': 'salesDateEnd',
     'package_id': 'packageId',
     'from_mother': 'isFromMotherPlant',
+    'source': 'source'
 }
 
 categories = [
@@ -371,22 +413,11 @@ transfer_statuses = [
 ]
 
 transfer_types = [
-  {
-    'Name': 'Transfer',
-    'ForLicensedShipments': True,
-    'ForExternalIncomingShipments': False,
-    'ForExternalOutgoingShipments': False,
-    'RequiresDestinationGrossWeight': False,
-    'RequiresPackagesGrossWeight': False
-  },
-  {
-    'Name': 'Wholesale',
-    'ForLicensedShipments': True,
-    'ForExternalIncomingShipments': False,
-    'ForExternalOutgoingShipments': False,
-    'RequiresDestinationGrossWeight': False,
-    'RequiresPackagesGrossWeight': False
-  }
+    {"Name": "Affiliated Transfer", "ForLicensedShipments": True, "ForExternalIncomingShipments": False, "ForExternalOutgoingShipments": False, "RequiresDestinationGrossWeight": False, "RequiresPackagesGrossWeight": False},
+    {"Name": "Beginning Inventory Transfer", "ForLicensedShipments": False, "ForExternalIncomingShipments": True, "ForExternalOutgoingShipments": False, "RequiresDestinationGrossWeight": False, "RequiresPackagesGrossWeight": False},
+    {"Name": "Lab Sample Transfer", "ForLicensedShipments": True, "ForExternalIncomingShipments": False, "ForExternalOutgoingShipments": False, "RequiresDestinationGrossWeight": False, "RequiresPackagesGrossWeight": False},
+    {"Name": "Unaffiliated (Wholesale) Transfer", "ForLicensedShipments": True, "ForExternalIncomingShipments": False, "ForExternalOutgoingShipments": False, "RequiresDestinationGrossWeight": False, "RequiresPackagesGrossWeight": False},
+    {"Name": "Waste Disposal", "ForLicensedShipments": True, "ForExternalIncomingShipments": False, "ForExternalOutgoingShipments": False, "RequiresDestinationGrossWeight": False, "RequiresPackagesGrossWeight": False}
 ]
 
 batch_types = ['Seed', 'Clone']
@@ -395,19 +426,15 @@ growth_phases = ['Young', 'Vegetative', 'Flowering']
 
 additive_types = ['Fertilizer', 'Pesticide','Other']
 
-harvest_waste_types = ['Plant Material', 'Fibrous', 'Root Ball']
+# harvest_waste_types = ['Plant Material', 'Fibrous', 'Root Ball']
+harvest_waste_types = ['MMJ Waste', 'Waste']
 
 waste_methods = [{'Name': 'Grinder'}, {'Name': 'Compost'}]
 
 waste_reasons = [
-  {
-    'Name': 'Contamination',
-    'RequiresNote': False
-  },
-  {
-    'Name': 'Male Plants',
-    'RequiresNote': False
-  }
+    {"Name": "Disease/Infestation", "RequiresNote": True},
+    {"Name": "Mother Plant Destruction", "RequiresNote": True},
+    {"Name": "Trimming/Pruning", "RequiresNote": False}
 ]
 
 customer_types = [
@@ -453,14 +480,11 @@ package_types = [
 ]
 
 adjustment_reasons = [
-  {
-    'Name': 'Drying',
-    'RequiresNote': False
-  },
-  {
-    'Name': 'Entry Error',
-    'RequiresNote': False
-  }
+  {"Name": "API Related Error", "RequiresNote": True},
+  {"Name": "Drying", "RequiresNote": True},
+  {"Name": "Mandatory State Destruction", "RequiresNote": True},
+  {"Name": "Theft", "RequiresNote": True},
+  {"Name": "Typing/Entry Error", "RequiresNote": True}
 ]
 
 units = [

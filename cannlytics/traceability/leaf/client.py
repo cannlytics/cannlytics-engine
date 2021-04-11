@@ -5,13 +5,27 @@ cannlytics.traceability.leaf.client
 This module contains the Client class responsible for
 communicating with the Leaf Data Systems API.
 """
-import json
-import requests
 from datetime import datetime
+from requests import Session
 
 from .exceptions import APIError
 from .urls import *
 from .utils import format_time_filter
+from .models import (
+    Area,
+    Batch,
+    Disposal,
+    Inventory,
+    InventoryAdjustment,
+    InventoryType,
+    LabResult,
+    Licensee,
+    Plant,
+    Sale,
+    Strain,
+    Transfer,
+    User,
+)
 
 
 class Client(object):
@@ -25,17 +39,18 @@ class Client(object):
             connect. Retrieved from the Leaf Data Systems user interface
             or the `/mmes` endpoint.
         
-        Usage: trace = leaf.Client(api_key='xyz', mme_code='abc')
+        Usage: track = leaf.Client(api_key='xyz', mme_code='abc')
     """
 
     def __init__(self, api_key, mme_code):
         self.base = LEAF_API_BASE_URL
         self.test_api = LEAF_API_BASE_URL_TEST
-        self.headers = {
+        self.session = Session()
+        self.session.headers.update({
             'x-mjf-key': api_key,
             'x-mjf-mme-code': mme_code,
             'Content-Type': 'application/json'
-        }
+        })
 
     def request(
         self,
@@ -44,15 +59,19 @@ class Client(object):
         params=None,
         data=None,
     ):
-        response = getattr(requests, method)(
+        """Make a request to the Leaf API."""
+        response = getattr(self.session, method)(
             endpoint,
-            data=data,
-            headers=self.headers,
+            json=data,
             params=params,
         )
 
-        if response.ok:
-            return response.json()
+        if response.status_code == 200:
+            body = response.json()
+            try:
+                return body['data']
+            except (KeyError, TypeError):
+                return body
         else:
             raise APIError(response)
     
@@ -63,8 +82,9 @@ class Client(object):
     def get_areas(self):
         """Get all areas."""
         url = LEAF_AREAS_URL
-        return self.request('get', url)
-    
+        response = self.request('get', url)
+        return [Area(self, x) for x in response]
+
 
     def create_areas(self, data):
         """Create area(s).    
@@ -72,8 +92,8 @@ class Client(object):
             data (list): A list of area(s) to create.
         """
         url = LEAF_AREAS_URL
-        body = json.dumps({'area': data})
-        return self.request('post', url, data=body)
+        response = self.request('post', url, data={'area': data})
+        return [Area(self, x) for x in response]
     
 
     def update_area(self, data):
@@ -82,8 +102,8 @@ class Client(object):
             data (dict): Updated area data.
         """
         url = LEAF_AREAS_UPDATE_URL
-        body = json.dumps({'area': data})
-        return self.request('post', url, data=body)
+        response = self.request('post', url, data={'area': data})
+        return Area(self, response)
     
 
     def delete_area(self, global_id):
@@ -93,7 +113,8 @@ class Client(object):
         """
         url = LEAF_AREAS_DELETE_URL % global_id
         return self.request('delete', url)
-    
+
+
     #------------------------------------------------------------------
     # Batches
     #------------------------------------------------------------------
@@ -124,6 +145,7 @@ class Client(object):
                 'harvest', or 'intermediate/ end product'
         """
         url = LEAF_BATCHES_URL
+        # TODO: Re-write with params
         if global_id:
             url += f'?f_global_id={global_id}'
         elif external_id:
@@ -144,17 +166,18 @@ class Client(object):
             url += f'?f_status={status}'
         elif batch_type:
             url += f'?f_type={batch_type}'
-        return self.request('get', url)
+        response = self.request('get', url)
+        return [Batch(self, x) for x in response]
     
 
     def create_batches(self, data):
-        """Create batch(es).    
+        """Create batch(es).
         Args:
             data (list): A list of batch data.
         """
         url = LEAF_BATCHES_URL
-        body = json.dumps({'batch': data})
-        return self.request('post', url, data=body)
+        response = self.request('post', url, data={'batch': data})
+        return [Batch(self, x) for x in response]
     
 
     def update_batch(self, data):
@@ -163,8 +186,8 @@ class Client(object):
             data (dict): Updated batch data.
         """
         url = LEAF_BATCHES_UPDATE_URL
-        body = json.dumps({'batch': data})
-        return self.request('post', url, data=body)
+        response = self.request('post', url, data={'batch': data})
+        return Batch(self, response)
     
 
     def delete_batch(self, global_id):
@@ -212,8 +235,8 @@ class Client(object):
             "global_flower_area_id": area_id,
             "global_other_area_id": destination_id
         }
-        body = json.dumps(data)
-        return self.request('post', url, data=body)
+        response = self.request('post', url, data=data)
+        return Batch(self, response)
     
 
     def finish_batch(
@@ -238,8 +261,8 @@ class Client(object):
             "global_batch_id": batch_id,
             "new_lot_types": lots
         }
-        body = json.dumps(data)
-        return self.request('post', url, data=body)
+        response = self.request('post', url, data=data)
+        return [Batch(self, x) for x in response]
 
     #------------------------------------------------------------------
     # Disposals
@@ -279,7 +302,8 @@ class Client(object):
                 disposal_end,
                 field='date'
             )
-        return self.request('get', url)
+        response = self.request('get', url)
+        return [Disposal(self, x) for x in response]
     
 
     def create_disposals(self, data):
@@ -288,8 +312,8 @@ class Client(object):
             data (list): A list of disposal data to create.
         """
         url = LEAF_DISPOSAL_URL
-        body = json.dumps({'disposal': data})
-        return self.request('post', url, data=body)
+        response = self.request('post', url, data={'disposal': data})
+        return [Disposal(self, x) for x in response]
     
 
     def update_disposal(self, data):
@@ -298,8 +322,8 @@ class Client(object):
             data (dict): Updated disposal data.
         """
         url = LEAF_DISPOSAL_UPDATE_URL
-        body = json.dumps({'disposal': data})
-        return self.request('post', url, data=body)
+        response = self.request('post', url, data={'disposal': data})
+        return [Disposal(self, x) for x in response]
     
 
     def delete_disposal(self, global_id):
@@ -311,14 +335,15 @@ class Client(object):
         return self.request('delete', url)
 
 
-    def dispose(self, global_id):
+    def dispose_disposal(self, data):
         """Dispose of a destruction record previously created.
         Args:
-            global_id (str): The `global_id` of the disposal to dispose.
+            data (dict): A dictionary of global_id and disposed_at.
         """
         url = LEAF_DISPOSAL_DISPOSE_URL
-        body = json.dumps({'global_id': global_id})
-        return self.request('post', url, data=body)
+        response = self.request('post', url, data=data)
+        return Disposal(self, response)
+
 
     #------------------------------------------------------------------
     # Plants
@@ -347,7 +372,15 @@ class Client(object):
             url += f'?f_batch_id={global_batch_id}'
         elif origin:
             url += f'?f_origin={origin}'
-        return self.request('get', url)
+        response = self.request('get', url)
+        return [Plant(self, x) for x in response]
+    
+
+    def get_plants_by_area(self):
+        """Get plant count by area."""
+        url = LEAF_PLANTS_AREAS_URL
+        response = self.request('get', url)
+        return [Area(self, x) for x in response]
     
 
     def create_plants(self, data):
@@ -356,8 +389,8 @@ class Client(object):
             data (list): A list of plant data to create.
         """
         url = LEAF_PLANTS_URL
-        body = json.dumps({'plant': data})
-        return self.request('post', url, data=body)
+        response = self.request('post', url, data={'plant': data})
+        return [Plant(self, x) for x in response]
     
 
     def update_plant(self, data):
@@ -366,8 +399,8 @@ class Client(object):
             data (dict): Updated plant data.
         """
         url = LEAF_PLANTS_UPDATE_URL
-        body = json.dumps({'plant': data})
-        return self.request('post', url, data=body)
+        response = self.request('post', url, data={'plant': data})
+        return Plant(self, response)
     
 
     def delete_plant(self, global_id):
@@ -428,14 +461,19 @@ class Client(object):
         }
         for plant_id in plant_ids:
             data['global_plant_ids'].append({'global_plant_id': plant_id})
-        body = json.dumps(data)
-        return self.request('post', url, data=body)
+        response = self.request('post', url, data=data)
+        return Plant(self, response)
     
 
-    # TODO: Implement plants_by_area (LEAF_PLANTS_AREAS_URL)
-
-    
-    # TODO: Implement move_plants_to_inventory (LEAF_PLANTS_MOVE_URL)
+    def move_plants_to_inventory(self, data):
+        """Package immature or mature plants of the same strain
+        into an inventory lot.    
+        Args:
+            data (dict): Updated plant data.
+        """
+        url = LEAF_PLANTS_MOVE_URL
+        response = self.request('post', url, data=data)
+        return Inventory(self, response)
 
 
     #------------------------------------------------------------------
@@ -445,7 +483,8 @@ class Client(object):
     def get_strains(self):
         """Get all strains."""
         url = LEAF_STRAINS_URL
-        return self.request('get', url)
+        response = self.request('get', url)
+        return [Strain(self, x) for x in response]
     
 
     def create_strains(self, data):
@@ -454,8 +493,8 @@ class Client(object):
             data (list): A list of strain(s) to create.
         """
         url = LEAF_STRAINS_URL
-        body = json.dumps({'strain': data})
-        return self.request('post', url, data=body)
+        response = self.request('post', url, data={'strain': data})
+        return [Strain(self, x) for x in response]
     
 
     def update_strain(self, data):
@@ -464,8 +503,8 @@ class Client(object):
             data (dict): Updated strain data.
         """
         url = LEAF_STRAINS_UPDATE_URL
-        body = json.dumps({'strain': data})
-        return self.request('post', url, data=body)
+        response = self.request('post', url, data={'strain': data})
+        return Strain(self, response)
     
 
     def delete_strain(self, global_id):
@@ -475,6 +514,7 @@ class Client(object):
         """
         url = LEAF_STRAINS_DELETE_URL % global_id
         return self.request('delete', url)
+
 
     #------------------------------------------------------------------
     # Inventory types
@@ -503,7 +543,8 @@ class Client(object):
             url += f'?f_external_id={external_id}'
         elif inventory_type:
             url += f'?f_type={inventory_type}'
-        return self.request('get', url)
+        response = self.request('get', url)
+        return [InventoryType(self, x) for x in response]
     
 
     def create_inventory_types(self, data):
@@ -512,8 +553,8 @@ class Client(object):
             data (list): A list of inventory types to create.
         """
         url = LEAF_INVENTORY_TYPES_URL
-        body = json.dumps({'inventory_type': data})
-        return self.request('post', url, data=body)
+        response = self.request('post', url, data={'inventory_type': data})
+        return [InventoryType(self, x) for x in response]
     
 
     def update_inventory_type(self, data):
@@ -522,8 +563,8 @@ class Client(object):
             data (dict): Updated inventory type data.
         """
         url = LEAF_INVENTORY_TYPES_UPDATE_URL
-        body = json.dumps({'inventory_type': data})
-        return self.request('post', url, data=body)
+        response = self.request('post', url, data={'inventory_type': data})
+        return InventoryType(self, response)
     
 
     def delete_inventory_type(self, global_id):
@@ -573,7 +614,8 @@ class Client(object):
                 created_at_end,
                 field='date'
             )
-        return self.request('get', url)
+        response = self.request('get', url)
+        return [Inventory(self, x) for x in response]
     
 
     def create_inventory(self, data):
@@ -582,8 +624,8 @@ class Client(object):
             data (list): A list of inventory item(s) to create.
         """
         url = LEAF_INVENTORY_URL
-        body = json.dumps({'inventory': data})
-        return self.request('post', url, data=body)
+        response = self.request('post', url, data={'inventory': data})
+        return [Inventory(self, x) for x in response]
     
 
     def update_inventory(self, data):
@@ -592,8 +634,8 @@ class Client(object):
             data (dict): Updated inventory item data.
         """
         url = LEAF_INVENTORY_UPDATE_URL
-        body = json.dumps({'inventory': data})
-        return self.request('post', url, data=body)
+        response = self.request('post', url, data={'inventory': data})
+        return Inventory(self, response)
     
 
     def delete_inventory(self, global_id):
@@ -637,8 +679,8 @@ class Client(object):
             'net_weight': '',
             'cost': '',
         }
-        body = json.dumps(data)
-        return self.request('post', url, data=body)
+        response = self.request('post', url, data=data)
+        return Inventory(self, response)
 
 
     def convert_inventory(
@@ -717,32 +759,34 @@ class Client(object):
                 'qty': item['qty'],
                 'global_from_inventory_id': item['global_id'],
             })
-        body = json.dumps(data)
-        return self.request('post', url, data=body)
+        response = self.request('post', url, data=data)
+        return [Inventory(self, x) for x in response]
     
 
     def inventory_to_plants(
         self,
         inventory_id,
-        batch_id,
-        qty,
+        batch_id='',
+        qty=1,
     ):
         """Unpackage plants from inventory lots. This may occur 
         when 'Immature Plant' inventory records are being converted
         into growing plants, or when transferred plants that have been moved 
         to inventory already need to be moved back to plant records.
-
+            inventory_id (str): The `global_id` of the inventory item.
             batch_id (str): An optional `global_id` for a batch. If
                 empty, then a new batch will be created.
+            qty (int): The number of plants to create.
         """
         url = LEAF_INVENTORY_MOVE_URL
         data = {
-            "global_inventory_id":inventory_id,
-            "global_batch_id": batch_id,
-            "qty": qty,
+            'global_inventory_id': inventory_id,
+            'global_batch_id': batch_id,
+            'qty': qty,
         }
-        body = json.dumps(data)
-        return self.request('post', url, data=body)
+        response = self.request('post', url, data=data)
+        return [Plant(self, x) for x in response]
+
 
     #------------------------------------------------------------------
     # Inventory adjustments
@@ -784,7 +828,8 @@ class Client(object):
                 created_at_end,
                 field='date'
             )
-        return self.request('get', url)
+        response = self.request('get', url)
+        return [InventoryAdjustment(self, x) for x in response]
     
 
     def create_inventory_adjustments(self, data):
@@ -793,14 +838,15 @@ class Client(object):
             data (list): A list of disposal data to create.
         """
         url = LEAF_INVENTORY_ADJUSTMENTS_URL
-        body = json.dumps({'disposal': data})
-        return self.request('post', url, data=body)
+        response = self.request('post', url, data={'disposal': data})
+        return [InventoryAdjustment(self, x) for x in response]
+
 
     #------------------------------------------------------------------
     # Inventory transfers
     #------------------------------------------------------------------
 
-    def get_inventory_transfers(
+    def get_transfers(
         self,
         external_id='',
         batch_id='',
@@ -838,33 +884,34 @@ class Client(object):
             date = datetime.fromisoformat(date)
             departed_date = date.strftime('%m/%d/%Y')
             url += f'?f_date1={departed_date}'
-        return self.request('get', url)
+        response = self.request('get', url)
+        return [Transfer(self, x) for x in response]
     
 
-    def create_inventory_transfers(self, data):
+    def create_transfers(self, data):
         """Create inventory transfer(s).
         Args:
             data (list): A list of inventory transfer(s) to create.
         """
         url = LEAF_INVENTORY_TRANSFERS_URL
-        body = json.dumps({'inventory_transfer': data})
-        return self.request('post', url, data=body)
+        response = self.request('post', url, data={'inventory_transfer': data})
+        return [Transfer(self, x) for x in response]
     
 
-    # Optional: create_inventory_transfer (singular)
-    
+    # Optional: create_transfer (singular)
 
-    def update_inventory_transfer(self, data):
+
+    def update_transfer(self, data):
         """Update inventory transfer.    
         Args:
             data (dict): Updated inventory transfer data.
         """
         url = LEAF_INVENTORY_TRANSFERS_UPDATE_URL
-        body = json.dumps({'inventory_transfer': data})
-        return self.request('post', url, data=body)
+        response = self.request('post', url, data={'inventory_transfer': data})
+        return Transfer(self, response)
 
 
-    def transit_inventory(self, global_id):
+    def transit_transfer(self, global_id):
         """
         Changes the 'status' of an 'open' inventory transfer
         to 'in_transit'.
@@ -873,11 +920,11 @@ class Client(object):
         """
         url = LEAF_INVENTORY_TRANSFERS_TRANSIT_URL
         data = {'global_id': global_id}
-        body = json.dumps(data)
-        return self.request('post', url, data=body)
+        response = self.request('post', url, data=data)
+        return Transfer(self, response)
     
 
-    def receive_inventory(
+    def receive_transfer(
         self,
         global_id,
         area_id='',
@@ -888,7 +935,6 @@ class Client(object):
         """
         Receive inventory associated with an inventory transfer that
         has been sent by another licensee.
-
         Args:
             global_id (str): The `global_id` of an inventory transfer.
             area_id (str): The `global_id` of an area if all items are
@@ -918,20 +964,20 @@ class Client(object):
                 'global_received_strain_id': strain_id,
             })
             count += 1
-        body = json.dumps(data)
-        return self.request('post', url, data=body)
+        response = self.request('post', url, data=data)
+        return Transfer(self, response)
 
     
-    def void_inventory(self, global_id):
+    def void_transfer(self, global_id):
         """
         Causes an inventory transfer record to be voided.
         Args:
             global_id (str): The `global_id` of an inventory transfer.
         """
         url = LEAF_INVENTORY_TRANSFERS_VOID_URL
-        data = {'global_id': global_id}
-        body = json.dumps(data)
-        return self.request('post', url, data=body)
+        response = self.request('post', url, data={'global_id': global_id})
+        return Transfer(self, response)
+
 
     #------------------------------------------------------------------
     # Lab results
@@ -960,7 +1006,8 @@ class Client(object):
             url += f'?f_type={inventory_type}'
         elif global_batch_id:
             url += f'?f_batch={global_batch_id}'
-        return self.request('get', url)
+        response = self.request('get', url)
+        return [LabResult(self, x) for x in response]
     
 
     def create_lab_results(self, data):
@@ -969,8 +1016,8 @@ class Client(object):
             data (list): A list of lab result(s) to create.
         """
         url = LEAF_LAB_RESULTS_URL
-        body = json.dumps({'lab_result': data})
-        return self.request('post', url, data=body)
+        response = self.request('post', url, data={'lab_result': data})
+        return [LabResult(self, x) for x in response]
     
 
     def update_lab_result(self, data):
@@ -979,8 +1026,8 @@ class Client(object):
             data (dict): Updated lab result data.
         """
         url = LEAF_LAB_RESULTS_UPDATE_URL
-        body = json.dumps({'lab_result': data})
-        return self.request('post', url, data=body)
+        response = self.request('post', url, data={'lab_result': data})
+        return LabResult(self, response)
     
 
     def delete_lab_result(self, global_id):
@@ -1034,8 +1081,9 @@ class Client(object):
                 sold_at_end,
                 field='date'
             )
-        return self.request('get', url)
-    
+        response = self.request('get', url)
+        return [Sale(self, x) for x in response]
+
 
     def create_sales(self, data):
         """Create sale(s).    
@@ -1043,8 +1091,8 @@ class Client(object):
             data (list): A list of a sale(s) data to create.
         """
         url = LEAF_SALES_URL
-        body = json.dumps({'sale': data})
-        return self.request('post', url, data=body)
+        response = self.request('post', url, data={'sale': data})
+        return [Sale(self, x) for x in response]
     
 
     def update_sale(self, data):
@@ -1053,8 +1101,8 @@ class Client(object):
             data (dict): Updated sale data.
         """
         url = LEAF_SALES_UPDATE_URL
-        body = json.dumps({'sale': data})
-        return self.request('post', url, data=body)
+        response = self.request('post', url, data={'sale': data})
+        return Sale(self, response)
     
 
     def delete_sale(self, global_id):
@@ -1100,7 +1148,8 @@ class Client(object):
             date = updated_at_end.split('-')
             yyyy, mm, dd = date[0], date[1], date[2]
             url += f'?f_updated_at2={mm}/{dd}/{yyyy}'
-        return self.request('get', url)
+        response = self.request('get', url)
+        return [Licensee(self, x) for x in response]    
     
 
     def get_licensee(self, global_id, mme_code=''):
@@ -1112,7 +1161,8 @@ class Client(object):
         url = LEAF_LICENSEE_URL % global_id
         if mme_code:
             url += f'?f_mme_code={mme_code}'
-        return self.request('get', url)
+        response = self.request('get', url)
+        return Licensee(self, response)
     
 
     def get_users(
@@ -1158,5 +1208,6 @@ class Client(object):
             date = updated_at_end.split('-')
             yyyy, mm, dd = date[0], date[1], date[2]
             url += f'?f_updated_at2={mm}/{dd}/{yyyy}'
-        return self.request('get', url)
+        response = self.request('get', url)
+        return [User(self, x) for x in response]
 

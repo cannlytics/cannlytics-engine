@@ -4,266 +4,494 @@ cannlytics.traceability.leaf.models
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 This module contains common Leaf Data Systems models.
 """
-# from .exceptions import WorksheetNotFound, CellNotFound
 
-# from .utils import ()
+from cannlytics.firebase import get_document, update_document
 
-# from .urls import (
-
-# )
-
-BATCH_TYPES = ['propagation material', 'plant', 'harvest', 
-'intermediate/ end product']
-
-PLANT_STAGES = ['propagation source', 'growing', 
-'harvested', 'packaged', 'destroyed']
+from .utils import get_time_string
 
 
-class Area(object):
+class LeafModel(object):
+    """Base class for all Leaf models."""
+
+    def __init__(self, client, context):
+        """Initialize the model, setting keys as properties."""
+        self.client = client
+        for key in context:
+            self.__dict__[key] = context[key]
+    
+    def __getattr__(self, key):
+        """Get properties through dot notation."""
+        return self.__dict__[key]
+    
+    def __setattr__(self, key, value):
+        """Set properties through dot notation."""
+        self.__dict__[key] = value
+    
+    @classmethod
+    def from_fb(cls, client, ref):
+        """Initialize a class from Firebase data.
+        Args:
+            client (Client): A client instance.
+            ref (str): The reference to the document in Firestore.
+        """
+        data = get_document(ref)
+        return cls(client, data)
+    
+    def to_fb(self, ref='', col=''):
+        """Upload the model's properties as a dictionary to Firestore.
+        Args:
+            ref (str): The Firestore document reference.
+            col (str): A Firestore collection, with the UID as document ID.
+        """
+        data = vars(self).copy()
+        [data.pop(x, None) for x in ['client']]
+        if col:
+            update_document(f'{col}/{self.global_id}', data)
+        else:
+            update_document(ref, data)
+    
+    def to_dict(self):
+        """Returns the model's properties as a dictionary."""
+        data = vars(self).copy()
+        [data.pop(x, None) for x in ['client']]
+        return data
+
+
+class Area(LeafModel):
     """A class that represents physical locations at licensed facilities
     where plants and inventory will be located.
-
-    type (str): Areas with a 'quarantine' designation are for circumstances such as
-        waste/destruction hold periods, QA quarantine periods,
-        or transfer hold periods as the licensee decides to use them.
-        Allowed values:
-            'quarantine' or 'non-quarantine'.
     """
 
-    def __init__(self, client, properties):
-        self.client = client
-        self._properties = properties
+    @classmethod
+    def create_from_json(cls, client, json):
+        obj = cls(client, json)
+        obj.create(obj.name, json.get('type'), json.get('external_id'))
+        return obj
 
-    @property
-    def id(self):
-        """Area global ID."""
-        return self._properties['global_id']
-    
-    def update(self):
-        """Update an Area."""
-        body = {
-            'area': {
-                # 'name': source_sheet_id,
-                # 'type': insert_sheet_index,
-                # 'external_id': new_sheet_id,
-                # 'global_id': new_sheet_name,
-            }
+    def create(self, name, type='non-quarantine', external_id=''):
+        """Create an area record."""
+        data = {'name': name, 'type': type, 'external_id': external_id}
+        area = self.client.create_areas([data])[0]
+        self.global_id = area['global_id']
+
+    def update(self, **kwargs):
+        """Update the area given parameters as keyword arguments."""
+        context = self.to_dict().copy()
+        data = {**context, **kwargs}
+        self.client.update_area(data)
+
+    def delete(self):
+        """Delete the area."""
+        self.client.delete_area(self.global_id)
+
+
+class Batch(LeafModel):
+    """A class that represents a batch of propagation material, plants,
+    harvests, or intermediate / end products.
+    """
+
+    @classmethod
+    def create_from_json(cls, client, json):
+        obj = cls(client, json)
+        obj.create(**json)
+        return obj
+
+    def create(
+        self,
+        global_area_id='',
+        global_strain_id='',
+        num_plants=0,
+        origin='seed',
+        type='propagation material',
+    ):
+        """Create a batch record."""
+        data = {
+            'global_area_id': global_area_id,
+            'global_strain_id': global_strain_id,
+            'num_plants': num_plants,
+            'origin': origin,
+            'type': type,
         }
-        # data = self.batch_update(body)
-        # properties = data['replies'][0]['duplicateSheet']['properties']
-        # worksheet = Worksheet(self, properties)
-        # return worksheet
+        entry = self.client.create_batches([data])[0]
+        for key in entry:
+            self[key] = entry[key]
+
+    def update(self, **kwargs):
+        """Update the batch given parameters as keyword arguments."""
+        context = self.to_dict().copy()
+        data = {**context, **kwargs}
+        self.client.update_batch(data)
+
+    def delete(self):
+        """Delete the batch."""
+        self.client.delete_batch(self.global_id)
 
 
-class Batch(object):
-    """Batch class for propagation material, plants, harvests, and intermediate / end products.
+class Disposal(LeafModel):
+    """A class that represents a cannabis disposal."""
 
-    'Propagation Material' batches are used to create inventory lot of seeds, clones, and plant tissue so that these plants can be tracked 
-    as inventory throughout their propagation phase. As plants shift from their propagation to vegetative phase, they are moved to 
-    plants (see /move_inventory_to_plants API call), at which point the plant records are associated with a 'plant' type batch.
+    @classmethod
+    def create_from_json(cls, client, json):
+        obj = cls(client, json)
+        obj.create(**json)
+        return obj
+
+    def create(
+        self,
+        qty,
+        external_id='',
+        global_area_id='',
+        global_batch_id='',
+        global_plant_id='',
+        global_inventory_id='',
+        reason='mandated',
+        source='batch',
+        uom='gm'
+    ):
+        """Create a disposal record."""
+        data = {
+            'external_id': external_id,
+            'reason': reason,
+            'disposal_at': get_time_string(),
+            'qty': qty,
+            'uom': uom,
+            'source': source,
+            'global_batch_id': global_batch_id,
+            'global_area_id': global_area_id,
+            'global_plant_id': global_plant_id,
+            'global_inventory_id': global_inventory_id
+        }
+        entry = self.client.create_disposals([data])[0]
+        for key in entry:
+            self[key] = entry[key]
+
+    def update(self, **kwargs):
+        """Update the disposal given parameters as keyword arguments."""
+        context = self.to_dict().copy()
+        data = {**context, **kwargs}
+        self.client.update_disposal(data)
+
+    def delete(self):
+        """Delete the disposal."""
+        self.client.delete_disposal(self.global_id)
+
+    def dispose(self):
+        """Dispose of the disposal."""
+        data = {'global_id': self.global_id, 'disposed_at': get_time_string()}
+        self.client.dispose_disposal(data)
+
+
+class Inventory(LeafModel):
+    """A class that represents an inventory item."""
+
+    @classmethod
+    def create_from_json(cls, client, json):
+        obj = cls(client, json)
+        obj.create(**json)
+        return obj
+
+    def create(self, data): # Optional: Pass parameters
+        """Create an inventory record."""
+        entry = self.client.create_inventory([data])[0]
+        for key in entry:
+            self[key] = entry[key]
     
-    'Plant' batches are a group of plants from the same strain, that are growing together within their vegetative and flowering phases. 
-    Attributes of all of the plants within a batch can be modified at the batch level, which will apply changes across all of the plant 
-    records. Additionally, plant records can be modified individually (see the /plants endpoint).
+    def update(self, **kwargs):
+        """Update the inventory given parameters as keyword arguments."""
+        context = self.to_dict().copy()
+        data = {**context, **kwargs}
+        self.client.update_inventory_type(data)
+
+    def delete(self):
+        """Delete the inventory."""
+        self.client.delete_inventory_type(self.global_id)
     
-    'Harvest' batches represent a group of harvested material that is all of the same strain. These types of batches are used to denote 
-    both 'wet' and 'dry' weight of 'flower' and 'other material' produced during the harvest. Resultant dry weight from a harvest batch is 
-    separated into 'inventory lots'. While initial inventory in a harvest stage can be created at the 'batch' endpoint, in a general workflow 
-    they are made by using the /harvest_plants API call.
+    def split(self, qty, area_id, external_id=''):
+        """Split the inventory."""
+        entry = self.client.split_inventory(
+            inventory_id=self.global_id,
+            area_id=area_id,
+            qty=qty,
+            external_id=external_id
+        )
+        for key in entry:
+            self[key] = entry[key]
     
-    'Intermediate/ end product' batches are batches that consist of multiple harvest batches being combined, for example, combining 
-    two different strains to make a blended concentrate product.
+    def convert(
+        self,
+        area_id,
+        inventory_type_id,
+        qty,
+        items=[],
+        external_id='',
+        medically_compliant=False,
+        retest=True,
+        strain_id='',
+        uom='gm',
+        start_date='',
+        end_date='',
+        waste=0,
+    ):
+        """Convert the inventory into new inventory."""
+        inventories = [{
+            'global_from_inventory_id': self.global_id,
+            'qty': qty
+        }]
+        for item in items:
+            inventories.append({
+                'qty': item['qty'],
+                'global_from_inventory_id': item['global_id'],
+            })
+            qty += item['qty']
+        if not start_date:
+            start_date = get_time_string()
+        if not end_date:
+            end_date = get_time_string()
+        entry = self.client.convert_inventory(
+            area_id,
+            inventory_type_id,
+            inventories,
+            qty,
+            external_id=external_id,
+            medically_compliant=medically_compliant,
+            retest=retest,
+            strain_id=strain_id,
+            uom=uom,
+            start_date=start_date,
+            end_date=end_date,
+            waste=waste,
+        )
+        for key in entry:
+            self[key] = entry[key]
+    
+    def to_plants(self, data):
+        """Unpackage the inventory into plants."""
+        plants = self.client.inventory_to_plants(
+            self.global_id,
+            batch_id='',
+            qty=1,
+        )
+        return plants
 
-    The purpose of using batches to group together plant and inventory records is two-fold. Batches assist with creating the traceability 
-    that the system is designed to offer. As well, batches allow producers to manage plants in any phase in groups, which enables mass 
-    actions to be applied to numerous records simultaneously. Batches are not intended to constrain activities involving plant 
-    movement, as plants can be shifted from one batch to another and do not have exclusive relationships with batches they are added 
-    to.
 
-        harvest_stage (str): the stage of the harvest process;
-            only used for batches with type 'harvest'.
-            Allowed values:
-                'wet', 'cure', 'finished'
+class InventoryAdjustment(LeafModel):
+    """A class that represents an inventory adjustment."""
 
-        origin (str): Indicates propagation source of the batch.
-            Required if type='plant' or 'propagation material'.
-            Allowed values:
-                'seed', 'clone', 'plant', 'tissue'
+    @classmethod
+    def create_from_json(cls, client, json):
+        obj = cls(client, json)
+        obj.create(**json)
+        return obj
+
+    def create(self, data): # Optional: Pass parameters
+        """Create an inventory adjustment record."""
+        entry = self.client.create_inventory_adjustments([data])[0]
+        for key in entry:
+            self[key] = entry[key]
+
+
+class InventoryType(LeafModel):
+    """A class that represents an inventory type."""
+    
+    @classmethod
+    def create_from_json(cls, client, json):
+        obj = cls(client, json)
+        obj.create(**json)
+        return obj
+
+    def create(self, data): # Optional: Pass parameters
+        """Create an inventory type record."""
+        entry = self.client.create_inventory_types([data])[0]
+        for key in entry:
+            self[key] = entry[key]
+    
+    def update(self, **kwargs):
+        """Update the inventory type given parameters as keyword arguments."""
+        context = self.to_dict().copy()
+        data = {**context, **kwargs}
+        self.client.update_inventory_type(data)
+
+    def delete(self):
+        """Delete the inventory type."""
+        self.client.delete_inventory_type(self.global_id)
+
+
+class Transfer(LeafModel):
+    """A class that represents an inventory transfer"""
+    
+    @classmethod
+    def create_from_json(cls, client, json):
+        obj = cls(client, json)
+        obj.create(**json)
+        return obj
+
+    def create(self, data): # Optional: Pass parameters
+        """Create an inventory transfer record."""
+        entry = self.client.create_transfers([data])[0]
+        for key in entry:
+            self[key] = entry[key]
+    
+    def update(self, **kwargs):
+        """Update the inventory transfer given parameters as keyword arguments."""
+        context = self.to_dict().copy()
+        data = {**context, **kwargs}
+        self.client.update_transfer(data)
+    
+    def receive(self, area_id):
+        """Receive the inventory transfer."""
+        entry = self.client.receive_transfer(
+            self.global_id,
+            area_id=area_id,
+        )
+        for key in entry:
+            self[key] = entry[key]
+    
+    def void(self):
+        """Void the inventory transfer."""
+        self.client.void_transfer(self.global_id)
         
-        plant_stage (str): Current development stage of the plants in 
-            the batch.
-            Allowed values:
-                'propagation source', 'growing', 
-                'harvested', 'packaged', 'destroyed'
-        
-        type (str): Indicates the type of batch.
-            Allowed values:
-                'propagation material', 'plant', 'harvest', 
-                'intermediate/ end product'
+    
+
+class LabResult(LeafModel):
+    """A class that represents a cannabis lab result."""
+
+    @classmethod
+    def create_from_json(cls, client, json):
+        obj = cls(client, json)
+        obj.create(**json)
+        return obj
+
+    def create(self, data):
+        """Create a lab result record."""
+        data['tested_at'] = get_time_string()
+        entry = self.client.create_lab_results([data])[0]
+        for key in entry:
+            self[key] = entry[key]
+
+    def update(self, **kwargs):
+        """Update the lab result given parameters as keyword arguments."""
+        context = self.to_dict().copy()
+        data = {**context, **kwargs}
+        self.client.update_lab_result(data)
+
+    def delete(self):
+        """Delete the lab result."""
+        self.client.delete_lab_result(self.global_id)
 
 
-    """
-
-    def __init__(self, client, properties):
-        self.client = client
-        self._properties = properties
-
-    @property
-    def id(self):
-        """Global ID."""
-        return self._properties['global_id']
+class Licensee(LeafModel):
+    """A class representing a cannabis licensee."""
+    pass
 
 
-class Disposal(object):
-    """ Disposal records (referred to as "Destructions" within the UI) are
-    inventory lots of waste that are created so that they can be 
-    segregated from other inventory to undergo their 72-hour hold process.
-    Once this time period has elapsed, physical destruction of 
-    the lots may be performed. This can be accomplished through the "dispose_item" API call.
-    Disposal records can be created from harvest batches (any waste associated with a harvest batch),
-    inventory lots, or recorded as daily plant waste."""
+class Plant(LeafModel):
+    """A class that represents a cannabis plant."""
 
-    def __init__(self, client, properties):
-        self.client = client
-        self._properties = properties
+    @classmethod
+    def create_from_json(cls, client, json):
+        obj = cls(client, json)
+        obj.create(json)
+        return obj
 
-    @property
-    def id(self):
-        """Global ID."""
-        return self._properties['global_id']
+    def create(self, data):
+        """Create a plant record."""
+        entry = self.client.create_plants([data])[0]
+        for key in entry:
+            self[key] = entry[key]
 
+    def update(self, **kwargs):
+        """Update the plant given parameters as keyword arguments."""
+        context = self.to_dict().copy()
+        data = {**context, **kwargs}
+        self.client.update_plant(data)
 
-class InventoryType(object):
-    """ """
+    def delete_plant(self):
+        """Delete the plant"""
+        self.client.delete_plant(self.global_id)
 
-    def __init__(self, client, properties):
-        self.client = client
-        self._properties = properties
-
-    @property
-    def id(self):
-        """Global ID."""
-        return self._properties['global_id']
-
-
-
-class Inventory(object):
-    """ """
-
-    def __init__(self, client, properties):
-        self.client = client
-        self._properties = properties
-
-    @property
-    def id(self):
-        """Global ID."""
-        return self._properties['global_id']
-
-
-class InventoryAdjustment(object):
-    """ """
-
-    def __init__(self, client, properties):
-        self.client = client
-        self._properties = properties
-
-    @property
-    def id(self):
-        """Global ID."""
-        return self._properties['global_id']
+    def harvest(self, data):
+        self.client.harvest_plants(
+            data['area_id'],
+            data['destination_id'],
+            [self.global_id],
+            batch_id=data.get('batch_id'),
+            external_id=data.get('external_id'),
+            harvested_at=get_time_string(),
+            flower_wet_weight=data.get('flower_wet_weight'),
+            other_wet_weight=data.get('other_wet_weight'),
+            uom='gm'
+        )
+    
+    def move_to_inventory(self, area_id, type_id='', plant_ids=[]):
+        """Package the plant into an inventory lot.
+        Args:
+            area_id (str): The area to locate the new package.
+            type_id (str): The inventory type ID. If blank,
+                then create a new inventory type.
+            plant_ids (list): Optional list of other plants to include.
+        """
+        data = {
+            'global_plant_ids': [self.global_id],
+            'global_inventory_type_id': type_id,
+            'global_area_id': area_id
+        }
+        self.client.move_plants_to_inventory(data)
 
 
-class InventoryTransfer(object):
-    """ """
 
-    def __init__(self, client, properties):
-        self.client = client
-        self._properties = properties
+class Sale(LeafModel):
+    """A class that represents a cannabis sale."""
 
-    @property
-    def id(self):
-        """Global ID."""
-        return self._properties['global_id']
+    @classmethod
+    def create_from_json(cls, client, json):
+        obj = cls(client, json)
+        obj.create(obj.name)
+        return obj
 
+    def create(self, name):
+        """Create a sales record."""
+        data = {'name': name}
+        json = self.client.create_sales([data])[0]
+        self.__dict__ = {**self.__dict__, **json}
 
-class LabResult(object):
-    """ """
+    def update(self, **kwargs):
+        """Update the sale given parameters as keyword arguments."""
+        context = self.to_dict().copy()
+        data = {**context, **kwargs}
+        self.client.update_sale(data)
 
-    def __init__(self, client, properties):
-        self.client = client
-        self._properties = properties
-
-    @property
-    def id(self):
-        """Global ID."""
-        return self._properties['global_id']
-
-    def summary(self):
-        """Returns a summary of the lab result."""
-        return self._properties['global_id']
+    def delete(self):
+        """Delete the sale."""
+        self.client.delete_sale(self.global_id)
 
 
-class Plant(object):
-    """ """
+class Strain(LeafModel):
+    """A class that represents a cannabis strain."""
 
-    def __init__(self, client, properties):
-        self.client = client
-        self._properties = properties
+    @classmethod
+    def create_from_json(cls, client, json):
+        obj = cls(client, json)
+        obj.create(obj.name)
+        return obj
 
-    @property
-    def id(self):
-        """Global ID."""
-        return self._properties['global_id']
+    def create(self, name):
+        """Create a strain record."""
+        data = {'name': name}
+        json = self.client.create_strains([data])[0]
+        self.__dict__ = {**self.__dict__, **json}
 
+    def update(self, **kwargs):
+        """Update the strain given parameters as keyword arguments."""
+        context = self.to_dict().copy()
+        data = {**context, **kwargs}
+        self.client.update_strain(data)
 
-class Sale(object):
-    """ """
-
-    def __init__(self, client, properties):
-        self.client = client
-        self._properties = properties
-
-    @property
-    def id(self):
-        """Global ID."""
-        return self._properties['global_id']
-
-
-class Strain(object):
-    """ """
-
-    def __init__(self, client, properties):
-        self.client = client
-        self._properties = properties
-
-    @property
-    def id(self):
-        """Global ID."""
-        return self._properties['global_id']
+    def delete(self):
+        """Delete the strain."""
+        self.client.delete_strain(self.global_id)
 
 
-class Licensee(object):
-    """ """
-
-    def __init__(self, client, properties):
-        self.client = client
-        self._properties = properties
-
-    @property
-    def id(self):
-        """Global ID."""
-        return self._properties['global_id']
-
-
-class User(object):
-    """ """
-
-    def __init__(self, client, properties):
-        self.client = client
-        self._properties = properties
-
-    @property
-    def id(self):
-        """Global ID."""
-        return self._properties['global_id']
+class User(LeafModel):
+    """A class representing a user at a cannabis licensee."""
+    pass
 
