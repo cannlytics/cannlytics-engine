@@ -42,3 +42,33 @@ track = metrc.authorize(vendor_api_key, user_api_key)
 
 The client is powerful and capable of performing all actions. Models with certain convenience actions implemented are returned by `GET` requests or are initialized from JSON as an argument to the class or with a `create_from_json` method. The `create_from_json` method also creates a record in Metrc. 
 
+## Facilities
+
+A Facility represents a building licensed for the growing, processing, and/or selling of product. Facilities are created and have their permissions determined by a state.
+
+A typical facility object:
+
+```js
+{
+    "HireDate": "0001-01-01",
+    "IsOwner": false,
+    "IsManager": true,
+    "Occupations": [],
+    "Name": "Cultivation LLC",
+    "Alias": "Cultivation on Road St",
+    "DisplayName": "Cultivation on Road St",
+    "CredentialedDate": "1969-08-15",
+    "SupportActivationDate": null,
+    "SupportExpirationDate": null,
+    "SupportLastPaidDate": null,
+    "FacilityType": null,
+    "License": {
+        "Number": "403-X0001",
+        "StartDate": "2013-06-28",
+        "EndDate": "2015-12-28",
+        "LicenseType": "Medical Cultivation"
+    }
+}
+```
+
+Methods

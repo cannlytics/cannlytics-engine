@@ -55,6 +55,7 @@ class Client(object):
         # https://stackoverflow.com/questions/18179345/uploading-multiple-files-in-a-single-request-using-python-requests-module
     ):
         """Make a request to the Metrc API."""
+        # FIXME: Handle ConnectionError
         response = getattr(self.session, method)(
             endpoint,
             json=data,
@@ -986,14 +987,14 @@ class Client(object):
         return self.request('get', url)
 
     
-    def create_transfers(self, data, license_number='', source=''):
+    def create_transfers(self, data, license_number=''):
         """Create transfer(s).
         Args:
             data (list): A list of transfers (dict) to create.
             license_number (str): A specific license number.
         """
         url = METRC_TRANSFERS_URL % 'external/incoming'
-        params = format_params(license_number=license_number, source=source)
+        params = format_params(license_number=license_number)
         return self.request('post', url, data=data, params=params)
 
 

@@ -122,7 +122,12 @@ class Facility(Model):
             }
         }
     """
-    
+
+    @property
+    def license_number(self):
+        """The facilities license number."""
+        return self.license['number']
+
     def get_locations(self, uid='', action=''):
         """Get locations at the facility.
         Args:

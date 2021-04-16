@@ -1,4 +1,4 @@
-"""
+'''
 Metrc Integration Test | Cannlytics
 
 Author: Keegan Skeate
@@ -25,7 +25,7 @@ Resources:
 
     https://api-ok.metrc.com/Documentation
 
-"""
+'''
 
 import os
 from dotenv import dotenv_values
@@ -48,11 +48,13 @@ from cannlytics.traceability.metrc.models import ( # pylint: disable=no-name-in-
     LabResult,
     Receipt,
     TransferTemplate,
+    Item,
+    PlantBatch,
 )
 
 
 def main():
-    """Perform Metrc API integration test."""
+    '''Perform Metrc API integration test.'''
     return NotImplementedError
 
 
@@ -74,8 +76,8 @@ if __name__ == '__main__':
     db = fb.initialize_firebase()
 
     # Initialize a Metrc client.
-    vendor_api_key = config['METRC_TEST_VENDOR_API_KEY']
-    user_api_key = config['METRC_TEST_USER_API_KEY']
+    vendor_api_key = config['METRC_TEST_VENDOR_API_KEY_OREGON']
+    user_api_key = config['METRC_TEST_USER_API_KEY_OREGON']
     track = metrc.authorize(vendor_api_key, user_api_key)
 
     print('--------------------------------------------')
@@ -89,11 +91,11 @@ if __name__ == '__main__':
 
     # Get facilities from Firestore.
     ref = 'tests/metrc/organizations/1/facilities'
-    cultivator = Facility.from_fb(track, f'{ref}/4b-X0002')
-    retailer = Facility.from_fb(track, f'{ref}/3c-X0002')
-    processor = Facility.from_fb(track, f'{ref}/5b-X0002')
-    lab = Facility.from_fb(track, f'{ref}/405-X0001')
-    transporter = Facility.from_fb(track, f'{ref}/406-X0001')
+    cultivator = Facility.from_fb(track, f'{ref}/020-X0002')
+    retailer = Facility.from_fb(track, f'{ref}/060-X0001')
+    # processor = Facility.from_fb(track, f'{ref}/5b-X0002')
+    lab = Facility.from_fb(track, f'{ref}/010-X0001')
+    # transporter = Facility.from_fb(track, f'{ref}/406-X0001')
 
     # Unless facilities are not set, then get the facilities from Metrc.
     # Get facilities, with permissions set by the state for each facility type.
@@ -102,30 +104,30 @@ if __name__ == '__main__':
     # Define primary cultivator, lab, and retailer for tests.
     # cultivator, lab, retailer = None, None, None
     # for facility in facilities:
-    #     license_type = facility.license_type
-    #     if cultivator is None and license_type == 'Grower':
+    #     print(facility.license['number'], facility.name, facility.license['license_type'])
+    #     license_type = facility.license['license_type']
+    #     if cultivator is None and facility.license['number'] == '020-X0002':
     #         cultivator = facility
-    #     elif lab is None and license_type == 'Testing Laboratory':
+    #     elif lab is None and license_type == 'Laboratory':
     #         lab = facility
-    #     elif retailer is None and license_type == 'Dispensary':
+    #     elif retailer is None and license_type == 'Recreational Wholesaler':
     #         retailer = facility
 
-        # Save facility to Firestore.
-        # license_number = facility.license_number
-        # ref = f'tests/metrc/organizations/1/facilities/{license_number}'
-        # data = clean_nested_dictionary(facility.to_dict())
-        # data['license_number'] = license_number
-        # firebase.update_document(ref, data)
+    #     # Save facility to Firestore.
+    #     license_number = facility.license_number
+    #     ref = f'tests/metrc/organizations/1/facilities/{license_number}'
+    #     data = clean_nested_dictionary(facility.to_dict())
+    #     data['license_number'] = license_number
+    #     fb.update_document(ref, data)
 
     #------------------------------------------------------------------
     # Locations ✓
     #------------------------------------------------------------------
 
     # Create a new location using: POST /locations/v1/create
-    cultivation_name = 'MediGrow'
-    cultivation_original_name = 'medi grow'
-    # , 'Harvest Location', 'Plant Location', Warehouse
-    # cultivator.create_locations([cultivation_original_name])
+    # cultivation_name = 'MediGrow'
+    # cultivation_original_name = 'medi grow'
+    # cultivator.create_locations([cultivation_name, 'Harvest Location', 'Plant Location', 'Warehouse'])
     
     # Get created location
     # cultivation= None
@@ -138,7 +140,7 @@ if __name__ == '__main__':
     # cultivator.update_locations([cultivation.uid], [cultivation_name])
 
     # View the location using GET /locations/v1/{id}
-    cultivation_uid = '10705'
+    # cultivation_uid = '10705'
     # traced_location = cultivator.get_locations(uid=cultivation_uid)
 
 
@@ -171,7 +173,7 @@ if __name__ == '__main__':
     # new_strain.update(thc_level=0.1333, cbd_level=0.0777)
 
     # View the Strain using GET /strains/v1/{id}
-    strain_uid = '14504'
+    # strain_uid = '14504'
     # traced_strain = track.get_strains(uid=strain_uid, license_number=cultivator.license_number)
     # print(traced_strain.name, '| THC:', traced_strain.thc_level, 'CBD:', traced_strain.cbd_level)
 
@@ -181,13 +183,13 @@ if __name__ == '__main__':
     #------------------------------------------------------------------
     
     # Create an item using: POST /items/v1/create
-    # item_name = 'New Old-Time Moonshine Teenth'
-    # item = Item.create_from_json(track, cultivator.license_number, {
-    #     'ItemCategory': 'Flower & Buds',
-    #     'Name': item_name,
-    #     'UnitOfMeasure': 'Ounces',
-    #     'Strain': strain_name,
-    # })
+    item_name = 'New Old-Time Moonshine Teenth'
+    item = Item.create_from_json(track, cultivator.license_number, {
+        'ItemCategory': 'Buds',
+        'Name': item_name,
+        'UnitOfMeasure': 'Ounces',
+        'Strain': strain_name,
+    })
 
     # Create additional products for future use.
     # item = Item.create_from_json(track, cultivator.license_number, {
@@ -223,7 +225,7 @@ if __name__ == '__main__':
     # })
 
     # Get the clone for future use.
-    clone_uid = '12324'
+    # clone_uid = '12324'
     # clone_item = track.get_items(uid=clone_uid, license_number=cultivator.license_number)
 
     #------------------------------------------------------------------
@@ -232,26 +234,26 @@ if __name__ == '__main__':
 
     # Create a new plant batch containing
     # 6 plants using: POST /plantbatches/v1/createplantings
-    # batch_name = 'New Old-Time Moonshine Table'
-    # batch = PlantBatch.create_from_json(track, cultivator.license_number, {
-    #     'Name': batch_name,
-    #     'Type': 'Seed',
-    #     'Count': 6,
-    #     'Strain': strain_name,
-    #     'Location': 'MediGrow',
-    #     'ActualDate': today,
-    # })
+    batch_name = 'New Old-Time Moonshine Table'
+    batch = PlantBatch.create_from_json(track, cultivator.license_number, {
+        'Name': batch_name,
+        'Type': 'Seed',
+        'Count': 6,
+        'Strain': strain_name,
+        'Location': 'MediGrow',
+        'ActualDate': today,
+    })
     # sleep(10) # Hack to wait for Metrc to create the batch
 
     # Get the plant batch
-    # traced_batch = None
-    # batches = track.get_batches(license_number=cultivator.license_number)
-    # for b in batches:
-    #     print(b.name, '|', b.type)
-    #     if b.name == batch_name:
-    #         traced_batch = b
+    traced_batch = None
+    batches = track.get_batches(license_number=cultivator.license_number)
+    for b in batches:
+        print(b.name, '|', b.type)
+        if b.name == batch_name:
+            traced_batch = b
 
-    batch_uid = '8901'
+    # batch_uid = '185901'
     # traced_batch = track.get_batches(uid=batch_uid, license_number=cultivator.license_number)
 
     # Create a package containing 3 clones from
@@ -272,16 +274,16 @@ if __name__ == '__main__':
 
     # Change the growth phase of 2 of the plants created in
     # Step 1 to the Vegetative Stage using:  POST /plantbatches/v1/changegrowthphase
-    # plant_tag = 'ABCDEF012345670000013348'
-    # growth_stage = {
-    #     'name': traced_batch.name,
-    #     'count': 2,
-    #     'starting_tag': plant_tag,
-    #     'growth_phase': 'Vegetative',
-    #     'new_location': 'MediGrow',
-    #     'growth_date': today,
-    # }
-    # traced_batch.change_growth_phase(growth_stage)
+    plant_tag = 'ABCDEF012345670000013423'
+    growth_stage = {
+        'name': traced_batch.name,
+        'count': 2,
+        'starting_tag': plant_tag,
+        'growth_phase': 'Vegetative',
+        'new_location': 'MediGrow',
+        'growth_date': today,
+    }
+    traced_batch.change_growth_phase(growth_stage)
 
     # Destroy 1 of the plants using: POST /plantbatches/v1/destroy
     # traced_batch.destroy_plants(count=1, reason='Male plant!')
@@ -357,20 +359,20 @@ if __name__ == '__main__':
     #     'UnitOfWeight': 'Grams',
     #     # 'PatientLicenseNumber': 'X00001',
     #     'Note': 'Golden ticket in this package.',
-    #     # 'IsProductionBatch': False,
-    #     # 'ProductionBatchNumber': None,
-    #     # 'IsTradeSample': False,
-    #     # 'IsDonation': False,
-    #     # 'ProductRequiresRemediation': False,
-    #     # 'RemediateProduct': False,
-    #     # 'RemediationMethodId': None,
-    #     # 'RemediationDate': None,
-    #     # 'RemediationSteps': None,
+    #     # 'IsProductionBatch': false,
+    #     # 'ProductionBatchNumber': null,
+    #     # 'IsTradeSample': false,
+    #     # 'IsDonation': false,
+    #     # 'ProductRequiresRemediation': false,
+    #     # 'RemediateProduct': false,
+    #     # 'RemediationMethodId': null,
+    #     # 'RemediationDate': null,
+    #     # 'RemediationSteps': null,
     #     'ActualDate': today,
     #     'Ingredients': [
     #         {
     #             'HarvestId': harvest_id,
-    #             # 'HarvestName': None,
+    #             # 'HarvestName': null,
     #             'Weight': 28,
     #             'UnitOfWeight': 'Grams'
     #         },
@@ -411,13 +413,13 @@ if __name__ == '__main__':
     
     # Get the package created earlier.
     # packs = track.get_packages(license_number=cultivator.license_number)
-    package_id = '13801'
-    traced_package = track.get_packages(
-        uid=package_id,
-        license_number=cultivator.license_number
-    )
+    # package_id = '13801'
+    # traced_package = track.get_packages(
+    #     uid=package_id,
+    #     license_number=cultivator.license_number
+    # )
 
-    new_package_tag = 'ABCDEF012345670000013678'
+    # new_package_tag = 'ABCDEF012345670000013678'
     # new_package_data = {
     #     'Tag': new_package_tag,
     #     'Location': 'Warehouse',
@@ -426,10 +428,10 @@ if __name__ == '__main__':
     #     'UnitOfMeasure': 'Grams',
     #     # 'PatientLicenseNumber': 'X00001',
     #     'Note': '1st teenth for sale.',
-    #     # 'IsProductionBatch': False,
-    #     # 'ProductionBatchNumber': None,
-    #     # 'IsDonation': False,
-    #     # 'ProductRequiresRemediation': False,
+    #     # 'IsProductionBatch': false,
+    #     # 'ProductionBatchNumber': null,
+    #     # 'IsDonation': false,
+    #     # 'ProductRequiresRemediation': false,
     #     # 'UseSameItem': True,
     #     'ActualDate': today,
     #     'Ingredients': [
@@ -477,11 +479,11 @@ if __name__ == '__main__':
     # print(new_package.last_modified)
 
     #------------------------------------------------------------------
-    # Outgoing transfers (See Oregon test) ✓
+    # Outgoing transfers
     #------------------------------------------------------------------
 
     # Get licensed courier.
-    # courier = track.get_employees(license_number=transporter.license_number)[0]
+    courier = track.get_employees(license_number=cultivator.license_number)[0]
 
     # Get lab analyst.
     # analyst = track.get_employees(license_number=lab.license_number)[0]
@@ -493,7 +495,7 @@ if __name__ == '__main__':
     # courier_details = track.get_transfer_d
 
     # Create a testing package
-    test_package_tag = 'ABCDEF012345670000013679'
+    # test_package_tag = 'ABCDEF012345670000013679'
     # test_package_data = {
     #     'Tag': test_package_tag,
     #     'Location': 'Warehouse',
@@ -515,85 +517,164 @@ if __name__ == '__main__':
     #     license_number=cultivator.license_number,
     #     qa=True
     # )
-    test_package = track.get_packages(label=test_package_tag, license_number=cultivator.license_number)
+    # test_package = track.get_packages(label=test_package_tag, license_number=cultivator.license_number)
 
     # Step 1a Set up an external Incoming transfer
     # using: POST/transfers/v1/external/incoming
-    # transfer_data = {
-    #     'ShipperLicenseNumber': cultivator.license_number,
-    #     'ShipperName': cultivator.name,
-    #     'ShipperMainPhoneNumber': '18005555555',
-    #     'ShipperAddress1': 'Mulberry Street',
-    #     'ShipperAddress2': None,
-    #     'ShipperAddressCity': 'Oklahoma City',
-    #     'ShipperAddressState': 'OK',
-    #     'ShipperAddressPostalCode': '123',
-    #     'TransporterFacilityLicenseNumber': cultivator.license['number'],
-    #     'DriverOccupationalLicenseNumber': grower.license['number'],
-    #     'DriverName': grower.full_name,
-    #     'DriverLicenseNumber': 'xyz',
-    #     'PhoneNumberForQuestions': '18005555555',
-    #     'VehicleMake': 'xyz',
-    #     'VehicleModel': 'xyz',
-    #     'VehicleLicensePlateNumber': 'xyz',
-    #     'Destinations': [
-    #         {
-    #             'RecipientLicenseNumber': cultivator.license_number,
-    #             'TransferTypeName': 'Affiliated Transfer',
-    #             'PlannedRoute': 'Hypertube.',
-    #             'EstimatedDepartureDateTime': get_timestamp(),
-    #             'EstimatedArrivalDateTime': get_timestamp(future=60 * 24),
-    #             'GrossWeight': 4,
-    #             # 'GrossUnitOfWeightId': None,
-    #             'Transporters': [
-    #                 {
-    #                     'TransporterFacilityLicenseNumber': transporter.license_number,
-    #                     'DriverOccupationalLicenseNumber': courier.license['number'],
-    #                     'DriverName': courier.full_name,
-    #                     'DriverLicenseNumber': 'xyz',
-    #                     'PhoneNumberForQuestions': '18005555555',
-    #                     'VehicleMake': 'xyz',
-    #                     'VehicleModel': 'xyz',
-    #                     'VehicleLicensePlateNumber': 'xyz',
-    #                     # 'IsLayover': False,
-    #                     'EstimatedDepartureDateTime': get_timestamp(),
-    #                     'EstimatedArrivalDateTime': get_timestamp(future=60 * 24),
-    #                     # 'TransporterDetails': None
-    #                 }
-    #             ],
-    #             'Packages': [
-    #                 {
-    #                     # 'PackageLabel': traced_package.label,
-    #                     # 'HarvestName': '2nd New Old-Time Moonshine Harvest',
-    #                     'ItemName': 'New Old-Time Moonshine Wet Plants',
-    #                     'Quantity': 1,
-    #                     'UnitOfMeasureName': 'Each',
-    #                     'PackagedDate': get_timestamp(),
-    #                     'GrossWeight': 4.0,
-    #                     'GrossUnitOfWeightName': 'Grams',
-    #                     'WholesalePrice': None,
-    #                     # 'Source': '2nd New Old-Time Moonshine Harvest',
-    #                 },
-    #             ]
-    #         }
-    #     ]
-    # }
-    # track.create_transfers(
-    #     [transfer_data],
-    #     license_number=cultivator.license_number,
-    #     source=cultivator.license_number
-    # )
+    transfer_data = {
+        'ShipperLicenseNumber': cultivator.license_number,
+        'ShipperName': cultivator.name,
+        'ShipperMainPhoneNumber': '18005555555',
+        'ShipperAddress1': 'Mulberry Street',
+        'ShipperAddress2': None,
+        'ShipperAddressCity': 'Oklahoma City',
+        'ShipperAddressState': 'OK',
+        'ShipperAddressPostalCode': '123',
+        'TransporterFacilityLicenseNumber': cultivator.license['number'],
+        'DriverOccupationalLicenseNumber': courier.license['number'],
+        'DriverName': courier.full_name,
+        'DriverLicenseNumber': 'xyz',
+        'PhoneNumberForQuestions': '18005555555',
+        'VehicleMake': 'xyz',
+        'VehicleModel': 'xyz',
+        'VehicleLicensePlateNumber': 'xyz',
+        'Destinations': [
+            {
+                'RecipientLicenseNumber': cultivator.license_number,
+                'TransferTypeName': 'Beginning Inventory Transfer',
+                'PlannedRoute': 'Hypertube.',
+                'EstimatedDepartureDateTime': get_timestamp(),
+                'EstimatedArrivalDateTime': get_timestamp(future=60 * 24),
+                'GrossWeight': 4,
+                # 'GrossUnitOfWeightId': null,
+                'Transporters': [
+                    {
+                        'TransporterFacilityLicenseNumber': cultivator.license_number,
+                        'DriverOccupationalLicenseNumber': courier.license['number'],
+                        'DriverName': courier.full_name,
+                        'DriverLicenseNumber': 'xyz',
+                        'PhoneNumberForQuestions': '18005555555',
+                        'VehicleMake': 'xyz',
+                        'VehicleModel': 'xyz',
+                        'VehicleLicensePlateNumber': 'xyz',
+                        # 'IsLayover': false,
+                        'EstimatedDepartureDateTime': get_timestamp(),
+                        'EstimatedArrivalDateTime': get_timestamp(future=60 * 24),
+                        # 'TransporterDetails': null
+                    }
+                ],
+                'Packages': [
+                    {
+                        # 'PackageLabel': traced_package.label,
+                        # 'HarvestName': '2nd New Old-Time Moonshine Harvest',
+                        'ItemName': 'New Old-Time Moonshine Teenth',
+                        'Quantity': 1,
+                        'UnitOfMeasureName': 'Ounces',
+                        'PackagedDate': get_timestamp(),
+                        'GrossWeight': 28.0,
+                        'GrossUnitOfWeightName': 'Grams',
+                        'WholesalePrice': None,
+                        # 'Source': '2nd New Old-Time Moonshine Harvest',
+                    },
+                ]
+            }
+        ]
+    }
+    track.create_transfers(
+        [transfer_data],
+        license_number=cultivator.license_number,
+        # source=cultivator.license_number
+    )
 
     # Step 1b Set up another external Incoming transfer
     # using: POST/transfers/v1/external/incoming
-
+    second_transfer_data = {
+        'ShipperLicenseNumber': cultivator.license_number,
+        'ShipperName': cultivator.name,
+        'ShipperMainPhoneNumber': '18005555555',
+        'ShipperAddress1': 'Mulberry Street',
+        'ShipperAddress2': None,
+        'ShipperAddressCity': 'Oklahoma City',
+        'ShipperAddressState': 'OK',
+        'ShipperAddressPostalCode': '123',
+        'TransporterFacilityLicenseNumber': cultivator.license['number'],
+        'DriverOccupationalLicenseNumber': courier.license['number'],
+        'DriverName': courier.full_name,
+        'DriverLicenseNumber': 'xyz',
+        'PhoneNumberForQuestions': '18005555555',
+        'VehicleMake': 'xyz',
+        'VehicleModel': 'xyz',
+        'VehicleLicensePlateNumber': 'xyz',
+        'Destinations': [
+            {
+                'RecipientLicenseNumber': cultivator.license_number,
+                'TransferTypeName': 'Beginning Inventory Transfer',
+                'PlannedRoute': 'Hypertube.',
+                'EstimatedDepartureDateTime': get_timestamp(),
+                'EstimatedArrivalDateTime': get_timestamp(future=60 * 24),
+                'GrossWeight': 56,
+                # 'GrossUnitOfWeightId': null,
+                'Transporters': [
+                    {
+                        'TransporterFacilityLicenseNumber': cultivator.license_number,
+                        'DriverOccupationalLicenseNumber': courier.license['number'],
+                        'DriverName': courier.full_name,
+                        'DriverLicenseNumber': 'xyz',
+                        'PhoneNumberForQuestions': '18005555555',
+                        'VehicleMake': 'xyz',
+                        'VehicleModel': 'xyz',
+                        'VehicleLicensePlateNumber': 'xyz',
+                        # 'IsLayover': false,
+                        'EstimatedDepartureDateTime': get_timestamp(),
+                        'EstimatedArrivalDateTime': get_timestamp(future=60 * 24),
+                        # 'TransporterDetails': null
+                    }
+                ],
+                'Packages': [
+                    {
+                        # 'PackageLabel': traced_package.label,
+                        # 'HarvestName': '2nd New Old-Time Moonshine Harvest',
+                        'ItemName': 'New Old-Time Moonshine Teenth',
+                        'Quantity': 2,
+                        'UnitOfMeasureName': 'Ounces',
+                        'PackagedDate': get_timestamp(),
+                        'GrossWeight': 56.0,
+                        'GrossUnitOfWeightName': 'Grams',
+                        'WholesalePrice': 720,
+                        # 'Source': '2nd New Old-Time Moonshine Harvest',
+                    },
+                ]
+            }
+        ]
+    }
+    track.create_transfers(
+        [second_transfer_data],
+        license_number=cultivator.license_number,
+    )
 
     # Step 2 Find the two Transfers created in Step 1a and 1b
     # by using the date search: GET/transfers/v1/incoming
-
+    traced_transfers = track.get_transfers(
+        license_number=cultivator.license_number,
+        start=today,
+        end=get_timestamp()
+    )
 
     # Step 3 Update one of the Transfers created in Step 1 by
     # using: PUT/transfers/v1/external/incoming
+    second_transfer_data['TransferId'] = traced_transfers[0].id
+    second_transfer_data['Destinations'][0]['Packages'][0]['Quantity'] = 3
+    track.update_transfers(
+        [second_transfer_data],
+        license_number=cultivator.license_number,
+    )
+
+    updated_transfer = track.get_transfers(
+        # uid=second_transfer_data['TransferId'],
+        license_number=cultivator.license_number,
+        start=get_timestamp(past=15),
+        end=get_timestamp()
+    )
 
 
     #------------------------------------------------------------------
@@ -606,11 +687,11 @@ if __name__ == '__main__':
     #     'TransporterFacilityLicenseNumber': cultivator.license_number,
     #     'DriverOccupationalLicenseNumber': courier.license['number'],
     #     'DriverName': courier.full_name,
-    #     # 'DriverLicenseNumber': None,
-    #     # 'PhoneNumberForQuestions': None,
-    #     # 'VehicleMake': None,
-    #     # 'VehicleModel': None,
-    #     # 'VehicleLicensePlateNumber': None,
+    #     # 'DriverLicenseNumber': null,
+    #     # 'PhoneNumberForQuestions': null,
+    #     # 'VehicleMake': null,
+    #     # 'VehicleModel': null,
+    #     # 'VehicleLicensePlateNumber': null,
     #     'Destinations': [
     #         {
     #             'RecipientLicenseNumber': lab.license_number,
@@ -695,27 +776,91 @@ if __name__ == '__main__':
 
 
     #------------------------------------------------------------------
-    # Outgoing transfers ✓
+    # Outgoing transfers
     #------------------------------------------------------------------
 
+    # Creeate an outgoing transfer
+    outgoing_transfer_data = {
+        'ShipperLicenseNumber': cultivator.license_number,
+        'ShipperName': cultivator.name,
+        'ShipperMainPhoneNumber': '18005555555',
+        'ShipperAddress1': 'Mulberry Street',
+        'ShipperAddress2': None,
+        'ShipperAddressCity': 'Oklahoma City',
+        'ShipperAddressState': 'OK',
+        'ShipperAddressPostalCode': '123',
+        'TransporterFacilityLicenseNumber': cultivator.license['number'],
+        'DriverOccupationalLicenseNumber': courier.license['number'],
+        'DriverName': courier.full_name,
+        'DriverLicenseNumber': 'xyz',
+        'PhoneNumberForQuestions': '18005555555',
+        'VehicleMake': 'xyz',
+        'VehicleModel': 'xyz',
+        'VehicleLicensePlateNumber': 'xyz',
+        'Destinations': [
+            {
+                'RecipientLicenseNumber': retailer.license_number,
+                'TransferTypeName': 'Beginning Inventory Transfer',
+                'PlannedRoute': 'Hypertube.',
+                'EstimatedDepartureDateTime': get_timestamp(),
+                'EstimatedArrivalDateTime': get_timestamp(future=60 * 24),
+                'GrossWeight': 4,
+                # 'GrossUnitOfWeightId': null,
+                'Transporters': [
+                    {
+                        'TransporterFacilityLicenseNumber': cultivator.license_number,
+                        'DriverOccupationalLicenseNumber': courier.license['number'],
+                        'DriverName': courier.full_name,
+                        'DriverLicenseNumber': 'xyz',
+                        'PhoneNumberForQuestions': '18005555555',
+                        'VehicleMake': 'xyz',
+                        'VehicleModel': 'xyz',
+                        'VehicleLicensePlateNumber': 'xyz',
+                        # 'IsLayover': false,
+                        'EstimatedDepartureDateTime': get_timestamp(),
+                        'EstimatedArrivalDateTime': get_timestamp(future=60 * 24),
+                        # 'TransporterDetails': null
+                    }
+                ],
+                'Packages': [
+                    {
+                        # 'PackageLabel': traced_package.label,
+                        # 'HarvestName': '2nd New Old-Time Moonshine Harvest',
+                        'ItemName': 'New Old-Time Moonshine Teenth',
+                        'Quantity': 0.0625,
+                        'UnitOfMeasureName': 'Ounces',
+                        'PackagedDate': get_timestamp(),
+                        # 'GrossWeight': 4.0,
+                        # 'GrossUnitOfWeightName': 'Grams',
+                        # 'WholesalePrice': 1,
+                        # 'Source': '2nd New Old-Time Moonshine Harvest',
+                    },
+                ]
+            }
+        ]
+    }
+    track.create_transfers(
+        [outgoing_transfer_data],
+        license_number=cultivator.license_number,
+    )
+
+    # TODO:
     # Step 1 Find an Incoming Transfer: GET/transfers/v1/incoming
     # incoming_transfers = track.get_transfers(license_number=retailer.license_number)
 
+    # TODO:
     # Step 2 Find an Outgoing Transfer: GET/transfers/v1/outgoing
-    # outgoing_transfers = track.get_transfers(
-    #     transfer_type='outgoing',
-    #     license_number=cultivator.license_number
-    # )
-    # facilities = track.get_facilities()
-    # for facility in facilities:
-    #     print('Getting transfers for', facility.license['number'])
-    #     outgoing_transfers = track.get_transfers(
-    #         transfer_type='outgoing',
-    #         license_number=facility.license['number']
-    #     )
-    #     if outgoing_transfers:
-    #         break
-    #     sleep(5)
+
+    facilities = track.get_facilities()
+    for facility in facilities:
+        print('Getting transfers for', facility.license['number'])
+        outgoing_transfers = track.get_transfers(
+            transfer_type='outgoing',
+            license_number=facility.license['number']
+        )
+        if outgoing_transfers:
+            break
+        sleep(5)
 
     # Step 3 Find a Rejected Transfer: GET/transfers/v1/rejected
     # rejected_transfers = track.get_transfers(
@@ -743,60 +888,26 @@ if __name__ == '__main__':
     #------------------------------------------------------------------
 
     # Record a lab test result using: POST /labtests/v1/record
-    # test_package_data = {
-    #     'Tag': test_package_tag,
-    #     'Location': None,
-    #     'Item': test_package.item['name'],
-    #     'UnitOfWeight': 'Grams',
-    #     # 'PatientLicenseNumber': 'X00001',
-    #     'Note': 'Clean as a whistle.',
-    #     'IsProductionBatch': False,
-    #     'ProductionBatchNumber': None,
-    #     'IsTradeSample': False,
-    #     'IsDonation': False,
-    #     'ProductRequiresRemediation': False,
-    #     'RemediateProduct': False,
-    #     'RemediationMethodId': None,
-    #     'RemediationDate': None,
-    #     'RemediationSteps': None,
-    #     'ActualDate': today,
-    #     'Ingredients': [
-    #         {
-    #             'HarvestId': 2,
-    #             'HarvestName': None,
-    #             'Weight': 100.23,
-    #             'UnitOfWeight': 'Grams'
-    #         },
-    #     ]
-    # }
+    # test_package_data = {}
     # track.create_harvest_testing_packages(test_package_data, license_number=cultivator.license_number)
     # packages = track.get_packages(license_number=cultivator.license_number)
     # lab_package = [0] # TODO: Get lab testing package
-
-    # Create the lab result record.
-    encoded_pdf = encode_pdf('../assets/pdfs/example_coa.pdf')
-    lab_result_data = {
-        'Label': test_package.label,
-        'ResultDate': get_timestamp(),
-        # 'DocumentFileName': 'new-old-time-moonshine.pdf',
-        # 'DocumentFileBase64': 'encoded_pdf',
-        'Results': [
-            {
-                'LabTestTypeName': 'THC',
-                'Quantity': 0.07,
-                'Passed': True,
-                'Notes': 'Fairly low, definitely hemp.'
-            },
-            {
-                'LabTestTypeName': 'CBD',
-                'Quantity': 23.33,
-                'Passed': True,
-                'Notes': 'Stunning.'
-            },
-        ]
-    }
+    # lab_result_data = {
+    #     'Label': lab_package.label,
+    #     'ResultDate': get_timestamp(),
+    #     'DocumentFileName': 'new-old-time-moonshine.pdf',
+    #     'DocumentFileBase64': encode_pdf('../assets/pdfs/example_coa.pdf'),
+    #     'Results': [
+    #     {
+    #         'LabTestTypeName': 'THC',
+    #         'Quantity': 23.33,
+    #         'Passed': True,
+    #         'Notes': ''
+    #     }
+    #     ]
+    # }
     # lab_result = LabResult.create_from_json(track, lab.license_number, lab_result_data)
-    lab_results = track.post_lab_results([lab_result_data], license_number=lab.license_number)
+
 
     #------------------------------------------------------------------
     # Sales

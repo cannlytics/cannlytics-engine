@@ -13,6 +13,10 @@ You can install the Cannlytics engine from [PyPI](https://pypi.org/project/cannl
 pip install cannlytics
 ```
 
+## Contributing
+
+<!-- This should include how new contributors to the project can help. This includes developing new features, fixing known issues, adding documentation, adding new tests, or reporting issues. -->
+
 ## License <a name="license"></a>
 
 This application is released under the [MIT license](LICENSE.md). You can use the code for any purpose, including commercial projects.

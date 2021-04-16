@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 """
 cannlytics.traceability.leaf
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -12,25 +11,6 @@ __author__ = 'Keegan Skeate'
 
 
 from .client import Client
-from .models import (
-    Area,
-    Batch,
-    Disposal,
-    InventoryType,
-    Inventory,
-    InventoryAdjustment,
-    InventoryTransfer,
-    LabResult,
-    Plant,
-    Sale,
-    Strain,
-    Licensee,
-    User,
-)
-
-from .exceptions import (
-    TraceabilityException,
-)
 
 
 def authorize(api_key, mme_code, client_class=Client):

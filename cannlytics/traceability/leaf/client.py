@@ -5,12 +5,14 @@ cannlytics.traceability.leaf.client
 This module contains the Client class responsible for
 communicating with the Leaf Data Systems API.
 """
+
+from json import dumps
 from datetime import datetime
 from requests import Session
 
 from .exceptions import APIError
 from .urls import *
-from .utils import format_time_filter
+from .utils import format_time_filter, get_time_string
 from .models import (
     Area,
     Batch,
@@ -34,11 +36,11 @@ class Client(object):
 
         api_key (str): A Leaf Data Systems API key.
             Created in the Leaf Data Systems user interface.
-            
+
         mme_code (str): The Leaf Data Systems ID for the licensee to
             connect. Retrieved from the Leaf Data Systems user interface
             or the `/mmes` endpoint.
-        
+
         Usage: track = leaf.Client(api_key='xyz', mme_code='abc')
     """
 
@@ -65,7 +67,13 @@ class Client(object):
             json=data,
             params=params,
         )
-
+        print('\n\nREQUEST:', response.request.url)
+        print('\n\nBODY:\n\n', response.request.body)
+        print('\n\nSTATUS CODE:', response.status_code)
+        try:
+            print('\n\nRESPONSE:\n\n', dumps(response.json()), '\n\n')
+        except ValueError:
+            print('\n\nRESPONSE:\n\n', response.text, '\n\n')
         if response.status_code == 200:
             body = response.json()
             try:
@@ -74,11 +82,11 @@ class Client(object):
                 return body
         else:
             raise APIError(response)
-    
+
     #------------------------------------------------------------------
     # Areas
     #------------------------------------------------------------------
-    
+
     def get_areas(self):
         """Get all areas."""
         url = LEAF_AREAS_URL
@@ -87,14 +95,14 @@ class Client(object):
 
 
     def create_areas(self, data):
-        """Create area(s).    
+        """Create area(s).
         Args:
             data (list): A list of area(s) to create.
         """
         url = LEAF_AREAS_URL
         response = self.request('post', url, data={'area': data})
         return [Area(self, x) for x in response]
-    
+
 
     def update_area(self, data):
         """Update area.
@@ -104,7 +112,7 @@ class Client(object):
         url = LEAF_AREAS_UPDATE_URL
         response = self.request('post', url, data={'area': data})
         return Area(self, response)
-    
+
 
     def delete_area(self, global_id):
         """Delete an area.
@@ -118,7 +126,7 @@ class Client(object):
     #------------------------------------------------------------------
     # Batches
     #------------------------------------------------------------------
-    
+
     def get_batches(
         self,
         external_id='',
@@ -138,7 +146,7 @@ class Client(object):
             harvested_start (str): An ISO date string, e.g. 2020-04-20.
             harvested_end (str): An ISO date string, e.g. 2021-04-20.
             planted_start (str): An ISO date string, e.g. 2020-04-20.
-            planted_end (str): An ISO date string, e.g. 2021-04-20. 
+            planted_end (str): An ISO date string, e.g. 2021-04-20.
             status (str): Batch status, does not work when
                 batch_type="intermediate/ end product".
             batch_type (str): Type of 'propagation material', 'plant',
@@ -168,7 +176,7 @@ class Client(object):
             url += f'?f_type={batch_type}'
         response = self.request('get', url)
         return [Batch(self, x) for x in response]
-    
+
 
     def create_batches(self, data):
         """Create batch(es).
@@ -178,17 +186,17 @@ class Client(object):
         url = LEAF_BATCHES_URL
         response = self.request('post', url, data={'batch': data})
         return [Batch(self, x) for x in response]
-    
+
 
     def update_batch(self, data):
-        """Update a batch.    
+        """Update a batch.
         Args:
             data (dict): Updated batch data.
         """
         url = LEAF_BATCHES_UPDATE_URL
         response = self.request('post', url, data={'batch': data})
         return Batch(self, response)
-    
+
 
     def delete_batch(self, global_id):
         """Delete a batch.
@@ -197,7 +205,7 @@ class Client(object):
         """
         url = LEAF_BATCHES_DELETE_URL % global_id
         return self.request('delete', url)
-    
+
 
     def cure_batch(
         self,
@@ -237,7 +245,7 @@ class Client(object):
         }
         response = self.request('post', url, data=data)
         return Batch(self, response)
-    
+
 
     def finish_batch(
         self,
@@ -264,10 +272,11 @@ class Client(object):
         response = self.request('post', url, data=data)
         return [Batch(self, x) for x in response]
 
+
     #------------------------------------------------------------------
     # Disposals
     #------------------------------------------------------------------
-    
+
     def get_disposals(
         self,
         disposal_start='',
@@ -304,27 +313,27 @@ class Client(object):
             )
         response = self.request('get', url)
         return [Disposal(self, x) for x in response]
-    
+
 
     def create_disposals(self, data):
-        """Create disposal(s).    
+        """Create disposal(s).
         Args:
             data (list): A list of disposal data to create.
         """
         url = LEAF_DISPOSAL_URL
         response = self.request('post', url, data={'disposal': data})
         return [Disposal(self, x) for x in response]
-    
+
 
     def update_disposal(self, data):
-        """Update a disposal.    
+        """Update a disposal.
         Args:
             data (dict): Updated disposal data.
         """
         url = LEAF_DISPOSAL_UPDATE_URL
         response = self.request('post', url, data={'disposal': data})
         return [Disposal(self, x) for x in response]
-    
+
 
     def delete_disposal(self, global_id):
         """Delete a disposal.
@@ -374,34 +383,34 @@ class Client(object):
             url += f'?f_origin={origin}'
         response = self.request('get', url)
         return [Plant(self, x) for x in response]
-    
+
 
     def get_plants_by_area(self):
         """Get plant count by area."""
         url = LEAF_PLANTS_AREAS_URL
         response = self.request('get', url)
         return [Area(self, x) for x in response]
-    
+
 
     def create_plants(self, data):
-        """Create plant(s).    
+        """Create plant(s).
         Args:
             data (list): A list of plant data to create.
         """
         url = LEAF_PLANTS_URL
         response = self.request('post', url, data={'plant': data})
         return [Plant(self, x) for x in response]
-    
+
 
     def update_plant(self, data):
-        """Update a plant.    
+        """Update a plant.
         Args:
             data (dict): Updated plant data.
         """
         url = LEAF_PLANTS_UPDATE_URL
         response = self.request('post', url, data={'plant': data})
         return Plant(self, response)
-    
+
 
     def delete_plant(self, global_id):
         """Delete a plant.
@@ -443,31 +452,32 @@ class Client(object):
         qty_harvest = flower_wet_weight + other_wet_weight
         # Optional: If no area ID, lookup area?
         if not harvested_at:
-            harvested_at = datetime.now().isoformat()[:10] # TODO: Add time.
-        date = harvested_at.split('-')
-        yyyy, mm, dd = date[0], date[1], date[2]
-        harvest_date = f"{mm}/{dd}/{yyyy}"
+            harvested_at = get_time_string()
+        # date = harvested_at.split('-')
+        # yyyy, mm, dd = date[0], date[1], date[2]
+        # harvest_date = f"{mm}/{dd}/{yyyy}"
         data = {
             "external_id": external_id,
-            "harvested_at": harvest_date,
+            "harvested_at": harvested_at,
             "qty_harvest": qty_harvest,
             "flower_wet_weight": flower_wet_weight,
             "other_wet_weight": other_wet_weight,
             "uom": uom,
-            "global_flower_area_id": area_id,
-            "global_other_area_id": destination_id,
-            "global_harvest_batch_id": batch_id,
+            # "global_flower_area_id": area_id,
+            # "global_other_area_id": area_id,
+            'global_area_id': area_id,
+            "global_harvest_batch_id": '',
             "global_plant_ids": []
         }
         for plant_id in plant_ids:
             data['global_plant_ids'].append({'global_plant_id': plant_id})
         response = self.request('post', url, data=data)
         return Plant(self, response)
-    
+
 
     def move_plants_to_inventory(self, data):
         """Package immature or mature plants of the same strain
-        into an inventory lot.    
+        into an inventory lot.
         Args:
             data (dict): Updated plant data.
         """
@@ -485,17 +495,17 @@ class Client(object):
         url = LEAF_STRAINS_URL
         response = self.request('get', url)
         return [Strain(self, x) for x in response]
-    
+
 
     def create_strains(self, data):
-        """Create strain(s).    
+        """Create strain(s).
         Args:
             data (list): A list of strain(s) to create.
         """
         url = LEAF_STRAINS_URL
         response = self.request('post', url, data={'strain': data})
         return [Strain(self, x) for x in response]
-    
+
 
     def update_strain(self, data):
         """Update strain.
@@ -505,7 +515,7 @@ class Client(object):
         url = LEAF_STRAINS_UPDATE_URL
         response = self.request('post', url, data={'strain': data})
         return Strain(self, response)
-    
+
 
     def delete_strain(self, global_id):
         """Delete a strain.
@@ -532,8 +542,8 @@ class Client(object):
             external_id (str): A free-form external ID.
             global_id (str): The `global_id` of a disposal.
             type (str): The primary category of the inventory type.
-                Values include immature_plant, mature_plant, 
-                harvest_materials, intermediate_product, 
+                Values include immature_plant, mature_plant,
+                harvest_materials, intermediate_product,
                 end_product, waste
         """
         url = LEAF_INVENTORY_TYPES_URL
@@ -545,27 +555,27 @@ class Client(object):
             url += f'?f_type={inventory_type}'
         response = self.request('get', url)
         return [InventoryType(self, x) for x in response]
-    
+
 
     def create_inventory_types(self, data):
-        """Create inventory type(s).    
+        """Create inventory type(s).
         Args:
             data (list): A list of inventory types to create.
         """
         url = LEAF_INVENTORY_TYPES_URL
         response = self.request('post', url, data={'inventory_type': data})
         return [InventoryType(self, x) for x in response]
-    
+
 
     def update_inventory_type(self, data):
-        """Update an inventory type.    
+        """Update an inventory type.
         Args:
             data (dict): Updated inventory type data.
         """
         url = LEAF_INVENTORY_TYPES_UPDATE_URL
         response = self.request('post', url, data={'inventory_type': data})
         return InventoryType(self, response)
-    
+
 
     def delete_inventory_type(self, global_id):
         """Delete an inventory type.
@@ -616,27 +626,27 @@ class Client(object):
             )
         response = self.request('get', url)
         return [Inventory(self, x) for x in response]
-    
+
 
     def create_inventory(self, data):
-        """Create inventory item(s).    
+        """Create inventory item(s).
         Args:
             data (list): A list of inventory item(s) to create.
         """
         url = LEAF_INVENTORY_URL
         response = self.request('post', url, data={'inventory': data})
         return [Inventory(self, x) for x in response]
-    
+
 
     def update_inventory(self, data):
-        """Update an inventory item.    
+        """Update an inventory item.
         Args:
             data (dict): Updated inventory item data.
         """
         url = LEAF_INVENTORY_UPDATE_URL
         response = self.request('post', url, data={'inventory': data})
         return Inventory(self, response)
-    
+
 
     def delete_inventory(self, global_id):
         """Delete an inventory item.
@@ -664,9 +674,9 @@ class Client(object):
             inventory_id (str): The `global_id` of the inventory item to split.
             area_id (str): The `global_id` of the area where the child inventory
                 will be located.
-            qty (str): The quantity of inventory being split into the 
-                new lot from the parent lot, relative to the 
-                unit of measure ('uom') of the associated 
+            qty (str): The quantity of inventory being split into the
+                new lot from the parent lot, relative to the
+                unit of measure ('uom') of the associated
                 inventory type.
             external_id (str): A free-form external ID.
         """
@@ -710,9 +720,9 @@ class Client(object):
             items (list): A list of inventory items to convert. Each
                 inventory item should be a dictionary with `qty`
                 and `global_id` fields.
-            qty (str): The quantity of inventory being split into the 
-                new lot from the parent lot, relative to the 
-                unit of measure ('uom') of the associated 
+            qty (str): The quantity of inventory being split into the
+                new lot from the parent lot, relative to the
+                unit of measure ('uom') of the associated
                 inventory type.
             external_id (str): An optional free-form external ID.
             medically_compliant (bool): If the conversion is medically compliant.
@@ -722,7 +732,7 @@ class Client(object):
             retest (bool): If the conversion needs to be tested again.
             start_date (str): The ISO date conversion began.
             end_date (str): The ISO date conversion ended.
-            waste (int): The total weight (gm) of waste produced from the 
+            waste (int): The total weight (gm) of waste produced from the
                 conversion process.
         """
         url = LEAF_INVENTORY_CONVERT_URL
@@ -761,7 +771,7 @@ class Client(object):
             })
         response = self.request('post', url, data=data)
         return [Inventory(self, x) for x in response]
-    
+
 
     def inventory_to_plants(
         self,
@@ -769,9 +779,9 @@ class Client(object):
         batch_id='',
         qty=1,
     ):
-        """Unpackage plants from inventory lots. This may occur 
+        """Unpackage plants from inventory lots. This may occur
         when 'Immature Plant' inventory records are being converted
-        into growing plants, or when transferred plants that have been moved 
+        into growing plants, or when transferred plants that have been moved
         to inventory already need to be moved back to plant records.
             inventory_id (str): The `global_id` of the inventory item.
             batch_id (str): An optional `global_id` for a batch. If
@@ -830,15 +840,15 @@ class Client(object):
             )
         response = self.request('get', url)
         return [InventoryAdjustment(self, x) for x in response]
-    
+
 
     def create_inventory_adjustments(self, data):
-        """Create disposal(s).    
+        """Create disposal(s).
         Args:
             data (list): A list of disposal data to create.
         """
         url = LEAF_INVENTORY_ADJUSTMENTS_URL
-        response = self.request('post', url, data={'disposal': data})
+        response = self.request('post', url, data={'inventory_adjustment': data})
         return [InventoryAdjustment(self, x) for x in response]
 
 
@@ -886,7 +896,7 @@ class Client(object):
             url += f'?f_date1={departed_date}'
         response = self.request('get', url)
         return [Transfer(self, x) for x in response]
-    
+
 
     def create_transfers(self, data):
         """Create inventory transfer(s).
@@ -896,13 +906,18 @@ class Client(object):
         url = LEAF_INVENTORY_TRANSFERS_URL
         response = self.request('post', url, data={'inventory_transfer': data})
         return [Transfer(self, x) for x in response]
-    
 
-    # Optional: create_transfer (singular)
+
+    def create_transfer(self, data):
+        """Create a single inventory transfer.
+        Args:
+            data (dict): Inventory transfer to create.
+        """
+        return self.create_transfers([data])
 
 
     def update_transfer(self, data):
-        """Update inventory transfer.    
+        """Update inventory transfer.
         Args:
             data (dict): Updated inventory transfer data.
         """
@@ -922,7 +937,7 @@ class Client(object):
         data = {'global_id': global_id}
         response = self.request('post', url, data=data)
         return Transfer(self, response)
-    
+
 
     def receive_transfer(
         self,
@@ -948,26 +963,28 @@ class Client(object):
         """
         url = LEAF_INVENTORY_TRANSFERS_RECEIVE_URL
         data = {'global_id': global_id, 'inventory_transfer_items': []}
-        item_request = self.get_inventory(global_id=global_id)
-        items = item_request[0]['inventory_transfer_items']
+        item_request = self.get_transfers(global_id=global_id)
+        items = item_request[0].inventory_transfer_items
         # Optional: Make area_ids and strain_ids flexibility more elegant.
         count = 0
         for item in items:
-            if area_ids.length > 0:
+            print(item)
+            if area_ids:
                 area_id = area_ids[count]
-            if strain_ids.length > 0:
+            if strain_ids:
                 strain_id = strain_ids[count]
             data['inventory_transfer_items'].append({
                 'global_id': item['global_id'],
                 'received_qty': item['qty'],
                 'global_received_area_id': area_id,
                 'global_received_strain_id': strain_id,
+                'global_received_inventory_id': item['global_inventory_id'],
             })
             count += 1
         response = self.request('post', url, data=data)
         return Transfer(self, response)
 
-    
+
     def void_transfer(self, global_id):
         """
         Causes an inventory transfer record to be voided.
@@ -1008,7 +1025,7 @@ class Client(object):
             url += f'?f_batch={global_batch_id}'
         response = self.request('get', url)
         return [LabResult(self, x) for x in response]
-    
+
 
     def create_lab_results(self, data):
         """Create lab result(s).
@@ -1018,17 +1035,17 @@ class Client(object):
         url = LEAF_LAB_RESULTS_URL
         response = self.request('post', url, data={'lab_result': data})
         return [LabResult(self, x) for x in response]
-    
+
 
     def update_lab_result(self, data):
-        """Update lab result.    
+        """Update lab result.
         Args:
             data (dict): Updated lab result data.
         """
         url = LEAF_LAB_RESULTS_UPDATE_URL
         response = self.request('post', url, data={'lab_result': data})
         return LabResult(self, response)
-    
+
 
     def delete_lab_result(self, global_id):
         """Delete a lab result.
@@ -1037,6 +1054,7 @@ class Client(object):
         """
         url = LEAF_LAB_RESULTS_DELETE_URL % global_id
         return self.request('delete', url)
+
 
     #------------------------------------------------------------------
     # Sales
@@ -1086,24 +1104,24 @@ class Client(object):
 
 
     def create_sales(self, data):
-        """Create sale(s).    
+        """Create sale(s).
         Args:
             data (list): A list of a sale(s) data to create.
         """
         url = LEAF_SALES_URL
         response = self.request('post', url, data={'sale': data})
         return [Sale(self, x) for x in response]
-    
+
 
     def update_sale(self, data):
-        """Update sales.    
+        """Update sales.
         Args:
             data (dict): Updated sale data.
         """
         url = LEAF_SALES_UPDATE_URL
         response = self.request('post', url, data={'sale': data})
         return Sale(self, response)
-    
+
 
     def delete_sale(self, global_id):
         """Delete a sale.
@@ -1112,6 +1130,7 @@ class Client(object):
         """
         url = LEAF_SALES_DELETE_URL % global_id
         return self.request('delete', url)
+
 
     #------------------------------------------------------------------
     # Licensees and users
@@ -1149,8 +1168,8 @@ class Client(object):
             yyyy, mm, dd = date[0], date[1], date[2]
             url += f'?f_updated_at2={mm}/{dd}/{yyyy}'
         response = self.request('get', url)
-        return [Licensee(self, x) for x in response]    
-    
+        return [Licensee(self, x) for x in response]
+
 
     def get_licensee(self, global_id, mme_code=''):
         """Get licensee,  with optional exclusive filters.
@@ -1163,7 +1182,7 @@ class Client(object):
             url += f'?f_mme_code={mme_code}'
         response = self.request('get', url)
         return Licensee(self, response)
-    
+
 
     def get_users(
         self,

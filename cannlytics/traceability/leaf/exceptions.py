@@ -11,8 +11,9 @@ class TraceabilityException(Exception):
 
 
 class APIError(TraceabilityException):
-    def __init__(self, response):
+    """A primary error raised by the Leaf Data Systems API."""
 
+    def __init__(self, response):
         super(APIError, self).__init__(self._extract_text(response))
         self.response = response
 
@@ -22,6 +23,10 @@ class APIError(TraceabilityException):
     def _text_from_detail(self, response):
         try:
             errors = response.json()
-            return errors['error']
+            # return errors['error']
+            if isinstance(errors, list):
+                return errors
+            else:
+                return errors['validation_messages']
         except (AttributeError, KeyError, ValueError):
-            return None
+            return response

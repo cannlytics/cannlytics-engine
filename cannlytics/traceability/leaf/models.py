@@ -113,8 +113,9 @@ class Batch(LeafModel):
             'type': type,
         }
         entry = self.client.create_batches([data])[0]
-        for key in entry:
-            self[key] = entry[key]
+        entry_data = entry.to_dict()
+        for key in entry_data:
+            self.__setattr__(key, entry_data[key])
 
     def update(self, **kwargs):
         """Update the batch given parameters as keyword arguments."""
@@ -138,7 +139,7 @@ class Disposal(LeafModel):
 
     def create(
         self,
-        qty,
+        qty='',
         external_id='',
         global_area_id='',
         global_batch_id='',
@@ -152,7 +153,7 @@ class Disposal(LeafModel):
         data = {
             'external_id': external_id,
             'reason': reason,
-            'disposal_at': get_time_string(),
+            # 'disposal_at': get_time_string(),
             'qty': qty,
             'uom': uom,
             'source': source,
@@ -162,8 +163,9 @@ class Disposal(LeafModel):
             'global_inventory_id': global_inventory_id
         }
         entry = self.client.create_disposals([data])[0]
-        for key in entry:
-            self[key] = entry[key]
+        entry_data = entry.to_dict()
+        for key in entry_data:
+            self.__setattr__(key, entry_data[key])
 
     def update(self, **kwargs):
         """Update the disposal given parameters as keyword arguments."""
@@ -187,14 +189,15 @@ class Inventory(LeafModel):
     @classmethod
     def create_from_json(cls, client, json):
         obj = cls(client, json)
-        obj.create(**json)
+        obj.create(json)
         return obj
 
     def create(self, data): # Optional: Pass parameters
         """Create an inventory record."""
         entry = self.client.create_inventory([data])[0]
-        for key in entry:
-            self[key] = entry[key]
+        entry_data = entry.to_dict()
+        for key in entry_data:
+            self.__setattr__(key, entry_data[key])
     
     def update(self, **kwargs):
         """Update the inventory given parameters as keyword arguments."""
@@ -214,8 +217,9 @@ class Inventory(LeafModel):
             qty=qty,
             external_id=external_id
         )
-        for key in entry:
-            self[key] = entry[key]
+        entry_data = entry.to_dict()
+        for key in entry_data:
+            self.__setattr__(key, entry_data[key])
     
     def convert(
         self,
@@ -261,8 +265,9 @@ class Inventory(LeafModel):
             end_date=end_date,
             waste=waste,
         )
-        for key in entry:
-            self[key] = entry[key]
+        entry_data = entry.to_dict()
+        for key in entry_data:
+            self.__setattr__(key, entry_data[key])
     
     def to_plants(self, data):
         """Unpackage the inventory into plants."""
@@ -286,8 +291,9 @@ class InventoryAdjustment(LeafModel):
     def create(self, data): # Optional: Pass parameters
         """Create an inventory adjustment record."""
         entry = self.client.create_inventory_adjustments([data])[0]
-        for key in entry:
-            self[key] = entry[key]
+        entry_data = entry.to_dict()
+        for key in entry_data:
+            self.__setattr__(key, entry_data[key])
 
 
 class InventoryType(LeafModel):
@@ -299,11 +305,28 @@ class InventoryType(LeafModel):
         obj.create(**json)
         return obj
 
-    def create(self, data): # Optional: Pass parameters
+    def create(
+        self,
+        weight=0,
+        external_id='',
+        name='',
+        type='end_product',
+        intermediate_type='usable_marijuana',
+        uom='ea'
+    ):
         """Create an inventory type record."""
+        data = {
+            'external_id': external_id,
+            'name': name,
+            'type': type,
+            'intermediate_type': intermediate_type,
+            'weight_per_unit_in_grams': weight,
+            'uom': uom
+        }
         entry = self.client.create_inventory_types([data])[0]
-        for key in entry:
-            self[key] = entry[key]
+        entry_data = entry.to_dict()
+        for key in entry_data:
+            self.__setattr__(key, entry_data[key])
     
     def update(self, **kwargs):
         """Update the inventory type given parameters as keyword arguments."""
@@ -322,14 +345,15 @@ class Transfer(LeafModel):
     @classmethod
     def create_from_json(cls, client, json):
         obj = cls(client, json)
-        obj.create(**json)
+        obj.create(json)
         return obj
 
     def create(self, data): # Optional: Pass parameters
         """Create an inventory transfer record."""
         entry = self.client.create_transfers([data])[0]
-        for key in entry:
-            self[key] = entry[key]
+        entry_data = entry.to_dict()
+        for key in entry_data:
+            self.__setattr__(key, entry_data[key])
     
     def update(self, **kwargs):
         """Update the inventory transfer given parameters as keyword arguments."""
@@ -343,8 +367,13 @@ class Transfer(LeafModel):
             self.global_id,
             area_id=area_id,
         )
-        for key in entry:
-            self[key] = entry[key]
+        entry_data = entry.to_dict()
+        for key in entry_data:
+            self.__setattr__(key, entry_data[key])
+    
+    def transit(self):
+        """Flag the inventory transfer as in-transit."""
+        self.client.transit_transfer(self.global_id)
     
     def void(self):
         """Void the inventory transfer."""
@@ -365,8 +394,9 @@ class LabResult(LeafModel):
         """Create a lab result record."""
         data['tested_at'] = get_time_string()
         entry = self.client.create_lab_results([data])[0]
-        for key in entry:
-            self[key] = entry[key]
+        entry_data = entry.to_dict()
+        for key in entry_data:
+            self.__setattr__(key, entry_data[key])
 
     def update(self, **kwargs):
         """Update the lab result given parameters as keyword arguments."""
@@ -390,14 +420,23 @@ class Plant(LeafModel):
     @classmethod
     def create_from_json(cls, client, json):
         obj = cls(client, json)
-        obj.create(json)
+        obj.create(**json)
         return obj
 
-    def create(self, data):
+    def create(self, batch_id='', created_at='', origin='seed', stage='growing'):
         """Create a plant record."""
+        if not created_at:
+            created_at = get_time_string()
+        data = {
+            'global_batch_id': batch_id,
+            'origin': origin,
+            'plant_created_at': created_at,
+            'stage': stage,
+        }
         entry = self.client.create_plants([data])[0]
-        for key in entry:
-            self[key] = entry[key]
+        entry_data = entry.to_dict()
+        for key in entry_data:
+            self.__setattr__(key, entry_data[key])
 
     def update(self, **kwargs):
         """Update the plant given parameters as keyword arguments."""
