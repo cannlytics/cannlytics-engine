@@ -477,7 +477,6 @@ class Plant(LeafModel):
         self.client.move_plants_to_inventory(data)
 
 
-
 class Sale(LeafModel):
     """A class that represents a cannabis sale."""
 

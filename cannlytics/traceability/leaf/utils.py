@@ -36,9 +36,8 @@ def get_time_string(past=0, future=0, tz='local'):
     return now.strftime('%m/%d/%Y %I:%M%p').lower()
 
 
-# '06/07/2016 12:34pm'
+# TODO: Import / export data to and from the API.
 
-# Optional:
 def import_csv(self, file_id, data):
     """Imports data from a .csv to the Leaf Data Systems API.
 
@@ -74,7 +73,7 @@ def import_csv(self, file_id, data):
     #     headers=headers,
     # )
 
-# Optional:
+
 def export_csv(self, file_id, data):
     """Exports data to a .csv from the Leaf Data Systems API.
 
@@ -122,7 +121,7 @@ adjustment_reasons = [
     'member_left_the_cooperative', 
     'internal_qa_sample', 
     'budtender_sample', 
-    'vendor_sample'
+    'vendor_sample',
 ]
 
 # TODO: Add analyses by sample type
@@ -131,14 +130,14 @@ analyses = {}
 analysis_statuses = [
     'not_started',
     'in_progress', 
-    'completed'
+    'completed',
 ]
 
 batch_types = [
     'propagation material',
     'plant',
     'harvest', 
-    'intermediate/ end product'
+    'intermediate/ end product',
 ]
 
 inventory_types = [
@@ -158,7 +157,7 @@ intermediate_types = {
         'co2_concentrate', 
         'ethanol_concentrate', 
         'food_grade_solvent_concentrate', 
-        'infused_cooking_medium'
+        'infused_cooking_medium',
     ],
     'end_product': [
         'liquid_edible', 
@@ -172,21 +171,21 @@ intermediate_types = {
         'capsules',
         'tinctures', 
         'transdermal_patches',
-        'suppositories'
+        'suppositories',
     ],
     'immature_plant': [
         'seeds',
         'clones',
-        'plant_tissue'
+        'plant_tissue',
     ],
     'mature_plant': [
-        'non_mandatory_plant_sample'
+        'non_mandatory_plant_sample',
     ],
     'harvest_materials': [
         'flower',
         'other_material',
         'flower_lots', 
-        'other_material_lots'
+        'other_material_lots',
     ],
     'waste': ['waste']
 }
@@ -196,7 +195,7 @@ plant_origins = [
     'seed',
     'clone',
     'plant',
-    'tissue'
+    'tissue',
 ]
 
 plant_stages = [
@@ -204,18 +203,18 @@ plant_stages = [
     'growing', 
     'harvested',
     'packaged',
-    'destroyed'
+    'destroyed',
 ]
 
 sample_types = [
     'lab_sample', 
     'non_mandatory_sample', 
-    'product_sample'
+    'product_sample',
 ]
 
 product_sample_types = [
     'budtender_sample', 
-    'vendor_sample'
+    'vendor_sample',
 ]
 
 waste_reasons = {
@@ -228,14 +227,14 @@ waste_reasons = {
         'unhealthy',
         'mandated',
         'waste', 
-        'other'
+        'other',
     ],
     'daily_plant_waste': [
         'pruning',
         'infestation',
         'quality control',
         'unhealthy',
-        'mandated'
+        'mandated',
     ],
     'inventory': [
         'failed qa', 

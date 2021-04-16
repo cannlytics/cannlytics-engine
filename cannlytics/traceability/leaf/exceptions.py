@@ -23,7 +23,6 @@ class APIError(TraceabilityException):
     def _text_from_detail(self, response):
         try:
             errors = response.json()
-            # return errors['error']
             if isinstance(errors, list):
                 return errors
             else:

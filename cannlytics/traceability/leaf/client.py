@@ -62,18 +62,12 @@ class Client(object):
         data=None,
     ):
         """Make a request to the Leaf API."""
+        # FIXME: Restart session if ConnectionError
         response = getattr(self.session, method)(
             endpoint,
             json=data,
             params=params,
         )
-        print('\n\nREQUEST:', response.request.url)
-        print('\n\nBODY:\n\n', response.request.body)
-        print('\n\nSTATUS CODE:', response.status_code)
-        try:
-            print('\n\nRESPONSE:\n\n', dumps(response.json()), '\n\n')
-        except ValueError:
-            print('\n\nRESPONSE:\n\n', response.text, '\n\n')
         if response.status_code == 200:
             body = response.json()
             try:
