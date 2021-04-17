@@ -441,7 +441,7 @@ customer_types = [
   'Consumer',
   'Patient',
   'Caregiver',
-  'ExternalPatient'
+  'ExternalPatient',
 ]
 
 location_types = [

@@ -21,28 +21,40 @@ class Client(object):
     """An instance of this class communicates with
     the Metrc API.
 
-        vendor_api_key (str): A Metrc API key, obtained from Metrc
-        upon successful certification. The vendor API key is the
-        software provider's secret used in every instance, regardless
-        of location or licensee.
+        vendor_api_key (str): Required Metrc API key, obtained from Metrc
+            upon successful certification. The vendor API key is the
+            software provider's secret used in every instance, regardless
+            of location or licensee.
             
-        user_api_key (str): A licensee's user's secret obtained
-        from the Metrc user interface. The user's permissions
-        determine the level of access to the Metrc API.
+        user_api_key (str): Required user secret obtained
+            from a licensee's Metrc user interface. The user's permissions
+            determine the level of access to the Metrc API.
+
+        primary_license (str): A license to use if no license is provided
+            on individual requests.
+
+        state (str): The state of the licensee, Oklahoma (ok) by default.
     
     Example:
         
-        track = metrc.Client(vendor_api_key='abc', user_api_key='xyz')
+        track = metrc.Client(
+            vendor_api_key='abc',
+            user_api_key='xyz',
+            primary_license='123',
+            state='ok'
+        )
     """
 
-    def __init__(self, vendor_api_key, user_api_key, primary_license=''):
-        self.base = METRC_API_BASE_URL
-        self.test_api = METRC_API_BASE_URL_TEST
+    def __init__(self, vendor_api_key, user_api_key, primary_license='', state='ok', test=False):
         self.user_api_key = user_api_key
         self.vendor_api_key = vendor_api_key
         self.primary_license = primary_license
         self.session = Session()
         self.session.auth = (vendor_api_key, user_api_key)
+        self.test = test
+        self.base = METRC_API_BASE_URL % state
+        if test:
+            self.test_api = METRC_API_BASE_URL_TEST % state
 
     def request(
         self,
@@ -50,17 +62,18 @@ class Client(object):
         endpoint,
         data=None,
         params=None,
-        verbose=True,
-        # Optional: See if passing files works
-        # https://stackoverflow.com/questions/18179345/uploading-multiple-files-in-a-single-request-using-python-requests-module
+        verbose=False,
     ):
         """Make a request to the Metrc API."""
-        # FIXME: Handle ConnectionError
-        response = getattr(self.session, method)(
-            endpoint,
-            json=data,
-            params=params,
-        )
+        url = self.base + endpoint
+        if self.test:
+            url = self.test_api + endpoint
+        try:
+            response = getattr(self.session, method)(url, json=data, params=params)
+        except ConnectionError:
+            self.session = Session()
+            self.session.auth = (self.vendor_api_key, self.user_api_key)
+            response = getattr(self.session, method)(url, json=data, params=params)
         if verbose:
             print('\n\nREQUEST:', response.request.url)
             print('\n\nBODY:\n\n', response.request.body)
@@ -77,9 +90,6 @@ class Client(object):
         else:
             raise MetrcAPIError(response)
 
-    # def parse(self, data, custom_object):
-    #     """Parse JSON response into a given object type."""
-    #     return loads(data, object_hook=custom_object)
 
     #------------------------------------------------------------------
     # Employees and facilities
@@ -288,8 +298,8 @@ class Client(object):
         """
         url = METRC_LAB_RESULTS_URL % 'results'
         params = format_params(
+            package_id=uid,
             license_number=license_number,
-            package_id=uid
         )
         response = self.request('get', url, params=params)
         return [LabResult(self, x) for x in response]
@@ -531,7 +541,7 @@ class Client(object):
     # Patients
     #------------------------------------------------------------------
 
-    def get_patients(self, uid='', action='', license_number=''):
+    def get_patients(self, uid='', action='active', license_number=''):
         """Get licensee member patients.
         Args:
             uid (str): A UID for a patient.
@@ -547,7 +557,10 @@ class Client(object):
         try:
             return Patient(self, response, license_number)
         except AttributeError:
-            return [Patient(self, x, license_number) for x in response]
+            try:
+                return [Patient(self, x, license_number) for x in response]
+            except AttributeError:
+                return response
 
 
     def create_patients(self, data, license_number=''):
@@ -579,9 +592,10 @@ class Client(object):
         params = format_params(license_number=license_number)
         return self.request('delete', url, params=params)
 
+
     #------------------------------------------------------------------
     # Plant Batches
-    # TODO: isFromMotherPlant on POST /plantbatches/v1/createpackages
+    # TODO: Implement parameter isFromMotherPlant on POST /plantbatches/v1/createpackages
     #------------------------------------------------------------------
 
     def get_batches(
@@ -711,7 +725,7 @@ class Client(object):
     def get_receipts(
         self,
         uid='',
-        action='',
+        action='active',
         license_number='',
         start='',
         end='',
@@ -1024,6 +1038,7 @@ class Client(object):
     # Transfer Templates
     #------------------------------------------------------------------
 
+    # TODO: Implement the following 2 endpoints:
     # GET /transfers/v1/templates/{id}/transporters
     # GET /transfers/v1/templates/{id}/transporters/details
 
