@@ -106,6 +106,7 @@ def test_create_log():
     logs = "tests/test_collections/logs"
     firebase.create_log(logs, user, "Test log.", "test", "create_log")
 
+
 #------------------------------------------------------------#
 # Test Firebase Storage
 #------------------------------------------------------------#

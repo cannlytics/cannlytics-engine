@@ -4,6 +4,7 @@ setup.py | cannlytics
 Copyright © 2021 Cannlytics
 Author: Keegan Skeate <keegan@cannlytics.com>
 Created: 1/21/2021
+Updated: 3/18/2021
 
 License GPLv3+: GNU GPL version 3 or later <https://gnu.org/licenses/gpl.html>
 This is free software: you are free to change and redistribute it.
@@ -16,7 +17,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="cannlytics",
-    version="0.0.5",
+    version="0.0.6",
     author="Cannlytics",
     author_email="contact@cannlytics.com",
     description="Cannlytics provides a user-friendly interface to quickly receive samples, perform analyses, collect and review results, and publish certificates of analysis (CoAs). There are also built in logistics, CRM (client relationship management), inventory management, and invoicing tools.",
