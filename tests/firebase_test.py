@@ -9,7 +9,7 @@ from google.cloud.firestore_v1.collection import CollectionReference
 from google.cloud.firestore_v1.document import DocumentReference
 
 import sys
-sys.path.append("..")
+sys.path.append('..')
 from cannlytics import firebase # pylint: disable=import-error
 
 
@@ -23,53 +23,53 @@ def test_firestore():
 
     # Initialize Firebase.
     env = environ.Env()
-    env.read_env("../.env")
-    credentials = env("GOOGLE_APPLICATION_CREDENTIALS")
-    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = credentials
+    env.read_env('../.env')
+    credentials = env('GOOGLE_APPLICATION_CREDENTIALS')
+    os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = credentials
     db = firebase.initialize_firebase()
 
     # Create a collection reference.
-    col_ref = firebase.create_reference(db, "tests")
+    col_ref = firebase.create_reference(db, 'tests')
     assert isinstance(col_ref, CollectionReference) == True
 
     # Create a document reference.
-    doc_ref = firebase.create_reference(db, "tests/firebase_test")
+    doc_ref = firebase.create_reference(db, 'tests/firebase_test')
     assert isinstance(doc_ref, DocumentReference) == True
 
     # Create a document.
-    firebase.update_document("tests/firebase_test", {"user": "CannBot"})
+    firebase.update_document('tests/firebase_test', {'user': 'CannBot'})
 
     # Update a document.
-    firebase.update_document("tests/firebase_test", {"test": "firebase_test"})
+    firebase.update_document('tests/firebase_test', {'test': 'firebase_test'})
 
     # Get the document.
-    data = firebase.get_document("tests/firebase_test")
-    assert data["user"] == "CannBot"
-    assert data["test"] == "firebase_test"
+    data = firebase.get_document('tests/firebase_test')
+    assert data['user'] == 'CannBot'
+    assert data['test'] == 'firebase_test'
 
     # Get a collection.
-    filters = [{"key": "test", "operation": "==", "value": "firebase_test"}]
-    docs = firebase.get_collection("tests", filters=filters)
-    assert docs[0]["test"] == "firebase_test"
+    filters = [{'key': 'test', 'operation': '==', 'value': 'firebase_test'}]
+    docs = firebase.get_collection('tests', filters=filters)
+    assert docs[0]['test'] == 'firebase_test'
 
     # Add an element to an array in a document.
-    firebase.add_to_array("tests/firebase_test", "likes", "Testing")
-    data = firebase.get_document("tests/firebase_test")
-    assert "Testing" in data["likes"]
+    firebase.add_to_array('tests/firebase_test', 'likes', 'Testing')
+    data = firebase.get_document('tests/firebase_test')
+    assert 'Testing' in data['likes']
 
     # Remove an element from an array in a document.
-    firebase.remove_from_array("tests/firebase_test", "likes", "Testing")
-    data = firebase.get_document("tests/firebase_test")
-    assert "Testing" not in data["likes"]
+    firebase.remove_from_array('tests/firebase_test', 'likes', 'Testing')
+    data = firebase.get_document('tests/firebase_test')
+    assert 'Testing' not in data['likes']
 
     # Increment a value in a document.
-    firebase.increment_value("tests/firebase_test", "runs")
-    data = firebase.get_document("tests/firebase_test")
-    assert data["runs"] > 0
+    firebase.increment_value('tests/firebase_test', 'runs')
+    data = firebase.get_document('tests/firebase_test')
+    assert data['runs'] > 0
 
     # Import .csv data to Firestore.
-    ref = "tests/test_collections/licensees"
-    data_file = "./assets/data/licensees_partial.csv"
+    ref = 'tests/test_collections/licensees'
+    data_file = './assets/data/licensees_partial.csv'
     firebase.import_data(db, ref, data_file)
     
     # TODO: Test import .xlsx data to Firestore.
@@ -77,8 +77,8 @@ def test_firestore():
     # TODO: Test import .txt data to Firestore.
     
     # Export data to .csv from Firestore.
-    output_csv_file = "./assets/data/licensees_test.csv"
-    output_xlsx_file = "./assets/data/licensees_test.xlsx"
+    output_csv_file = './assets/data/licensees_test.csv'
+    output_xlsx_file = './assets/data/licensees_test.xlsx'
     firebase.export_data(db, ref, output_csv_file)
     
     # Export data to .xlsx from Firestore.
@@ -91,20 +91,20 @@ def test_create_log():
     
     # Initialize Firebase.
     env = environ.Env()
-    env.read_env("../.env")
-    credentials = env("GOOGLE_APPLICATION_CREDENTIALS")
-    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = credentials
+    env.read_env('../.env')
+    credentials = env('GOOGLE_APPLICATION_CREDENTIALS')
+    os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = credentials
     db = firebase.initialize_firebase()
 
     # Create a test log.
     user = {
-        "uid": "test",
-        "display_name": "CannBot",
-        "email": "bot@cannlytics.com",
-        "photo_url": "https://robohash.org/bot@cannlytics.com",
+        'uid': 'test',
+        'display_name': 'CannBot',
+        'email': 'bot@cannlytics.com',
+        'photo_url': 'https://robohash.org/bot@cannlytics.com',
     }
-    logs = "tests/test_collections/logs"
-    firebase.create_log(logs, user, "Test log.", "test", "create_log")
+    logs = 'tests/test_collections/logs'
+    firebase.create_log(logs, user, 'Test log.', 'test', 'create_log')
 
 
 #------------------------------------------------------------#
@@ -117,22 +117,22 @@ def test_storage():
 
     # Initialize Firebase.
     env = environ.Env()
-    env.read_env("../.env")
-    credentials = env("GOOGLE_APPLICATION_CREDENTIALS")
-    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = credentials
+    env.read_env('../.env')
+    credentials = env('GOOGLE_APPLICATION_CREDENTIALS')
+    os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = credentials
     firebase.initialize_firebase()
 
     # Define file names.
-    bucket_name = "cannlytics.appspot.com"
-    bucket_folder = "tests/assets/pdfs"
-    destination_blob_name = "tests/assets/pdfs/pandas_cheat_sheet.pdf"
-    local_folder = "./assets/pdfs"
-    source_file_name = "./assets/pdfs/Pandas_Cheat_Sheet.pdf"
-    download_folder = "./assets/downloads/pdfs"
-    download_file_name = "./assets/downloads/pdfs/Pandas_Cheat_Sheet.pdf"
-    file_name = "pandas_cheat_sheet.pdf"
-    file_copy = "pandas_cheat_sheet_copy.pdf"
-    newfile_name = "tests/assets/pdfs/" + file_copy
+    bucket_name = 'cannlytics.appspot.com'
+    bucket_folder = 'tests/assets/pdfs'
+    destination_blob_name = 'tests/assets/pdfs/pandas_cheat_sheet.pdf'
+    local_folder = './assets/pdfs'
+    source_file_name = './assets/pdfs/Pandas_Cheat_Sheet.pdf'
+    download_folder = './assets/downloads/pdfs'
+    download_file_name = './assets/downloads/pdfs/Pandas_Cheat_Sheet.pdf'
+    file_name = 'pandas_cheat_sheet.pdf'
+    file_copy = 'pandas_cheat_sheet_copy.pdf'
+    newfile_name = 'tests/assets/pdfs/' + file_copy
 
     # Upload a file to a Firebase Storage bucket.
     firebase.upload_file(bucket_name, destination_blob_name, source_file_name)
@@ -167,15 +167,15 @@ def test_auth():
 
     # Initialize Firebase
     env = environ.Env()
-    env.read_env("../.env")
-    credentials = env("GOOGLE_APPLICATION_CREDENTIALS")
-    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = credentials
+    env.read_env('../.env')
+    credentials = env('GOOGLE_APPLICATION_CREDENTIALS')
+    os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = credentials
     firebase.initialize_firebase()
 
     # Create account.
-    name = "CannBot"
-    email = "contact@cannlytics.com"
-    claims = {"organizations": ["Cannlytics"]}
+    name = 'CannBot'
+    email = 'contact@cannlytics.com'
+    claims = {'organizations': ['Cannlytics']}
     user, _ = firebase.create_account(name, email, notification=True)
 
     # Create and get custom claims.
@@ -194,9 +194,9 @@ def test_auth():
     assert isinstance(all_users, list) == True
 
     # Update user.
-    photo_url = f"https://robohash.org/{email}?set=set5"
-    user = firebase.update_user(user, {"photo_url": photo_url})
-    assert user.photo_url == "https://robohash.org/contact@cannlytics.com?set=set5"
+    photo_url = f'https://robohash.org/{email}?set=set5'
+    user = firebase.update_user(user, {'photo_url': photo_url})
+    assert user.photo_url == 'https://robohash.org/contact@cannlytics.com?set=set5'
 
     # Delete a user.
     firebase.delete_user(user.uid)
@@ -209,12 +209,12 @@ def test_auth():
 
 def test_get_keywords():
     """Test get keywords."""
-    keywords = firebase.get_keywords("Gorilla Glue")
-    assert "gorilla" in keywords and "glue" in keywords
+    keywords = firebase.get_keywords('Gorilla Glue')
+    assert 'gorilla' in keywords and 'glue' in keywords
 
 
 def test_snake_case():
     """Test string to snake-case."""
-    key = firebase.snake_case("% Dev. from the mean")
-    assert key == "percent_dev_from_the_mean"
+    key = firebase.snake_case('% Dev. from the mean')
+    assert key == 'percent_dev_from_the_mean'
 

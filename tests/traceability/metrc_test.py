@@ -23,7 +23,8 @@ Description:
 
 Resources:
 
-    https://api-ok.metrc.com/Documentation
+    [Metrc Oklahoma Docs](https://api-ok.metrc.com/Documentation)
+    [Metrc Oregon Docs](https://api-or.metrc.com/Documentation)
 
 """
 

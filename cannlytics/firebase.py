@@ -19,10 +19,10 @@ Example:
 
     # Get and set all credentials.
     env = environ.Env()
-    env.read_env(".env")
-    credentials = env("GOOGLE_APPLICATION_CREDENTIALS")
-    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = credentials
-    bucket_name = environ.get("FIREBASE_STORAGE_BUCKET")
+    env.read_env('.env')
+    credentials = env('GOOGLE_APPLICATION_CREDENTIALS')
+    os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = credentials
+    bucket_name = environ.get('FIREBASE_STORAGE_BUCKET')
 
     # Initialize Firebase
     db = initialize_firebase()
@@ -69,7 +69,7 @@ def create_reference(database, path):
         (ref): Either a document or collection reference.
     """
     ref = database
-    parts = path.split("/")
+    parts = path.split('/')
     for i in range(len(parts)):
         part = parts[i]
         if i % 2:
@@ -158,7 +158,7 @@ def get_collection(ref, limit=None, order_by=None, desc=False, filters=[]):
         order_by (str): A field to order the documents by, with the default being none.
         desc (bool): The direction to order the documents by the order_by field.
         filters (list): Filters are dictionaries of the form
-            `{"key": "", "operation": "", "value": ""}`.
+            `{'key': '', 'operation': '', 'value': ''}`.
             Filters apply [Firebase queries](https://firebase.google.com/docs/firestore/query-data/queries)
             to the given `key` for the given `value`.
             Operators include: `==`, `>=`, `<=`, `>`, `<`, `!=`,
@@ -173,10 +173,10 @@ def get_collection(ref, limit=None, order_by=None, desc=False, filters=[]):
     if filters:
         for filter in filters:
             collection = collection.where(
-                filter["key"], filter["operation"], filter["value"]
+                filter['key'], filter['operation'], filter['value']
             )
     if order_by and desc:
-        collection = collection.order_by(order_by, direction="DESCENDING")
+        collection = collection.order_by(order_by, direction='DESCENDING')
     elif order_by:
         collection = collection.order_by(order_by)
     if limit:
@@ -209,14 +209,14 @@ def import_data(db, ref, data_file):
         )
     except:
         try:
-            data = read_csv(data_file, sep=" ", header=None)
+            data = read_csv(data_file, sep=' ', header=None)
         except:
             try:
                 data = read_csv(
                     data_file,
                     header=0,
                     skip_blank_lines=True, 
-                    encoding="utf-16",
+                    encoding='utf-16',
                     sep='\t',
                 )
             except:
@@ -230,7 +230,7 @@ def import_data(db, ref, data_file):
             doc_data = values.to_dict()
             data_ref.document(doc_id).set(doc_data, merge=True)
     else:
-        doc_data = data.to_dict(orient="index")
+        doc_data = data.to_dict(orient='index')
         data_ref.set(doc_data, merge=True)
 
 
@@ -247,7 +247,7 @@ def export_data(db, ref, data_file):
             meta=['id'],
             record_prefix='sp_artist_',
             meta_prefix='sp_track_',
-            sep="_"
+            sep='_'
         )
     
     Args:
@@ -261,7 +261,7 @@ def export_data(db, ref, data_file):
         docs = data_ref.stream()
         for doc in docs:
             doc_data = doc.to_dict()
-            doc_data["id"] = doc.id
+            doc_data['id'] = doc.id
             data.append(doc_data)
         output = DataFrame(data)
     else:
@@ -293,9 +293,9 @@ def create_account(name, email, notification=True):
             (tuple): User object, random password
 
     """
-    chars = "abcdefghijklmnopqrstuvwxyz0123456789!@#$-_"
+    chars = 'abcdefghijklmnopqrstuvwxyz0123456789!@#$-_'
     password = get_random_string(42, chars)
-    photo_url = f"https://robohash.org/{email}?set=set5"
+    photo_url = f'https://robohash.org/{email}?set=set5'
     try:
         user = auth.create_user(
             uid=str(uuid4()),
@@ -410,12 +410,12 @@ def update_user(existing_user, data):
     """
     values = {}
     fields = [
-        "email",
-        "phone_number",
-        "email_verified",
-        "display_name",
-        "photo_url",
-        "disabled",
+        'email',
+        'phone_number',
+        'email_verified',
+        'display_name',
+        'photo_url',
+        'disabled',
     ]
     for field in fields:
         new_value = data.get(field)
@@ -425,12 +425,12 @@ def update_user(existing_user, data):
             values[field] = getattr(existing_user, field)
     return auth.update_user(
         existing_user.uid,
-        email=values["email"],
-        phone_number=values["phone_number"],
-        email_verified=values["email_verified"],
-        display_name=values["display_name"],
-        photo_url=values["photo_url"],
-        disabled=values["disabled"],
+        email=values['email'],
+        phone_number=values['phone_number'],
+        email_verified=values['email_verified'],
+        display_name=values['display_name'],
+        photo_url=values['photo_url'],
+        disabled=values['disabled'],
     )
 
 
@@ -469,7 +469,7 @@ def download_file(bucket_name, source_blob_name, destination_file_name, verbose=
     blob.download_to_filename(destination_file_name)
     if verbose:
         print(
-            "Blob {} downloaded to {}.".format(source_blob_name, destination_file_name)
+            'Blob {} downloaded to {}.'.format(source_blob_name, destination_file_name)
         )
 
 
@@ -486,10 +486,10 @@ def download_files(bucket_name, bucket_folder, local_folder, verbose=True):
     file_list = list_files(bucket_name, bucket_folder)
     for file in file_list:
         blob = bucket.blob(file)
-        file_name = blob.name.split("/")[-1]
+        file_name = blob.name.split('/')[-1]
         blob.download_to_filename(local_folder + '/' + file_name)
         if verbose:
-            print(f"{file_name} downloaded from bucket.")
+            print(f'{file_name} downloaded from bucket.')
 
 
 def upload_file(bucket_name, destination_blob_name, source_file_name, verbose=True):
@@ -505,7 +505,7 @@ def upload_file(bucket_name, destination_blob_name, source_file_name, verbose=Tr
     blob = bucket.blob(destination_blob_name)
     blob.upload_from_filename(source_file_name)
     if verbose:
-        print("File {} uploaded to {}.".format(source_file_name, destination_blob_name))
+        print('File {} uploaded to {}.'.format(source_file_name, destination_blob_name))
 
 
 def upload_files(bucket_name, bucket_folder, local_folder, verbose=True):
@@ -536,7 +536,7 @@ def list_files(bucket_name, bucket_folder):
     """
     bucket = storage.bucket(name=bucket_name)
     files = bucket.list_blobs(prefix=bucket_folder)
-    return [file.name for file in files if "." in file.name]
+    return [file.name for file in files if '.' in file.name]
 
 
 def delete_file(bucket_name, bucket_folder, file_name, verbose=True):
@@ -551,7 +551,7 @@ def delete_file(bucket_name, bucket_folder, file_name, verbose=True):
     bucket = storage.bucket(name=bucket_name)
     bucket.delete_blob(bucket_folder + '/' + file_name)
     if verbose:
-        print(f"{file_name} deleted from bucket.")
+        print(f'{file_name} deleted from bucket.')
 
 
 def rename_file(bucket_name, bucket_folder, file_name, newfile_name, verbose=True):
@@ -568,7 +568,7 @@ def rename_file(bucket_name, bucket_folder, file_name, newfile_name, verbose=Tru
     blob = bucket.blob(bucket_folder + '/' + file_name)
     bucket.rename_blob(blob, new_name=newfile_name)
     if verbose:
-        print(f"{file_name} renamed to {newfile_name}.")
+        print(f'{file_name} renamed to {newfile_name}.')
 
 
 # ------------------------------------------------------------#
@@ -589,19 +589,19 @@ def create_log(ref, claims, action, log_type, key, changes=[]):
     """
     now = datetime.now()
     timestamp = datetime.now().isoformat()
-    log_id = now.strftime("%Y-%m-%d_%H-%M-%S")
+    log_id = now.strftime('%Y-%m-%d_%H-%M-%S')
     log_entry = {
-        "action": action,
-        "type": log_type,
-        "key": key,
-        "created_at": timestamp,
-        "user": claims.get("uid"),
-        "user_name": claims.get("display_name"),
-        "user_email": claims.get("email"),
-        "user_photo_url": claims.get("photo_url"),
-        "changes": changes,
+        'action': action,
+        'type': log_type,
+        'key': key,
+        'created_at': timestamp,
+        'user': claims.get('uid'),
+        'user_name': claims.get('display_name'),
+        'user_email': claims.get('email'),
+        'user_photo_url': claims.get('photo_url'),
+        'changes': changes,
     }
-    update_document(f"{ref}/{log_id}", log_entry)
+    update_document(f'{ref}/{log_id}', log_entry)
 
 
 def get_keywords(name):
@@ -610,7 +610,7 @@ def get_keywords(name):
     Args:
         string (str): A string to get keywords for.
     """
-    keywords = name.lower().split(" ")
+    keywords = name.lower().split(' ')
     keywords = [x.strip() for x in keywords if x]
     keywords = list(set(keywords))
     return keywords
@@ -628,7 +628,7 @@ def snake_case(name):
     clean_name = clean_name.replace('$', 'dollars')
     clean_name = clean_name.replace('/', '_')
     clean_name = clean_name.replace(r'\\', '_')
-    clean_name = sub("[!@#$%^&*()[]{};:,./<>?\|`~-=+]", " ", clean_name)
+    clean_name = sub('[!@#$%^&*()[]{};:,./<>?\|`~-=+]', ' ', clean_name)
     words = findall(r'[A-Z]?[a-z]+|[A-Z]{2,}(?=[A-Z][a-z]|\d|\W|$)|\d+', clean_name)
     return '_'.join(map(str.lower, words))
 

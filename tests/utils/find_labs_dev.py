@@ -15,8 +15,8 @@ from cannlytics import find_labs # pylint: disable=import-error
 def labs():
     """Target labs to find metadata."""
     return [{
-        "name": "Cannlytics",
-        "website": "https://cannlytics.com",
+        'name': 'Cannlytics',
+        'website': 'https://cannlytics.com',
     }]
 
 
@@ -29,9 +29,9 @@ def expected_result():
 def test_find_labs(labs, expected_result):
     """Match find_labs results to known value."""
     env = environ.Env()
-    env.read_env("../.env")
-    credentials = env("GOOGLE_APPLICATION_CREDENTIALS")
-    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = credentials
+    env.read_env('../.env')
+    credentials = env('GOOGLE_APPLICATION_CREDENTIALS')
+    os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = credentials
     metadata = find_labs.find_labs(labs)
     assert metadata == expected_result
 
