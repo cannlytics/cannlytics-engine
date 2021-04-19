@@ -1,9 +1,13 @@
 # Change Log
 
-## 3/18/2021 v0.0.6
+## 4/16/2021 v0.0.5
 
-Added Leaf Data Systems traceability module.
+Added complete Metrc and Leaf Data Systems API modules.
 
-## 2/14/2021 v0.0.1 - v0.0.5
+## 3/18/2021 v0.0.4
+
+Started Leaf Data Systems traceability module.
+
+## 2/14/2021 v0.0.1 - v0.0.3
 
 Added Firebase functionality.
