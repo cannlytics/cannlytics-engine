@@ -4,7 +4,7 @@ Metrc Integration Test | Cannlytics
 Author: Keegan Skeate
 Contact: keegan@cannlytics.com
 Created: Mon Mar 29 14:18:18 2021
-License: MIT License
+License: GPLv3
 
 Description:
 
@@ -201,7 +201,6 @@ if __name__ == '__main__':
         'Strain': strain_name,
     })
 
-
     # Get the item's UID.
     new_item = None
     items = track.get_items(license_number=cultivator.license_number)
@@ -359,22 +358,11 @@ if __name__ == '__main__':
         'Location': 'Harvest Location',
         'Item': 'New Old-Time Moonshine Teenth',
         'UnitOfWeight': 'Grams',
-        # 'PatientLicenseNumber': 'X00001',
         'Note': 'Golden ticket in this package.',
-        # 'IsProductionBatch': False,
-        # 'ProductionBatchNumber': None,
-        # 'IsTradeSample': False,
-        # 'IsDonation': False,
-        # 'ProductRequiresRemediation': False,
-        # 'RemediateProduct': False,
-        # 'RemediationMethodId': None,
-        # 'RemediationDate': None,
-        # 'RemediationSteps': None,
         'ActualDate': today,
         'Ingredients': [
             {
                 'HarvestId': harvest_id,
-                # 'HarvestName': None,
                 'Weight': 28,
                 'UnitOfWeight': 'Grams'
             },
@@ -428,13 +416,7 @@ if __name__ == '__main__':
         'Item': 'New Old-Time Moonshine Teenth',
         'Quantity': 1.75,
         'UnitOfMeasure': 'Grams',
-        # 'PatientLicenseNumber': 'X00001',
         'Note': '1st teenth for sale.',
-        # 'IsProductionBatch': False,
-        # 'ProductionBatchNumber': None,
-        # 'IsDonation': False,
-        # 'ProductRequiresRemediation': False,
-        # 'UseSameItem': True,
         'ActualDate': today,
         'Ingredients': [
             {
@@ -526,13 +508,6 @@ if __name__ == '__main__':
         'ShipperAddressState': 'OK',
         'ShipperAddressPostalCode': '123',
         'TransporterFacilityLicenseNumber': lab.license['number'],
-        # 'DriverOccupationalLicenseNumber': grower.license['number'],
-        # 'DriverName': grower.full_name,
-        # 'DriverLicenseNumber': 'xyz',
-        # 'PhoneNumberForQuestions': '18005555555',
-        # 'VehicleMake': 'xyz',
-        # 'VehicleModel': 'xyz',
-        # 'VehicleLicensePlateNumber': 'xyz',
         'Destinations': [
             {
                 'RecipientLicenseNumber': lab.license_number,
@@ -541,7 +516,6 @@ if __name__ == '__main__':
                 'EstimatedDepartureDateTime': get_timestamp(),
                 'EstimatedArrivalDateTime': get_timestamp(future=60 * 24),
                 'GrossWeight': 4,
-                # 'GrossUnitOfWeightId': None,
                 'Transporters': [
                     {
                         'TransporterFacilityLicenseNumber': lab.license_number,
@@ -552,16 +526,12 @@ if __name__ == '__main__':
                         'VehicleMake': 'xyz',
                         'VehicleModel': 'xyz',
                         'VehicleLicensePlateNumber': 'xyz',
-                        # 'IsLayover': False,
                         'EstimatedDepartureDateTime': get_timestamp(),
                         'EstimatedArrivalDateTime': get_timestamp(future=60 * 24),
-                        # 'TransporterDetails': None
                     }
                 ],
                 'Packages': [
                     {
-                        # 'PackageLabel': traced_package.label,
-                        # 'HarvestName': '2nd New Old-Time Moonshine Harvest',
                         'ItemName': 'New Old-Time Moonshine Teenth',
                         'Quantity': 1,
                         'UnitOfMeasureName': 'Each',
@@ -569,7 +539,6 @@ if __name__ == '__main__':
                         'GrossWeight': 4.0,
                         'GrossUnitOfWeightName': 'Grams',
                         'WholesalePrice': None,
-                        # 'Source': '2nd New Old-Time Moonshine Harvest',
                     },
                 ]
             }
@@ -608,7 +577,6 @@ if __name__ == '__main__':
                 'EstimatedDepartureDateTime': get_timestamp(),
                 'EstimatedArrivalDateTime': get_timestamp(future=60 * 24),
                 'GrossWeight': 56,
-                # 'GrossUnitOfWeightId': null,
                 'Transporters': [
                     {
                         'TransporterFacilityLicenseNumber': cultivator.license_number,
@@ -619,16 +587,12 @@ if __name__ == '__main__':
                         'VehicleMake': 'xyz',
                         'VehicleModel': 'xyz',
                         'VehicleLicensePlateNumber': 'xyz',
-                        # 'IsLayover': false,
                         'EstimatedDepartureDateTime': get_timestamp(),
                         'EstimatedArrivalDateTime': get_timestamp(future=60 * 24),
-                        # 'TransporterDetails': null
                     }
                 ],
                 'Packages': [
                     {
-                        # 'PackageLabel': traced_package.label,
-                        # 'HarvestName': '2nd New Old-Time Moonshine Harvest',
                         'ItemName': 'New Old-Time Moonshine Teenth',
                         'Quantity': 2,
                         'UnitOfMeasureName': 'Ounces',
@@ -636,7 +600,6 @@ if __name__ == '__main__':
                         'GrossWeight': 56.0,
                         'GrossUnitOfWeightName': 'Grams',
                         'WholesalePrice': 720,
-                        # 'Source': '2nd New Old-Time Moonshine Harvest',
                     },
                 ]
             }
@@ -665,7 +628,7 @@ if __name__ == '__main__':
     )
 
     updated_transfer = track.get_transfers(
-        # uid=second_transfer_data['TransferId'],
+        uid=second_transfer_data['TransferId'],
         license_number=cultivator.license_number,
         start=get_timestamp(past=15),
         end=get_timestamp()
@@ -681,11 +644,6 @@ if __name__ == '__main__':
         'TransporterFacilityLicenseNumber': cultivator.license_number,
         'DriverOccupationalLicenseNumber': courier.license['number'],
         'DriverName': courier.full_name,
-        # 'DriverLicenseNumber': None,
-        # 'PhoneNumberForQuestions': None,
-        # 'VehicleMake': None,
-        # 'VehicleModel': None,
-        # 'VehicleLicensePlateNumber': None,
         'Destinations': [
             {
                 'RecipientLicenseNumber': lab.license_number,
@@ -709,12 +667,12 @@ if __name__ == '__main__':
                         'TransporterDetails': None
                     }
                 ],
-                # 'Packages': [
-                #     {
-                #         'PackageLabel': new_package_tag,
-                #         'WholesalePrice': 13.33
-                #     },
-                # ]
+                'Packages': [
+                    {
+                        'PackageLabel': new_package_tag,
+                        'WholesalePrice': 13.33
+                    },
+                ]
             }
         ]
     }
@@ -824,7 +782,6 @@ if __name__ == '__main__':
         'Location': None,
         'Item': test_package.item['name'],
         'UnitOfWeight': 'Grams',
-        # 'PatientLicenseNumber': 'X00001',
         'Note': 'Clean as a whistle.',
         'IsProductionBatch': False,
         'ProductionBatchNumber': None,
@@ -855,10 +812,6 @@ if __name__ == '__main__':
     lab_result_data = {
         'Label': test_package_label,
         'ResultDate': get_timestamp(),
-        # 'LabTestDocument': {
-            # 'DocumentFileName': 'new-old-time-moonshine.pdf',
-            # 'DocumentFileBase64': 'encoded_pdf',
-        # },
         'Results': [
             {
                 'LabTestTypeName': 'THC',
@@ -872,24 +825,6 @@ if __name__ == '__main__':
                 'Passed': True,
                 'Notes': ''
             },
-            # {
-            #     'LabTestTypeName': 'Microbiologicals',
-            #     'Quantity': 0,
-            #     'Passed': True,
-            #     'Notes': ''
-            # },
-            # {
-            #     'LabTestTypeName': 'Pesticides',
-            #     'Quantity': 0,
-            #     'Passed': True,
-            #     'Notes': ''
-            # },
-            # {
-            #     'LabTestTypeName': 'Heavy Metals',
-            #     'Quantity': 0,
-            #     'Passed': True,
-            #     'Notes': ''
-            # },
         ]
     }
     track.post_lab_results([lab_result_data], license_number=lab.license_number)
