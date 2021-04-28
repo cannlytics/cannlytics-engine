@@ -628,7 +628,7 @@ def snake_case(name):
     clean_name = clean_name.replace('$', 'dollars')
     clean_name = clean_name.replace('/', '_')
     clean_name = clean_name.replace(r'\\', '_')
-    clean_name = sub('[!@#$%^&*()[]{};:,./<>?\|`~-=+]', ' ', clean_name)
-    words = findall(r'[A-Z]?[a-z]+|[A-Z]{2,}(?=[A-Z][a-z]|\d|\W|$)|\d+', clean_name)
+    clean_name = sub('[!@#$%^&*()[]{};:,./<>?\|`~-=+]', ' ', clean_name) # Remove all other special characters
+    words = findall(r'[A-Z]?[a-z]+|[A-Z]{2,}(?=[A-Z][a-z]|\d|\W|$)|\d+', clean_name) # Handle title case
     return '_'.join(map(str.lower, words))
 
