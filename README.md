@@ -2,6 +2,10 @@
 
 [![contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg)](https://github.com/cannlytics/cannlytics-engine/fork)
 
+<div style="text-align:center; margin-top:1rem; margin-bottom: 1rem;">
+  <img style="max-width:720px" width="100%" alt="" src="./samples/cannlytics_metrc_package.png">
+</div>
+
 Cannlytics provides a user-friendly interface to quickly receive samples, perform analyses, collect and review results, and publish certificates of analysis (CoAs). There are also built in logistics, CRM (client relationship management), inventory management, and invoicing tools. The Cannlytics engine comes with **batteries included**, but you are always welcome to supercharge your setup with modifications and custom components.
 
 ## Installation
@@ -19,6 +23,18 @@ Cannlytics leverages Firebase by default for a database, file storage, and authe
 ## Traceability
 
 Cannlytics supports the [Leaf Data Systems](https://s3-us-gov-west-1.amazonaws.com/leafdata-wa-prod/help/Addendum+C--API+Documentation.pdf) and [Metrc](https://api-ok.metrc.com/Documentation) APIs out-of-the-box.
+
+Producer / processor workflow:
+
+<img style="max-width:100%" width="540px" alt="" src="./samples/metrc_grower_workflow.png">
+
+Lab workflow:
+
+<img style="max-width:100%" width="540px" alt="" src="./samples/metrc_lab_workflow.png">
+
+Retail workflow:
+
+<img style="max-width:100%" width="540px" alt="" src="./samples/metrc_retail_workflow.png">
 
 <!-- ## Contributing -->
 
@@ -41,4 +57,4 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-Made with 💖 by Cannlytics and Cannlytics contributors.
+Made with 💖 by Cannlytics and Cannlytics Contributors.
