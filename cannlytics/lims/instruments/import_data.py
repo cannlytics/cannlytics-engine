@@ -30,16 +30,18 @@ def movecol(df, cols_to_move=[], ref_col='', place='After'):
 # helper function to cleanup column names
 # this should be revisited to make a cleaner more general solution
 def clean_col_names(df):
+
     df.columns = df.columns.str.strip()
     df.columns = df.columns.str.rstrip('.)]')
     df.columns = df.columns.str.replace('%',  'percent', regex=True)
     df.columns = df.columns.str.replace('#',  'number', regex=True)
     df.columns = df.columns.str.replace('[/,-]',  '_', regex=True)
     df.columns = df.columns.str.replace('[.,(,)]',  '', regex=True)
-    df.columns = df.columns.str.replace(r"\'",'', regex=True)
-    df.columns = df.columns.str.replace(r"[[]",  '_', regex=True)
+    df.columns = df.columns.str.replace("\'",'', regex=True)
+    df.columns = df.columns.str.replace("[[]",  '_', regex=True)
     df.columns = df.columns.str.replace(r"[]]",  '', regex=True)
     df.columns = df.columns.str.replace(' ',  '_', regex=True)
+    df.columns = df.columns.str.lower()
 
     return df
 
@@ -128,3 +130,31 @@ def import_nexera(file_name):
  
     return combined_df
 
+def import_gcms_qp(file_name):
+
+    import pandas as pd
+
+    # read in the data and the header data
+    qp_df = pd.read_csv(file_name, sep='   ', header = 6, engine ='python')
+    #clean the column names
+    qp_df = clean_col_names(qp_df)
+
+    # read in the info from the header
+    header_df = pd.read_csv(file_name, nrows=5)
+ 
+    # get the number of ids
+    n_ids = header_df.iloc[4,0].split()[3]
+
+    # drop the rows without an id
+    qp_df.drop(index = [*range(int(n_ids), len(qp_df))], inplace = True)
+
+   # get the file name and add it to the dataframe
+    qp_df['file_name'] = header_df.iloc[0,0].split()[3]
+
+    # get the output date and add it to the dataframe
+    qp_df['date'] = header_df.iloc[1,0].split()[2]
+
+    # get the output time and add it to the dataframe
+    qp_df['time'] = header_df.iloc[2,0].split()[2]
+
+    return qp_df
