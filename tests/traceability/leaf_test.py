@@ -4,7 +4,7 @@ Leaf Integration Test | Cannlytics
 Author: Keegan Skeate
 Contact: keegan@cannlytics.com
 Created: Thu Mar 18 16:08:18 2021
-License: GPLv3
+License: MIT License
 
 Description:
 
