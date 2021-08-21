@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-cannlytics.traceability.metrc.exceptions
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Metrc Exceptions | Cannlytics
+
 Exceptions used when interfacing with the Metrc API.
 """
 
@@ -27,8 +27,11 @@ class MetrcAPIError(TraceabilityException):
         try:
             errors = response.json()
             if isinstance(errors, list):
-                return errors
+                message = '\n'.join(errors)
+                return f'\n---------------\n{message}\n---------------'
             else:
-                return errors['Message']
+                message = errors['Message']
+                return f'\n---------------\n{message}\n---------------'
         except (AttributeError, KeyError, ValueError):
-            return None
+            message = 'Unknown API error'
+            return f'\n---------------\n{message}\n---------------'

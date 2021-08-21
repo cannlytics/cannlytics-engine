@@ -16,6 +16,10 @@ You can install the Cannlytics engine from [PyPI](https://pypi.org/project/cannl
 pip install cannlytics
 ```
 
+## Documentation
+
+Please refer to the [Cannlytics Developer Guide](https://docs.cannlytics.com/) for detailed information about the module.
+
 ## Authentication, Data, and File Management
 
 Cannlytics leverages Firebase by default for a database, file storage, and authentication.

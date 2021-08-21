@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-cannlytics.traceability.metrc.utils
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Metrc Utility Functions | Cannlytics
+
 This module contains common Metrc utility functions
 and constants.
 """
@@ -73,7 +73,7 @@ def encode_pdf(filename):
     Args:
         filename (str): The full file path of a PDF to encode.
     Returns:
-        A string encoded in base-64.
+        (str): A string encoded in base-64.
     """
     with open(filename, 'rb') as pdf:
         return b64encode(pdf.read())
@@ -104,6 +104,7 @@ def get_timestamp(past=0, future=0, tz='local'):
         return now.isoformat()[:19]
     else:
         return now.isoformat()
+
 
 def remove_dict_fields(d, fields):
     """Remove multiple keys from a dictionary.

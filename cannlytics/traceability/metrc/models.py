@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-cannlytics.traceability.metrc.models
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Metrc Models | Cannlytics
+
 This module contains common Metrc models.
 """
 
@@ -28,11 +28,11 @@ class Model(object):
     """Base class for all Metrc models."""
 
     def __init__(
-        self,
-        client,
-        context,
-        license_number='',
-        function=camel_to_snake
+            self,
+            client,
+            context,
+            license_number='',
+            function=camel_to_snake
     ):
         """Initialize the model, setting keys as properties."""
         self.client = client
@@ -40,13 +40,13 @@ class Model(object):
         properties = clean_nested_dictionary(context, function)
         for key in properties:
             self.__dict__[key] = properties[key]
-    
+
     def __getattr__(self, key):
         return self.__dict__[key]
-    
+
     def __setattr__(self, key, value):
         self.__dict__[key] = value
-    
+
     @classmethod
     def from_fb(cls, client, ref):
         """Initialize a class from Firebase data.
@@ -57,7 +57,7 @@ class Model(object):
         data = get_document(ref)
         obj = cls(client, data)
         return obj
-    
+
     @property
     def uid(self):
         """The model's unique ID."""
@@ -68,7 +68,7 @@ class Model(object):
         data = vars(self).copy()
         [data.pop(x, None) for x in ['_license', 'client']]
         return data
-    
+
     def to_fb(self, ref='', col=''):
         """Upload the model's properties as a dictionary to Firestore.
         Args:
@@ -87,11 +87,12 @@ class Model(object):
 
 class Employee(Model):
     """An organization's employee or team member.
-    E.g.
+    ```js
         {
             "FullName": "Keegan Skeate",
             "License": None
         }
+    ```
     """
     pass
 
@@ -100,27 +101,28 @@ class Facility(Model):
     """A Facility represents a building licensed for the growing,
     processing, and/or selling of product. Facilities are created
     and have their permissions determined by a state.
-    E.g.
-        {
-            "HireDate": "0001-01-01",
-            "IsOwner": false,
-            "IsManager": true,
-            "Occupations": [],
-            "Name": "Cultivation LLC",
-            "Alias": "Cultivation on Road St",
-            "DisplayName": "Cultivation on Road St",
-            "CredentialedDate": "1969-08-15",
-            "SupportActivationDate": null,
-            "SupportExpirationDate": null,
-            "SupportLastPaidDate": null,
-            "FacilityType": null,
-            "License": {
-                "Number": "403-X0001",
-                "StartDate": "2013-06-28",
-                "EndDate": "2015-12-28",
-                "LicenseType": "Medical Cultivation"
-            }
+    ```js
+    {
+        "HireDate": "0001-01-01",
+        "IsOwner": false,
+        "IsManager": true,
+        "Occupations": [],
+        "Name": "Cultivation LLC",
+        "Alias": "Cultivation on Road St",
+        "DisplayName": "Cultivation on Road St",
+        "CredentialedDate": "1969-08-15",
+        "SupportActivationDate": null,
+        "SupportExpirationDate": null,
+        "SupportLastPaidDate": null,
+        "FacilityType": null,
+        "License": {
+            "Number": "403-X0001",
+            "StartDate": "2013-06-28",
+            "EndDate": "2015-12-28",
+            "LicenseType": "Medical Cultivation"
         }
+    }
+    ```
     """
 
     @property
@@ -136,8 +138,8 @@ class Facility(Model):
         """
         response = self.client.get_locations(uid=uid, action=action, license_number=self.license_number)
         return response
-    
-    def create_locations(self, names, types=[]):
+
+    def create_locations(self, names, types):
         """Create locations at the facility.
         Args:
             names (list): A list of location names.
@@ -159,11 +161,11 @@ class Facility(Model):
             license_number=self.license_number
         )
         return response
-    
+
     def update_locations(self, ids, names, types=[]):
         """Update locations at the facility.
         Args:
-            uids (list): A list of location IDs.
+            ids (list): A list of location IDs.
             names (list): A list of location names.
             types (list): A list of location types:
                 `default`, `planting`, or `packing`.
@@ -195,17 +197,17 @@ class Facility(Model):
             license_number=self.license_number
         )
         return response
-    
+
     # TODO:
     # Get / Create / Update / Delete strains from facility
     # Get / Create / Update / Delete items from facility
-    
+
     # TODO: Create transfers from the facility
 
 
 class Location(Model):
     """A class that represents a cannabis-production location.
-    E.g.
+    ```js
         {
             "Id": 1,
             "Name": "Harvest Location",
@@ -216,6 +218,7 @@ class Location(Model):
             "ForHarvests": True,
             "ForPackages": True
         }
+    ```
     """
 
     def __init__(self, client, properties, license_number=''):
@@ -245,7 +248,7 @@ class Location(Model):
 
 class Strain(Model):
     """A class that represents a cannabis strain.
-    E.g.
+    ```js
         {
             "Id": 1,
             "Name": "Old-time Moonshine",
@@ -255,10 +258,12 @@ class Strain(Model):
             "IndicaPercentage": 25.0,
             "SativaPercentage": 75.0
         }
+    ```
     """
 
     @classmethod
     def create_from_json(cls, client, json):
+        """Initiate a class instance from a dictionary."""
         obj = cls(client, json)
         obj.create()
         return obj
@@ -268,7 +273,7 @@ class Strain(Model):
         context = self.to_dict()
         data = clean_dictionary(context, snake_to_camel)
         self.client.create_strains([data])
-    
+
     def update(self, **kwargs):
         """Update the strain given parameters as keyword arguments."""
         context = self.to_dict()
@@ -291,7 +296,7 @@ class Item(Model):
     identifies what is in the package and categories
     are used for grouping similar items for reporting purposes.    
     An item will retain its name unless it is re-packaged.
-    E.g.
+    ```js
         {
             "Id": 1,
             "Name": "Buds",
@@ -328,6 +333,7 @@ class Item(Model):
             "Description": null,
             "IsUsed": false
         }
+    ```
     """
 
     RETURNED_VALUES = {
@@ -342,7 +348,6 @@ class Item(Model):
         'AdministrationMethod': 'administration_method',
         'UnitQuantity': 'unit_quantity',
         'UnitQuantityUnitOfMeasureName': 'unit_quantity_unit_of_measure_name',
-        
     }
 
     def __init__(self, client, properties, license_number=''):
@@ -355,10 +360,11 @@ class Item(Model):
 
     @classmethod
     def create_from_json(cls, client, license_number, json):
+        """Initiate a class instance from a dictionary."""
         new_obj = cls(client, json, license_number)
         new_obj.create(license_number)
         return new_obj
-    
+
     def create(self, license_number):
         """Create an item record in Metrc."""
         context = self.to_dict()
@@ -478,7 +484,7 @@ class Plant(Model):
             action='destroyplants',
             license_number=self._license
         )
-    
+
     def manicure(
         self,
         weight,
@@ -559,26 +565,26 @@ class Harvest(Model):
 
     B. Weight – The plant is weighed individually in its entirety after being cut from
     root ball (stem, stalk, bud/flower, leaves, trim leaves, etc.).
-    
+
     C. Waste – This can be recorded using multiple entries but must be reported
     within three days of destruction.
-    
+
     D. Package – Package and tag the product from the Harvest Batch (Fresh
     Cannabis Plant, Flower, Leaf or Kief). These packages must be strain
     specific.
-    
+
     E. Transfer – Licensee must create transfer manifest to move product to a
     Processor, Distributor, or Manufacturer.
-    
+
     F. Finish – When the Harvest Batch (HB) has been fully packaged, there should
     be remaining wet weight to account for moisture loss. Selecting Finish
     Harvest will attribute any remaining weight to moisture loss.
-    
+
     6. A Harvest Batch package of Flower, Leaf, Kief or Fresh Cannabis Plant can only
     be created from the Harvested Tab using a single strain from plants harvested at
     the same time.
     """
-    
+
     def create_packages(self, data):
         """Create packages from a harvest.
         Args:
@@ -609,12 +615,11 @@ class Harvest(Model):
             'ActualDate': get_timestamp()
         }
         self.client.remove_waste([data], license_number=self._license)
-    
+
     def finish(self):
         """Finish a harvest."""
         data = {'Id': self.uid, 'ActualDate': get_timestamp()}
         self.client.finish_harvests([data], license_number=self._license)
-    
 
     def unfinish(self):
         """Unfinish a harvest."""
@@ -637,7 +642,7 @@ class Harvest(Model):
 
 class Package(Model):
     """A class that represents a cannabis package.
-    
+
     Immature plants and seeds can be packaged by a nursery and
     transported by a distributor to a cultivator,
     distributor or retailer for sale.
@@ -677,7 +682,7 @@ class Package(Model):
     #     new_obj = cls(client, json, license_number)
     #     new_obj.create_package(new_obj.to_dict(), license_number)
     #     return new_obj
-    
+
     def create_package(self, data):
         """Create a package record in Metrc."""
         data = clean_nested_dictionary(data, snake_to_camel)
@@ -687,7 +692,7 @@ class Package(Model):
         """Change the item of the package."""
         data = {'Label': self.label, 'Item': item_name}
         self.client.change_package_items([data], self._license)
-    
+
     def finish(self):
         """Finish a package."""
         data = {'Label': self.label, 'ActualDate': get_timestamp()}
@@ -698,11 +703,11 @@ class Package(Model):
         self.client.manage_packages([{'Label': self.label}], action='unfinish', license_number=self._license)
 
     def adjust(
-        self,
-        weight,
-        note='',
-        reason='Mandatory State Destruction',
-        uom='Grams'
+            self,
+            weight,
+            note='',
+            reason='Mandatory State Destruction',
+            uom='Grams'
     ):
         """Adjust the package.
         Args:
@@ -721,14 +726,14 @@ class Package(Model):
         }
         self.client.manage_packages([data], action='adjust', license_number=self._license)
 
-    
+
     # TODO:  remediate, update_note, change_location
     # update_items, update, delete
 
 
 class Patient(Model):
     """A class that represents a cannabis patient.
-    e.g
+    ```js
     {
         'PatientId': 1,
         'LicenseNumber': '000001',
@@ -740,10 +745,12 @@ class Patient(Model):
         'HasSalesLimitExemption': false,
         'OtherFacilitiesCount': 1
     }
+    ```
     """
 
     @classmethod
     def create_from_json(cls, client, json):
+        """Initiate a class instance from a dictionary."""
         obj = cls(client, json)
         obj.create()
         return obj
@@ -769,7 +776,7 @@ class Patient(Model):
 
 class PlantBatch(Model):
     """A class that represents a cannabis plant batch.
-    E.g.
+    ```js
         {
             "Id": 5,
             "Name": "Demo Plant Batch 1",
@@ -803,6 +810,7 @@ class PlantBatch(Model):
             "PatientLicenseNumber": "X00001",
             "ActualDate": "2015-12-15"
         }
+    ```
     """
 
     RETURNED_VALUES = {
@@ -817,7 +825,6 @@ class PlantBatch(Model):
         'AdministrationMethod': 'administration_method',
         'UnitQuantity': 'unit_quantity',
         'UnitQuantityUnitOfMeasureName': 'unit_quantity_unit_of_measure_name',
-        
     }
 
     def __init__(self, client, properties, license_number=''):
@@ -830,10 +837,11 @@ class PlantBatch(Model):
 
     @classmethod
     def create_from_json(cls, client, license_number, json):
+        """Initiate a class instance from a dictionary."""
         new_obj = cls(client, json, license_number)
         new_obj.create(license_number)
         return new_obj
-    
+
     def create(self, license_number):
         """Create a plant batch record in Metrc."""
         context = self.to_dict()
@@ -844,12 +852,12 @@ class PlantBatch(Model):
         """Create a package from the plant batch."""
         data = clean_dictionary(data, snake_to_camel)
         self.client.manage_batches([data], 'createpackages', self._license) # , from_mother=True
-    
+
     def create_package_from_plants(self, data):
         """Create a package from the plant batch."""
         data = clean_dictionary(data, snake_to_camel)
         self.client.manage_batches([data], '/create/packages/frommotherplant', self._license)
-    
+
     def change_growth_phase(self, data):
         """Change the growth phase of the batch."""
         data = clean_dictionary(data, snake_to_camel)
@@ -873,7 +881,7 @@ class PlantBatch(Model):
 
 class LabResult(Model):
     """A class that represents a cannabis lab result.
-    
+
     The Lab Results tab displays the details of each individual lab test performed on
     the package. A Document Download button is available on each row on the Lab
     Results tab to view the associated certificate of analysis (COA), which the
@@ -884,6 +892,7 @@ class LabResult(Model):
 
     @classmethod
     def create_from_json(cls, client, license_number, json):
+        """Initiate a class instance from a dictionary."""
         new_obj = cls(client, json, license_number)
         new_obj.post(license_number)
         return new_obj
@@ -922,19 +931,19 @@ class Transfer(Model):
 
     A package must be received in its entirety (the system DOES NOT allow
     receiving a partial package).
-    
+
     A transfer can be rejected by individual package, or in whole by rejecting all
     packages.
-    
+
     A rejected package requires the originating Licensee to receive the package
     back into inventory.
-    
+
     A package must exist in order to be selected for transfer. Transfers are done in
     real time and are inventory dependent.
-    
+
     When receiving a package, any adjustments to the weight, volume, or count may
     be reported to the State.
-    
+
     If there are any questions about a transfer, reject it.
 
     A transfer can be modified , or voided, up until the time that the
@@ -942,7 +951,7 @@ class Transfer(Model):
     transfer process has begun, the transfer may not be modified except by the Distributor
     or Testing Laboratory to edit estimated departure and arrival times, or driver and vehicle
     information (see Edit Transporter Info below).
-    
+
     When modifying transfers, each of the transfer fields may be modified at the same level
     of detail as when the transfer was created. Edits may be completed for a variety of
     reasons including: error correction, changes in destination, changes in product, etc.
@@ -959,6 +968,7 @@ class Transfer(Model):
 
     @classmethod
     def create_from_json(cls, client, json):
+        """Initiate a class instance from a dictionary."""
         obj = cls(client, json)
         obj.create()
         return obj
@@ -1001,6 +1011,7 @@ class TransferTemplate(Model):
 
     @classmethod
     def create_from_json(cls, client, json):
+        """Initiate a class instance from a dictionary."""
         obj = cls(client, json)
         obj.create()
         return obj
@@ -1026,13 +1037,17 @@ class TransferTemplate(Model):
 
 class Transaction(Model):
     """A class that represents a cannabis sale transaction.
-    Get:
+    When you get a transaction you receive an object as follows.
+    ```js
     {
         "SalesDate": "2015-01-08",
         "TotalTransactions": 40,
         "TotalPackages": 40,
         "TotalPrice": 399.6
     }
+    ```
+    A created transaction is as follows.
+    ```js
     {
         "PackageId": 71,
         "PackageLabel": "ABCDEF012345670000010331",
@@ -1067,20 +1082,23 @@ class Transaction(Model):
         "RecordedByUserName": null,
         "LastModified": "0001-01-01T00:00:00+00:00"
     }
-    Post:
+    ```
+    When you update a transaction, you pass the following object.
+    ```js
     {
         "PackageLabel": "ABCDEF012345670000010331",
         "Quantity": 1.0,
         "UnitOfMeasure": "Ounces",
         "TotalAmount": 9.99
     }
+    ```
     """
-    
 
     RETURNED_VALUES = {}
 
     @classmethod
     def create_from_json(cls, client, json):
+        """Initiate a class instance from a dictionary."""
         obj = cls(client, json)
         obj.create()
         return obj
@@ -1106,8 +1124,8 @@ class Receipt(Model):
     Sales are reported to record the transfer of cannabis
     products to a consumer, patient or caregiver.
 
-    Retrived:
-
+    When you request receipts you receive the following object.
+    ```js
     {
         "Id": 1,
         "ReceiptNumber": null,
@@ -1125,9 +1143,10 @@ class Receipt(Model):
         "RecordedByUserName": null,
         "LastModified": "0001-01-01T00:00:00+00:00"
     }
+    ```
 
-    Post:
-
+    When you create a receipt, you pass the following object.
+    ```js
     {
         "SalesDateTime": "2016-10-04T16:44:53.000",
         "SalesCustomerType": "Consumer",
@@ -1143,11 +1162,12 @@ class Receipt(Model):
             }
         ]
     }
-
+    ```
     """
 
     @classmethod
     def create_from_json(cls, client, json):
+        """Initiate a class instance from a dictionary."""
         obj = cls(client, json)
         obj.create()
         return obj
@@ -1170,44 +1190,25 @@ class Receipt(Model):
         self.client.delete_receipt(self.id, self._license)
 
 
-
-
-
-#------------------------
-# Unused | Needed?
-#------------------------
-
-# class Driver(Model):
-#     """A class that represents a cannabis transfer driver."""
-#     pass
-
-
-# class Vehicle(Model):
-#     """A class that represents a cannabis transfer driver."""
-#     pass
-
-
-# class Waste(Model):
-#     """A class that represents a cannabis waste.
+class Waste(Model):
+    """A class that represents cannabis waste.
     
-#     A harvest batch is created and given a
-#     unique Harvest Name when plants
-#     or plant material are harvested.
+    A harvest batch is created and given a
+    unique Harvest Name when plants
+    or plant material are harvested.
 
-#     Plant waste must be recorded within three business days of destruction. In Metrc
-#     plant waste can be recorded by Immature Plant Lot, Flowering Plant or by
-#     Location.
-#     2. Waste can also be recorded by Harvest Batch. See Metrc User Guide for details.
-#     3. When recording Flowering Plant waste, the waste from multiple plants can be
-#     recorded as a single waste event but the flowering plants contributing to the
-#     waste must be individually identified.
-#     4. If a plant is no longer viable, the waste must be recorded prior to recording its
-#     destruction.
-#     5. The reason for the waste must be identified using the Waste Reasons defined by
-#     the State of California as listed in Exhibit 38 below. Use of some Waste
-#     Reasons may be limited to certain license types, as determined by the State.
+    Plant waste must be recorded within three business days of destruction. In Metrc
+    plant waste can be recorded by Immature Plant Lot, Flowering Plant or by
+    Location.
+    2. Waste can also be recorded by Harvest Batch. See Metrc User Guide for details.
+    3. When recording Flowering Plant waste, the waste from multiple plants can be
+    recorded as a single waste event but the flowering plants contributing to the
+    waste must be individually identified.
+    4. If a plant is no longer viable, the waste must be recorded prior to recording its
+    destruction.
+    5. The reason for the waste must be identified using the Waste Reasons defined by
+    the State of California as listed in Exhibit 38 below. Use of some Waste
+    Reasons may be limited to certain license types, as determined by the State.
 
-#     """
-
-#     pass
-
+    """
+    pass
