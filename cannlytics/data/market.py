@@ -1,0 +1,220 @@
+"""
+Data Market | Cannlytics
+
+Authors: Keegan Skeate <keegan@cannlytics.com>
+Created: 10/11/2021
+Updated: 10/11/2021
+TODO:
+    - Write docstrings.
+    - Allow selling data as a pool.
+    - Allow user to pass a Wallet instead of private_key.
+
+1. Publish assets metadata and associated services
+    - Each asset is assigned a unique DID and a DID Document (DDO)
+    - The DDO contains the asset's services including the metadata
+    - The DID is registered on-chain with a URL of the metadata store
+        to retrieve the DDO from
+    `asset = ocean.assets.create(metadata, publisher_wallet)`
+"""
+
+# Internal packages.
+from datetime import datetime
+from decimal import Decimal
+import os
+import yaml
+
+# External packages.
+from ocean_lib.common.agreements.service_types import ServiceTypes
+from ocean_lib.common.ddo.service import Service
+from ocean_lib.data_provider.data_service_provider import DataServiceProvider
+from ocean_lib.models.btoken import BToken # BToken is ERC20
+from ocean_lib.ocean.ocean import Ocean
+from ocean_lib.web3_internal.constants import ZERO_ADDRESS
+from ocean_lib.web3_internal.currency import pretty_ether_and_wei, to_wei
+from ocean_lib.web3_internal.wallet import Wallet
+
+
+def get_wallet(ocean, private_key):
+    """Get a user's wallet given their private key.
+    Args:
+
+    Returns:
+
+    """
+    return Wallet(ocean.web3, private_key, ocean.config.block_confirmations)
+
+def initialize_market():
+    """Initialize an Ocean data marketplace."""
+    config = None
+    with open('env.yaml', 'r') as f:
+        config = yaml.load(f, Loader=yaml.FullLoader)
+    os.environ['OCEAN_NETWORK_URL'] = config['OCEAN_NETWORK_URL']
+    return Ocean(config)
+
+
+def publish_data(
+        ocean,
+        private_key,
+        files,
+        name,
+        symbol,
+        author,
+        data_license='CC0: Public Domain',
+):
+    """Publish a dataset on the Ocean marketplace.
+    Publish metadata and service attributes on-chain.
+    The service urls will be encrypted before going on-chain.
+    They're only decrypted for datatoken owners upon consume.
+    Args:
+
+    Returns:
+        ()
+    """
+    wallet = Wallet(ocean.web3, private_key, ocean.config.block_confirmations)
+    assert wallet.web3.eth.get_balance(wallet.address) > 0, 'need ETH'
+    data_token = ocean.create_data_token(name, symbol, wallet, blob=ocean.config.metadata_cache_uri)
+    token_address = data_token.address
+    date_created = datetime.now().isoformat()
+    metadata =  {
+        'main': {
+            'type': 'dataset',
+            'name': name,
+            'author': author,
+            'license': data_license,
+            'dateCreated': date_created,
+            'files': files,
+        }
+    }
+    service_attributes = {
+        'main': {
+            'name': 'dataAssetAccessServiceAgreement',
+            'creator': wallet.address,
+            'timeout': 3600 * 24,
+            'datePublished': date_created,
+            'cost': 1.0, # <don't change, this is obsolete>
+        }
+    }
+    service_endpoint = DataServiceProvider.get_url(ocean.config)
+    # FIXME:
+    download_service = Service(
+        service_endpoint=service_endpoint,
+        service_type=ServiceTypes.ASSET_ACCESS,
+        attributes=service_attributes,
+    )
+    assert wallet.web3.eth.get_balance(wallet.address) > 0, 'need ETH'
+    asset = ocean.assets.create(
+        metadata,
+        wallet,
+        service_descriptors=[],
+        data_token_address=token_address
+    )
+    assert token_address == asset.data_token_address
+    return data_token, asset
+
+
+def sell_data(
+        ocean,
+        private_key,
+        data_token,
+        amount,
+        fixed_price=True,
+):
+    """Sell a dataset on the Ocean market.
+    Mint the datatokens.
+    In the create() step below, ganache OCEAN is needed.
+    Finally, Approve the datatoken for sale.
+    Args:
+        ocean ():
+        wallet ():
+        data_token ():
+        amount ():
+        fixed_price (bool): Whether or not to sell the data at a fixed price.
+    Returns:
+        (bool): Returns True if successful.
+    """
+    wallet = Wallet(ocean.web3, private_key, ocean.config.block_confirmations)
+    data_token.mint(wallet.address, to_wei(amount), wallet)
+    OCEAN_token = BToken(ocean.web3, ocean.OCEAN_address)
+    assert OCEAN_token.balanceOf(wallet.address) > 0, 'need OCEAN'
+    data_token.approve(
+        ocean.exchange._exchange_address,
+        to_wei(amount),
+        wallet
+    )
+    return True
+
+
+def buy_data(
+        ocean,
+        private_key,
+        token_address,
+        seller_wallet,
+        min_amount,
+        max_amount,
+):
+    """Buy a dataset on the market.
+    Define wallet, verify that there is enough ganache ETH and OCEAN.
+    Create an exchange_id for a new exchange.
+    Args:
+
+    Returns:
+
+    """
+    wallet = Wallet(ocean.web3, private_key, ocean.config.block_confirmations)
+    assert ocean.web3.eth.get_balance(wallet.address) > 0, 'need ganache ETH'
+    OCEAN_token = BToken(ocean.web3, ocean.OCEAN_address)
+    assert OCEAN_token.balanceOf(wallet.address) > 0, 'need ganache OCEAN'
+    exchange_id = ocean.exchange.create(token_address, to_wei(min_amount), seller_wallet)
+    tx_result = ocean.exchange.buy_at_fixed_rate(
+        to_wei(min_amount),
+        wallet,
+        to_wei(max_amount),
+        exchange_id,
+        token_address,
+        seller_wallet.address
+    )
+    assert tx_result, 'failed buying data tokens at fixed rate.'
+    # FIXME:
+    # print(f"Bob has {pretty_ether_and_wei(data_token.balanceOf(bob_wallet.address), data_token.symbol())}.")
+    # assert data_token.balanceOf(wallet.address) >= to_wei(1), "Bob didn't get 1.0 datatokens"
+
+
+
+def download_data(ocean, private_key, did):
+    """Download a dataset that is in a user's possession.
+    Points to the service object, send datatoken to the service,
+    and then downloads the dataset files. If the connection breaks,
+    then the request can be made again with the order_tx_id.
+    Args:
+        ocean ():
+        private_key ():
+        did (str): Dataset ID.
+    Returns:
+
+    """
+    wallet = Wallet(ocean.web3, private_key, ocean.config.block_confirmations)
+    fee_receiver = ZERO_ADDRESS # could also be market address
+    asset = ocean.assets.resolve(did)
+    service = asset.get_service(ServiceTypes.ASSET_ACCESS)
+    quote = ocean.assets.order(asset.did, wallet.address, service_index=service.index)
+    order_tx_id = ocean.assets.pay_for_service(
+        ocean.web3,
+        quote.amount,
+        quote.data_token_address,
+        asset.did,
+        service.index,
+        fee_receiver,
+        wallet,
+        service.get_c2d_address()
+    )
+    try:
+        file_path = ocean.assets.download(
+            asset.did,
+            service.index,
+            wallet,
+            order_tx_id,
+            destination='./'
+        )
+        return file_path
+    except:
+        return order_tx_id

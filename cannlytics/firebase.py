@@ -1,7 +1,7 @@
 """
 Firebase Module | Cannlytics
 
-Author: Keegan Skeate <contact@cannlytics.com>  
+Authors: Keegan Skeate <contact@cannlytics.com>  
 Created: 2/7/2021  
 Updated: 7/30/2021  
 
@@ -755,7 +755,13 @@ def get_file_url(ref, bucket_name=None, expiration=None):
     return blob.generate_signed_url(expiration)
 
 
-def upload_file(bucket_name, destination_blob_name, source_file_name=None, data_url=None, content_type='image/jpg'):
+def upload_file(
+    bucket_name,
+    destination_blob_name,
+    source_file_name=None,
+    data_url=None,
+    content_type='image/jpg'
+):
     """Upload file to Firebase Storage.
     Args:
         bucket_name (str): The name of the storage bucket.
