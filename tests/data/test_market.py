@@ -14,8 +14,8 @@ sys.path.append('../..')
 from cannlytics.data import market # pylint: disable=import-error
 
 
-def test_market():
-    """Test the data market."""
+def test_publish_data():
+    """Publish a dataset on the data market."""
 
     # Initialize Ocean market.
     ocean = market.initialize_market()
@@ -37,6 +37,13 @@ def test_market():
         'KLS',
         data_license='CC0: Public Domain',
     )
+    return data_token, asset
+
+def test_sell_data(data_token):
+    """Sell a dataset on the data market."""
+
+    # Initialize Ocean market.
+    ocean = market.initialize_market()
 
     # Sell a dataset.
     market.sell_data(
@@ -46,6 +53,12 @@ def test_market():
         100,
         fixed_price=True,
     )
+
+def test_buy_data(data_token, asset):
+    """Buy a dataset on the data market."""
+
+    # Initialize Ocean market.
+    ocean = market.initialize_market()
 
     # Buy a dataset.
     seller_wallet = market.get_wallet(
@@ -70,4 +83,11 @@ def test_market():
 
 if __name__ == '__main__':
 
-    test_market()
+    # Test publishing a dataset.
+    data_token, asset = test_publish_data()
+
+    # Test selling a dataset.
+    test_sell_data(data_token)
+
+    # Test buying a dataset.
+    test_buy_data(data_token, asset)
