@@ -177,6 +177,12 @@ class Contact(Model):
 
 
 @dataclass
+class DataSet(Model):
+    """An abstract representation of a data set."""
+    _collection = 'organizations/%s/batches'
+
+
+@dataclass
 class Batch(Model):
     """A group of samples. A batch does not depend on the client or the
     project of the sample."""

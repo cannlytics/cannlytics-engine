@@ -30,7 +30,7 @@ from ocean_lib.data_provider.data_service_provider import DataServiceProvider
 from ocean_lib.models.btoken import BToken # BToken is ERC20
 from ocean_lib.ocean.ocean import Ocean
 from ocean_lib.web3_internal.constants import ZERO_ADDRESS
-from ocean_lib.web3_internal.currency import pretty_ether_and_wei, to_wei
+from ocean_lib.web3_internal.currency import pretty_ether_and_wei, to_wei, from_wei
 from ocean_lib.web3_internal.wallet import Wallet
 
 
@@ -43,12 +43,12 @@ def get_wallet(ocean, private_key):
     """
     return Wallet(ocean.web3, private_key, ocean.config.block_confirmations)
 
-def initialize_market():
+def initialize_market(env_file='env.yaml'):
     """Initialize an Ocean data marketplace."""
     config = None
-    with open('env.yaml', 'r') as f:
+    with open(env_file, 'r') as f:
         config = yaml.load(f, Loader=yaml.FullLoader)
-    os.environ['OCEAN_NETWORK_URL'] = config['OCEAN_NETWORK_URL']
+    os.environ['ocean_network_url'] = config['OCEAN_NETWORK_URL']
     return Ocean(config)
 
 
@@ -73,6 +73,7 @@ def publish_data(
     wallet = Wallet(ocean.web3, private_key, ocean.config.block_confirmations)
     assert wallet.web3.eth.get_balance(wallet.address) > 0, 'need ETH'
     data_token = ocean.create_data_token(name, symbol, wallet, blob=ocean.config.metadata_cache_uri)
+    # return data_token
     token_address = data_token.address
     date_created = datetime.now().isoformat()
     metadata =  {
@@ -105,7 +106,8 @@ def publish_data(
     asset = ocean.assets.create(
         metadata,
         wallet,
-        service_descriptors=[],
+        # services=[download_service],
+        # service_descriptors=[],
         data_token_address=token_address
     )
     assert token_address == asset.data_token_address
