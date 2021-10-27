@@ -72,9 +72,11 @@ def publish_data(
     """
     wallet = Wallet(ocean.web3, private_key, ocean.config.block_confirmations)
     assert wallet.web3.eth.get_balance(wallet.address) > 0, 'need ETH'
+    print('Proceeding with wallet:', wallet.address)
     data_token = ocean.create_data_token(name, symbol, wallet, blob=ocean.config.metadata_cache_uri)
     # return data_token
     token_address = data_token.address
+    print('Created token:', token_address)
     date_created = datetime.now().isoformat()
     metadata =  {
         'main': {
@@ -110,6 +112,7 @@ def publish_data(
         # service_descriptors=[],
         data_token_address=token_address
     )
+    print('Created asset:', asset.data_token_address)
     assert token_address == asset.data_token_address
     return data_token, asset
 
