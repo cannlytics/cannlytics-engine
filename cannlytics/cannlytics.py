@@ -31,3 +31,17 @@ class Cannlytics:
             config_dict = {}
             config = {**config_dict, **config}
         self.config = config
+    
+
+    def initialize_traceability(self, config, license_number):
+        """Initialize the traceability client.
+        Args:
+            config (dict): The configuration for the traceability client.
+            license_number (str): A primary license to initialize the traceability client.
+        """
+
+        # TODO: Initialize a Metrc traceability client.
+        self.track = {}
+    
+
+
