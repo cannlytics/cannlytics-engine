@@ -1,5 +1,5 @@
 """
-Email Tools | Cannlytics
+Email Utilities | Cannlytics
 
 Author: Keegan Skeate <keegan@cannlytics.com>
 Created: 6/23/2021

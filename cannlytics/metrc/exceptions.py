@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Metrc Exceptions | Cannlytics
-Copyright (c) 2021 CAnnlytics and Cannlytics Contributors
+Copyright (c) 2021 Cannlytics and Cannlytics Contributors
 
 Author: Keegan Skeate <keegan@cannlytics.com>
 Created: 11/5/2021

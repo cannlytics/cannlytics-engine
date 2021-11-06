@@ -1,36 +1,12 @@
-# -*- coding: utf-8 -*-
-
 """
-cannlytics.traceability.metrc
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Metrc client library.
+Cannlytics Metrc Client Initialization | Cannlytics
+Copyright (c) 2021 Cannlytics and Cannlytics Contributors
+
+Author: Keegan Skeate <keegan@cannlytics.com>
+Created: 11/6/2021
+Updated: 11/6/2021
 """
-
-
-__version__ = '0.0.1'
-__author__ = 'Keegan Skeate'
-
-
 from .client import Client
-# from .models import (
-#     Area,
-#     Batch,
-#     Disposal,
-#     InventoryType,
-#     Inventory,
-#     InventoryAdjustment,
-#     InventoryTransfer,
-#     LabResult,
-#     Plant,
-#     Sale,
-#     Strain,
-#     Licensee,
-#     User,
-# )
-
-# from .exceptions import (
-#     TraceabilityException,
-# )
 
 
 def authorize(vendor_api_key, user_api_key, client_class=Client):
@@ -43,6 +19,4 @@ def authorize(vendor_api_key, user_api_key, client_class=Client):
     
     Returns: `client_class` instance.
     """
-
-    client = client_class(vendor_api_key, user_api_key)
-    return client
+    return client_class(vendor_api_key, user_api_key)

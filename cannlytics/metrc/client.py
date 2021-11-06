@@ -1,6 +1,6 @@
 """
 Metrc Client | Cannlytics
-Copyright (c) 2021 CAnnlytics and Cannlytics Contributors
+Copyright (c) 2021 Cannlytics and Cannlytics Contributors
 
 Author: Keegan Skeate <keegan@cannlytics.com>
 Created: 11/5/2021
@@ -17,10 +17,10 @@ from json import dumps
 from requests import Session
 
 # Internal imports.
+from .constants import parameters
 from .exceptions import MetrcAPIError
 from .models import *
 from .urls import *
-from .utils import format_params
 
 logger = logging.getLogger('metrc')
 
@@ -68,6 +68,7 @@ class Client(object):
         """
         self.user_api_key = user_api_key
         self.vendor_api_key = vendor_api_key
+        self.parameters = parameters
         self.primary_license = primary_license
         self.session = Session()
         self.session.auth = (vendor_api_key, user_api_key)
@@ -130,7 +131,7 @@ class Client(object):
             license_number (str): A specific license number.
         """
         url = METRC_LOCATIONS_URL % 'types'
-        params = format_params(license_number=license_number or self.primary_license)
+        params = self.format_params(license_number=license_number or self.primary_license)
         return self.request('get', url, params=params)
 
 
@@ -140,7 +141,7 @@ class Client(object):
             license_number (str): A specific license number.
         """
         url = METRC_PLANTS_URL % 'waste/methods'
-        params = format_params(license_number=license_number or self.primary_license)
+        params = self.format_params(license_number=license_number or self.primary_license)
         return self.request('get', url, params=params)
 
 
@@ -150,7 +151,7 @@ class Client(object):
             license_number (str): A specific license number.
         """
         url = METRC_PLANTS_URL % 'waste/reasons'
-        params = format_params(license_number=license_number or self.primary_license)
+        params = self.format_params(license_number=license_number or self.primary_license)
         return self.request('get', url, params=params)
 
 
@@ -160,7 +161,7 @@ class Client(object):
             license_number (str): A specific license number.
         """
         url = METRC_HARVESTS_URL % 'waste/types'
-        params = format_params(license_number=license_number or self.primary_license)
+        params = self.format_params(license_number=license_number or self.primary_license)
         return self.request('get', url, params=params)
 
 
@@ -181,7 +182,7 @@ class Client(object):
             license_number (str): A licensee's license number.
         """
         url = METRC_EMPLOYEES_URL
-        params = format_params(license_number=license_number or self.primary_license)
+        params = self.format_params(license_number=license_number or self.primary_license)
         response = self.request('get', url, params=params)
         return [Employee(self, x) for x in response]
 
@@ -216,7 +217,7 @@ class Client(object):
             license_number (str): A specific license number.
         """
         url = METRC_SALES_URL % 'deliveries'
-        params = format_params(license_number=license_number or self.primary_license)
+        params = self.format_params(license_number=license_number or self.primary_license)
         return self.request('post', url, data=data, params=params)
 
 
@@ -251,7 +252,7 @@ class Client(object):
             url = METRC_SALES_URL % f'delivery/{uid}'
         else:
             url = METRC_SALES_URL % f'deliveries/{action}'
-        params = format_params(
+        params = self.format_params(
             license_number=license_number or self.primary_license,
             start=start,
             end=end,
@@ -273,7 +274,7 @@ class Client(object):
             (list): A list of return reasons.
         """
         url = METRC_SALES_URL % 'delivery/returnreasons'
-        params = format_params(license_number=license_number or self.primary_license)
+        params = self.format_params(license_number=license_number or self.primary_license)
         return self.request('get', url, params=params)
 
     
@@ -284,7 +285,7 @@ class Client(object):
             license_number (str): A specific license number.
         """
         url = METRC_SALES_URL % 'deliveries/complete'
-        params = format_params(license_number=license_number or self.primary_license)
+        params = self.format_params(license_number=license_number or self.primary_license)
         return self.request('put', url, data=data, params=params)
 
 
@@ -295,7 +296,7 @@ class Client(object):
             license_number (str): A specific license number.
         """
         url = METRC_SALES_URL % f'delivery/{uid}'
-        params = format_params(license_number=license_number or self.primary_license)
+        params = self.format_params(license_number=license_number or self.primary_license)
         return self.request('delete', url, params=params)
 
 
@@ -306,7 +307,7 @@ class Client(object):
             license_number (str): A specific license number.
         """
         url = METRC_SALES_URL % 'deliveries'
-        params = format_params(license_number=license_number or self.primary_license)
+        params = self.format_params(license_number=license_number or self.primary_license)
         return self.request('put', url, data=data, params=params)
 
 
@@ -337,7 +338,7 @@ class Client(object):
             url = METRC_HARVESTS_URL % uid
         else:
             url = METRC_HARVESTS_URL % action
-        params = format_params(license_number=license_number or self.primary_license, start=start, end=end)
+        params = self.format_params(license_number=license_number or self.primary_license, start=start, end=end)
         response = self.request('get', url, params=params)
         try:
             return Harvest(self, response, license_number)
@@ -355,7 +356,7 @@ class Client(object):
             license_number (str): A specific license number.
         """
         url = METRC_HARVESTS_URL % 'finish'
-        params = format_params(license_number=license_number or self.primary_license)
+        params = self.format_params(license_number=license_number or self.primary_license)
         return self.request('post', url, data=data, params=params)
 
 
@@ -366,7 +367,7 @@ class Client(object):
             license_number (str): A specific license number.
         """
         url = METRC_HARVESTS_URL % 'unfinish'
-        params = format_params(license_number=license_number or self.primary_license)
+        params = self.format_params(license_number=license_number or self.primary_license)
         return self.request('post', url, data=data, params=params)
 
 
@@ -377,7 +378,7 @@ class Client(object):
             license_number (str): A specific license number.
         """
         url = METRC_HARVESTS_URL % 'removewaste'
-        params = format_params(license_number=license_number or self.primary_license)
+        params = self.format_params(license_number=license_number or self.primary_license)
         return self.request('post', url, data=data, params=params)
 
 
@@ -388,7 +389,7 @@ class Client(object):
             license_number (str): A specific license number.
         """
         url = METRC_HARVESTS_URL % 'move'
-        params = format_params(license_number=license_number or self.primary_license)
+        params = self.format_params(license_number=license_number or self.primary_license)
         return self.request('put', url, data=data, params=params)
 
 
@@ -399,7 +400,7 @@ class Client(object):
             license_number (str): A specific license number.
         """
         url = METRC_HARVESTS_URL % 'create/packages'
-        params = format_params(license_number=license_number or self.primary_license)
+        params = self.format_params(license_number=license_number or self.primary_license)
         return self.request('post', url, data=data, params=params)
 
 
@@ -410,7 +411,7 @@ class Client(object):
             license_number (str): A specific license number.
         """
         url = METRC_HARVESTS_URL % 'create/packages/testing'
-        params = format_params(license_number=license_number or self.primary_license)
+        params = self.format_params(license_number=license_number or self.primary_license)
         return self.request('post', url, data=data, params=params)
 
 
@@ -435,7 +436,7 @@ class Client(object):
             url = METRC_ITEMS_URL % uid
         else:
             url = METRC_ITEMS_URL % action
-        params = format_params(license_number=license_number or self.primary_license)
+        params = self.format_params(license_number=license_number or self.primary_license)
         response = self.request('get', url, params=params)
         try:
             return Item(self, response, license_number)
@@ -453,7 +454,7 @@ class Client(object):
             license_number (str): A specific license number.
         """
         url = METRC_ITEMS_URL % 'create'
-        params = format_params(license_number=license_number or self.primary_license)
+        params = self.format_params(license_number=license_number or self.primary_license)
         return self.request('post', url, data=data, params=params)
 
 
@@ -464,7 +465,7 @@ class Client(object):
             license_number (str): A specific license number.
         """
         url = METRC_ITEMS_URL % 'update'
-        params = format_params(license_number=license_number or self.primary_license)
+        params = self.format_params(license_number=license_number or self.primary_license)
         return self.request('post', url, data=data, params=params)
 
 
@@ -475,7 +476,7 @@ class Client(object):
             license_number (str): A specific license number.
         """
         url = METRC_ITEMS_URL % uid
-        params = format_params(license_number=license_number or self.primary_license)
+        params = self.format_params(license_number=license_number or self.primary_license)
         return self.request('delete', url, params=params)
 
 
@@ -485,7 +486,7 @@ class Client(object):
             license_number (str): A specific license number.
         """
         url = METRC_ITEMS_URL % 'categories'
-        params = format_params(license_number=license_number or self.primary_license)
+        params = self.format_params(license_number=license_number or self.primary_license)
         return self.request('get', url, params=params)
 
 
@@ -504,7 +505,7 @@ class Client(object):
             license_number (str): A specific license number.
         """
         url = METRC_LAB_RESULTS_URL % 'results'
-        params = format_params(
+        params = self.format_params(
             package_id=uid,
             license_number=license_number or self.primary_license,
         )
@@ -518,7 +519,7 @@ class Client(object):
             license_number (str): A specific license number.
         """
         url = METRC_LAB_RESULTS_URL % 'types'
-        params = format_params(license_number=license_number or self.primary_license)
+        params = self.format_params(license_number=license_number or self.primary_license)
         return self.request('get', url, params=params)
 
 
@@ -528,7 +529,7 @@ class Client(object):
             license_number (str): A specific license number.
         """
         url = METRC_LAB_RESULTS_URL % 'states'
-        params = format_params(license_number=license_number or self.primary_license)
+        params = self.format_params(license_number=license_number or self.primary_license)
         return self.request('get', url, params=params)
 
 
@@ -539,7 +540,7 @@ class Client(object):
             license_number (str): A specific license number.
         """
         url = METRC_LAB_RESULTS_URL % 'record'
-        params = format_params(license_number=license_number or self.primary_license)
+        params = self.format_params(license_number=license_number or self.primary_license)
         return self.request('post', url, data=data, params=params)
 
 
@@ -550,7 +551,7 @@ class Client(object):
             license_number (str): A specific license number.
         """
         url = METRC_LAB_RESULTS_URL % 'labtestdocument'
-        params = format_params(license_number=license_number or self.primary_license)
+        params = self.format_params(license_number=license_number or self.primary_license)
         return self.request('put', url, data=data, params=params)
 
 
@@ -561,7 +562,7 @@ class Client(object):
             license_number (str): A specific license number.
         """
         url = METRC_LAB_RESULTS_URL % 'results/release'
-        params = format_params(license_number=license_number or self.primary_license)
+        params = self.format_params(license_number=license_number or self.primary_license)
         return self.request('put', url, data=data, params=params)
 
 
@@ -586,7 +587,7 @@ class Client(object):
             url = METRC_LOCATIONS_URL % uid
         else:
             url = METRC_LOCATIONS_URL % action
-        params = format_params(license_number=license_number or self.primary_license)
+        params = self.format_params(license_number=license_number or self.primary_license)
         response = self.request('get', url, params=params)
         try:
             return Location(self, response, license_number)
@@ -604,7 +605,7 @@ class Client(object):
             license_number (str): Optional license number filter.
         """
         url = METRC_LOCATIONS_URL % 'create'
-        params = format_params(license_number=license_number or self.primary_license)
+        params = self.format_params(license_number=license_number or self.primary_license)
         return self.request('post', url, data=data, params=params)
 
 
@@ -615,7 +616,7 @@ class Client(object):
             license_number (str): Optional license number filter.
         """
         url = METRC_LOCATIONS_URL % 'update'
-        params = format_params(license_number=license_number or self.primary_license)
+        params = self.format_params(license_number=license_number or self.primary_license)
         return self.request('post', url, data=data, params=params)
 
 
@@ -626,7 +627,7 @@ class Client(object):
             license_number (str): Optional license number filter.
         """
         url = METRC_LOCATIONS_URL % uid
-        params = format_params(license_number=license_number or self.primary_license)
+        params = self.format_params(license_number=license_number or self.primary_license)
         return self.request('delete', url, params=params)
 
     #------------------------------------------------------------------
@@ -658,7 +659,7 @@ class Client(object):
             url = METRC_PACKAGES_URL % label
         else:
             url = METRC_PACKAGES_URL % action
-        params = format_params(license_number=license_number or self.primary_license, start=start, end=end)
+        params = self.format_params(license_number=license_number or self.primary_license, start=start, end=end)
         response = self.request('get', url, params=params)
         try:
             return Package(self, response, license_number)
@@ -682,7 +683,7 @@ class Client(object):
             url += '/testing'
         elif plantings:
             url += '/plantings'
-        params = format_params(license_number=license_number or self.primary_license)
+        params = self.format_params(license_number=license_number or self.primary_license)
         return self.request('post', url, data=data, params=params)
 
 
@@ -693,7 +694,7 @@ class Client(object):
             license_number (str): A specific license number.
         """
         url = METRC_PACKAGES_URL % 'update'
-        params = format_params(license_number=license_number or self.primary_license)
+        params = self.format_params(license_number=license_number or self.primary_license)
         return self.request('post', url, data=data, params=params)
 
 
@@ -704,7 +705,7 @@ class Client(object):
             license_number (str): A specific license number.
         """
         url = METRC_PACKAGES_URL % uid
-        params = format_params(license_number=license_number or self.primary_license)
+        params = self.format_params(license_number=license_number or self.primary_license)
         return self.request('delete', url, params=params)
 
 
@@ -715,7 +716,7 @@ class Client(object):
             license_number (str): A specific license number.
         """
         url = METRC_PACKAGES_URL % 'change/item'
-        params = format_params(license_number=license_number or self.primary_license)
+        params = self.format_params(license_number=license_number or self.primary_license)
         return self.request('post', url, data=data, params=params)
 
 
@@ -726,7 +727,7 @@ class Client(object):
             license_number (str): A specific license number.
         """
         url = METRC_PACKAGES_URL % 'change/locations'
-        params = format_params(license_number=license_number or self.primary_license)
+        params = self.format_params(license_number=license_number or self.primary_license)
         return self.request('post', url, data=data, params=params)
 
 
@@ -739,7 +740,7 @@ class Client(object):
                 `adjust`, `finish`, `unfinish`, `remediate`.
         """
         url = METRC_PACKAGES_URL % action
-        params = format_params(license_number=license_number or self.primary_license)
+        params = self.format_params(license_number=license_number or self.primary_license)
         return self.request('post', url, data=data, params=params)
 
 
@@ -750,7 +751,7 @@ class Client(object):
             license_number (str): A specific license number.
         """
         url = METRC_PACKAGES_URL % 'change/note'
-        params = format_params(license_number=license_number or self.primary_license)
+        params = self.format_params(license_number=license_number or self.primary_license)
         return self.request('put', url, data=data, params=params)
 
 
@@ -760,7 +761,7 @@ class Client(object):
             license_number (str): A specific license number.
         """
         url = METRC_PACKAGES_URL % 'types'
-        params = format_params(license_number=license_number or self.primary_license)
+        params = self.format_params(license_number=license_number or self.primary_license)
         return self.request('get', url, params=params)
 
 
@@ -779,7 +780,7 @@ class Client(object):
             url = METRC_PATIENTS_URL % uid
         else:
             url = METRC_PATIENTS_URL % action
-        params = format_params(license_number=license_number or self.primary_license)
+        params = self.format_params(license_number=license_number or self.primary_license)
         response = self.request('get', url, params=params)
         try:
             return Patient(self, response, license_number)
@@ -796,7 +797,7 @@ class Client(object):
             data (list): A list of patient (dict) to add.
         """
         url = METRC_PATIENTS_URL % 'add'
-        params = format_params(license_number=license_number or self.primary_license)
+        params = self.format_params(license_number=license_number or self.primary_license)
         return self.request('post', url, data=data, params=params)
 
 
@@ -806,7 +807,7 @@ class Client(object):
             data (list): A list of patients (dict) to update.
         """
         url = METRC_PATIENTS_URL % 'update'
-        params = format_params(license_number=license_number or self.primary_license)
+        params = self.format_params(license_number=license_number or self.primary_license)
         return self.request('put', url, data=data, params=params)
 
 
@@ -816,7 +817,7 @@ class Client(object):
             uid (str): The UID of a patient to delete.
         """
         url = METRC_PATIENTS_URL % uid
-        params = format_params(license_number=license_number or self.primary_license)
+        params = self.format_params(license_number=license_number or self.primary_license)
         return self.request('delete', url, params=params)
 
 
@@ -848,7 +849,7 @@ class Client(object):
             url = METRC_BATCHES_URL % uid
         else:
             url = METRC_BATCHES_URL % action
-        params = format_params(license_number=license_number or self.primary_license, start=start, end=end)
+        params = self.format_params(license_number=license_number or self.primary_license, start=start, end=end)
         response = self.request('get', url, params=params)
         try:
             return PlantBatch(self, response, license_number)
@@ -871,7 +872,7 @@ class Client(object):
                 `createpackages` action.
         """
         url = METRC_BATCHES_URL % action
-        params = format_params(from_mother=from_mother, license_number=license_number or self.primary_license)
+        params = self.format_params(from_mother=from_mother, license_number=license_number or self.primary_license)
         return self.request('post', url, data=data, params=params)
 
 
@@ -881,7 +882,7 @@ class Client(object):
             data (list): A list of plant batches (dict) to move.
         """
         url = METRC_BATCHES_URL % 'moveplantbatches'
-        params = format_params(license_number=license_number or self.primary_license)
+        params = self.format_params(license_number=license_number or self.primary_license)
         return self.request('put', url, data=data, params=params)
 
 
@@ -918,7 +919,7 @@ class Client(object):
             url = METRC_PLANTS_URL % label
         else:
             url = METRC_PLANTS_URL % action
-        params = format_params(license_number=license_number or self.primary_license, start=start, end=end)
+        params = self.format_params(license_number=license_number or self.primary_license, start=start, end=end)
         response = self.request('get', url, params=params)
         try:
             return Plant(self, response, license_number)
@@ -941,7 +942,7 @@ class Client(object):
             license_number (str): A specific license number.
         """
         url = METRC_PLANTS_URL % action
-        params = format_params(license_number=license_number or self.primary_license)
+        params = self.format_params(license_number=license_number or self.primary_license)
         return self.request('post', url, data=data, params=params)
 
 
@@ -978,7 +979,7 @@ class Client(object):
             url = METRC_RECEIPTS_URL % uid
         else:
             url = METRC_RECEIPTS_URL % action
-        params = format_params(
+        params = self.format_params(
             license_number=license_number or self.primary_license,
             start=start,
             end=end,
@@ -1010,7 +1011,7 @@ class Client(object):
             url = METRC_TRANSACTIONS_URL % f'{start}/{end}'
         else:
             url = METRC_SALES_URL % 'transactions'
-        params = format_params(license_number=license_number or self.primary_license)
+        params = self.format_params(license_number=license_number or self.primary_license)
         response = self.request('get', url, params=params)
         try:
             return Transaction(self, response, license_number)
@@ -1024,7 +1025,7 @@ class Client(object):
             license_number (str): A specific license number.
         """
         url = METRC_SALES_URL % 'customertypes'
-        params = format_params(license_number=license_number or self.primary_license)
+        params = self.format_params(license_number=license_number or self.primary_license)
         return self.request('get', url, params=params)
 
 
@@ -1035,7 +1036,7 @@ class Client(object):
             license_number (str): A specific license number.
         """
         url = METRC_SALES_URL % 'receipts'
-        params = format_params(license_number=license_number or self.primary_license)
+        params = self.format_params(license_number=license_number or self.primary_license)
         return self.request('post', url, data=data, params=params)
 
 
@@ -1046,7 +1047,7 @@ class Client(object):
             license_number (str): A specific license number.
         """
         url = METRC_SALES_URL % 'receipts'
-        params = format_params(license_number=license_number or self.primary_license)
+        params = self.format_params(license_number=license_number or self.primary_license)
         return self.request('put', url, data=data, params=params)
 
 
@@ -1057,7 +1058,7 @@ class Client(object):
             license_number (str): A specific license number.
         """
         url = METRC_SALES_URL % f'receipts/{uid}'
-        params = format_params(license_number=license_number or self.primary_license)
+        params = self.format_params(license_number=license_number or self.primary_license)
         return self.request('delete', url, params=params)
 
 
@@ -1069,7 +1070,7 @@ class Client(object):
             license_number (str): A specific license number.
         """
         url = METRC_TRANSACTIONS_URL % date
-        params = format_params(license_number=license_number or self.primary_license)
+        params = self.format_params(license_number=license_number or self.primary_license)
         return self.request('post', url, data=data, params=params)
 
 
@@ -1081,7 +1082,7 @@ class Client(object):
             license_number (str): A specific license number.
         """
         url = METRC_TRANSACTIONS_URL % date
-        params = format_params(license_number=license_number or self.primary_license)
+        params = self.format_params(license_number=license_number or self.primary_license)
         return self.request('put', url, data=data, params=params)
 
     #------------------------------------------------------------------
@@ -1104,7 +1105,7 @@ class Client(object):
             url = METRC_STRAINS_URL % uid
         else:
             url = METRC_STRAINS_URL % action
-        params = format_params(license_number=license_number or self.primary_license)
+        params = self.format_params(license_number=license_number or self.primary_license)
         response = self.request('get', url, params=params)
         try:
             return Strain(self, response, license_number)
@@ -1119,7 +1120,7 @@ class Client(object):
             license_number (str): A specific license number.
         """
         url = METRC_STRAINS_URL % 'create'
-        params = format_params(license_number=license_number or self.primary_license)
+        params = self.format_params(license_number=license_number or self.primary_license)
         return self.request('post', url, data=data, params=params)
 
 
@@ -1130,7 +1131,7 @@ class Client(object):
             license_number (str): A specific license number.
         """
         url = METRC_STRAINS_URL % 'update'
-        params = format_params(license_number=license_number or self.primary_license)
+        params = self.format_params(license_number=license_number or self.primary_license)
         return self.request('post', url, data=data, params=params)
 
 
@@ -1141,7 +1142,7 @@ class Client(object):
             license_number (str): A specific license number.
         """
         url = METRC_STRAINS_URL % uid
-        params = format_params(license_number=license_number or self.primary_license)
+        params = self.format_params(license_number=license_number or self.primary_license)
         return self.request('delete', url, params=params)
 
 
@@ -1170,7 +1171,7 @@ class Client(object):
             url = METRC_TRANSFERS_URL % f'{uid}/deliveries'
         else:
             url = METRC_TRANSFERS_URL % transfer_type
-        params = format_params(license_number=license_number or self.primary_license, start=start, end=end)
+        params = self.format_params(license_number=license_number or self.primary_license, start=start, end=end)
         response = self.request('get', url, params=params)
         try:
             return Transfer(self, response, license_number)
@@ -1190,7 +1191,7 @@ class Client(object):
             url = METRC_TRANSFER_PACKAGES_URL % (f'package/{uid}', action)
         else:
             url = METRC_TRANSFER_PACKAGES_URL % (uid, action)
-        params = format_params(license_number=license_number or self.primary_license)
+        params = self.format_params(license_number=license_number or self.primary_license)
         return self.request('get', url, params=params)
 
 
@@ -1200,7 +1201,7 @@ class Client(object):
             license_number (str): A specific license number.
         """
         url = METRC_TRANSFERS_URL % 'types'
-        params = format_params(license_number=license_number or self.primary_license)
+        params = self.format_params(license_number=license_number or self.primary_license)
         return self.request('get', url, params=params)
 
 
@@ -1210,7 +1211,7 @@ class Client(object):
             license_number (str): A specific license number.
         """
         url = METRC_TRANSFERS_URL % 'delivery/packages/states'
-        params = format_params(license_number=license_number or self.primary_license)
+        params = self.format_params(license_number=license_number or self.primary_license)
         return self.request('get', url, params=params)
 
 
@@ -1239,7 +1240,7 @@ class Client(object):
             license_number (str): A specific license number.
         """
         url = METRC_TRANSFERS_URL % 'external/incoming'
-        params = format_params(license_number=license_number or self.primary_license)
+        params = self.format_params(license_number=license_number or self.primary_license)
         return self.request('post', url, data=data, params=params)
 
 
@@ -1250,7 +1251,7 @@ class Client(object):
             license_number (str): A specific license number.
         """
         url = METRC_TRANSFERS_URL % 'external/incoming'
-        params = format_params(license_number=license_number or self.primary_license)
+        params = self.format_params(license_number=license_number or self.primary_license)
         return self.request('put', url, data=data, params=params)
 
 
@@ -1261,7 +1262,7 @@ class Client(object):
             license_number (str): A specific license number.
         """
         url = METRC_TRANSFERS_URL % f'external/incoming/{uid}'
-        params = format_params(license_number=license_number or self.primary_license)
+        params = self.format_params(license_number=license_number or self.primary_license)
         return self.request('delete', url, params=params)
 
 
@@ -1297,7 +1298,7 @@ class Client(object):
             url = METRC_TRANSFER_TEMPLATE_URL % f'delivery/{uid}/packages'
         else:
             url = (METRC_TRANSFER_TEMPLATE_URL % '').rstrip('/')
-        params = format_params(license_number=license_number or self.primary_license, start=start, end=end)
+        params = self.format_params(license_number=license_number or self.primary_license, start=start, end=end)
         response = self.request('get', url, params=params)
         try:
             return TransferTemplate(self, response, license_number)
@@ -1311,7 +1312,7 @@ class Client(object):
             data (list): A list of transfer templates (dict) to create.
         """
         url = (METRC_TRANSFER_TEMPLATE_URL % '').rstrip('/')
-        params = format_params(license_number=license_number or self.primary_license)
+        params = self.format_params(license_number=license_number or self.primary_license)
         return self.request('post', url, data=data, params=params)
 
 
@@ -1321,7 +1322,7 @@ class Client(object):
             data (list): A list of transfer templates (dict) to update.
         """
         url = (METRC_TRANSFER_TEMPLATE_URL % '').rstrip('/')
-        params = format_params(license_number=license_number or self.primary_license)
+        params = self.format_params(license_number=license_number or self.primary_license)
         return self.request('put', url, data=data, params=params)
 
 
@@ -1331,7 +1332,7 @@ class Client(object):
             uid (str): The UID of a transfer template to delete.
         """
         url = METRC_TRANSFER_TEMPLATE_URL % uid
-        params = format_params(license_number=license_number or self.primary_license)
+        params = self.format_params(license_number=license_number or self.primary_license)
         return self.request('delete', url, params=params)
 
 
@@ -1342,5 +1343,55 @@ class Client(object):
     def get_uom(self, license_number=''):
         """Get all units of measurement."""
         url = METRC_UOM_URL
-        params = format_params(license_number=license_number or self.primary_license)
+        params = self.format_params(license_number=license_number or self.primary_license)
         return self.request('get', url, params=params)
+
+    # def import_tags(self, file_path):
+    #     """Import plant and package tags.
+    #     Args:
+    #         file_path (str): The file location of the tags.
+    #     Returns:
+    #         (dict): Returns the tags as a dictionary.
+    #     """
+    #     df = read_excel(file_path, sep=',')
+    #     data = df.to_dict('records')
+    #     return clean_dictionary(data)
+    
+    def format_params(self, **kwargs):
+        """Format Metrc request parameters.
+        Returns:
+            (dict): Returns the parameters as a dictionary.
+        """
+        params = {}
+        for param in kwargs:
+            if kwargs[param]:
+                key = self.parameters[param]
+                params[key] = kwargs[param]
+        return params
+
+    # TODO: Data import
+    # 1. Create Plantings / Plantings from Plants / Plantings from Packages
+    # 2. Immature Plants Growth Phase
+    # 3. Record Immature Plants Waste
+    # 4. Immature Plants Packages
+    # 5. Destroy Immature Plants
+    # 6. Plants Location
+    # 7. Plants Growth Phase
+    # 8. Record Plants Waste
+    # 9. Manicure Plants
+    # 10.Harvest Plants
+    # 11.Destroy Plants
+    # 12.Packages from Harvest
+    # 13.Lab Results
+    # 14.Package Adjustment
+    # 15.Sales (new)
+    # 16.Sales (update)
+    # If uploading multiple types of CSV files, it is recommended that they be uploaded in the
+    # order listed above to avoid data collisions. For instance, if uploading a CSV to
+    # Manicure Plants and another to Destroy Plants and the same plant is included on both
+    # files, the manicure must be recorded prior to the destruction of the plant.
+    # Except for Lab Results, all CSV files are limited to 500 rows per file. When adding
+    # plants to the same harvest or manicure batch using multiple CSV files, it is
+    # recommended that they be uploaded one file at a time.
+    # Please reference the CA CSV Guide available under the Metrc Support menu for
+    # additional Data Import assistance.

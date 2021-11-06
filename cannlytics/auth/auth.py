@@ -8,19 +8,19 @@ utility functions, request authentication and verification helpers,
 and the authentication endpoints.
 """
 
-# Standard imports
+# Standard imports.
 from os import environ
 from json import loads
 from secrets import token_urlsafe
 
-# External imports
+# External imports.
 import hmac
 from hashlib import sha256
 from datetime import datetime, timedelta
 from django.http.response import JsonResponse
 
-# Internal imports
-from cannlytics.firebase import (
+# Internal imports.
+from ..firebase import (
     create_custom_token,
     create_log,
     delete_document,
@@ -37,11 +37,11 @@ from cannlytics.firebase import (
 )
 
 # Initialize Firebase.
-try:
-    initialize_firebase()
-    BUCKET_NAME = environ.get('FIREBASE_STORAGE_BUCKET', None)
-except ValueError:
-    pass
+# try:
+#     initialize_firebase()
+#     BUCKET_NAME = environ.get('FIREBASE_STORAGE_BUCKET', None)
+# except ValueError:
+#     pass
 
 #-----------------------------------------------------------------------
 # Core Authentication Mechanism

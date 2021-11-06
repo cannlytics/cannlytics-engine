@@ -1,20 +1,25 @@
 """
 Cannlytics Module | Cannlytics
-Copyright (c) 2021 CAnnlytics and Cannlytics Contributors
+Copyright (c) 2021 Cannlytics and Cannlytics Contributors
 
 Author: Keegan Skeate <keegan@cannlytics.com>
 Created: 11/5/2021
-Updated: 11/5/2021
+Updated: 11/6/2021
 
 This module contains the Cannlytics class,
 the entry point into Cannlytics features and functionality.
 """
+# Standard imports.
 import logging
 from typing import Dict, List, Optional, Type, Union
 
+# External imports.
 from enforce_typing import enforce_types
 
-# logger = logging.getLogger('cannlytics')
+# Internal imports.
+from .exceptions import CannlyticsError
+
+logger = logging.getLogger('cannlytics')
 
 
 class Cannlytics:
@@ -36,7 +41,6 @@ class Cannlytics:
             config_dict = {}
             config = {**config_dict, **config}
         self.config = config
-    
 
     def initialize_traceability(self, config, license_number):
         """Initialize the traceability client.
@@ -47,6 +51,8 @@ class Cannlytics:
 
         # TODO: Initialize a Metrc traceability client.
         self.track = {}
-    
 
-
+    def initialize_firebase(self):
+        """Initialize a Firebase account for back-end, cloud services."""
+        self.db = {}
+        self.storage = {}  

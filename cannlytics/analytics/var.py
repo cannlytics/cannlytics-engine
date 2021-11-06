@@ -1,9 +1,9 @@
 """
 VAR Functions | Cannlytics
 
-Author: Keegan Skeate
-Contact: <keegan@cannlytics.com>
-Created: Wed Apr 14 07:55:43 2021
+Authors: Keegan Skeate <keegan@cannlytics.com>
+Created: 4/14/2021
+Updated: 11/6/2021
 License: MIT License <https://opensource.org/licenses/MIT>
 
 Description:
@@ -15,7 +15,6 @@ Resources:
     https://www.statsmodels.org/stable/generated/statsmodels.tsa.tsatools.lagmat.html
 
 """
-
 import numpy as np
 import pandas as pd
 import statsmodels.api as sm
@@ -27,6 +26,10 @@ def VAR(Vector, lag_order):
     Inputs a Vector of dimension N x I, where N is the number of observations
     and I is the number of variables, as well as the lag order of the model.
     Returns the estimated equations from OLS as a dictionary with names 'Eq#'.
+    Args:
+
+    Returns:
+
     """
     X = np.empty_like(Vector)
     for i in range(1 , 1 + lag_order):
@@ -44,13 +47,17 @@ def VAR_forecast(Vector, VAR_estimates, lag_order, horizon,shock=None):
     """
     Inputs the VAR Vector, VAR estimates, the lag order of the model,
     the forecast horizon, and the desired first period shock.
+    Args:
+
+    Returns:
+    
     """
-    # Inital Period shock for IRF
+    # Initial Period shock for IRF.
     if shock is None:
         shock = np.zeros(len(Vector[0]))
     error = np.zeros((len(Vector),len(Vector[0])))
     error[0] = shock
-    # Predictions for Forecast Horizon
+    # Predictions for Forecast Horizon.
     for t in np.arange(0,horizon):     
         X_hat = Vector
         for i in range(1 , lag_order):
@@ -67,17 +74,35 @@ def VAR_forecast(Vector, VAR_estimates, lag_order, horizon,shock=None):
 
 
 def IRF(Vector,VAR_estimates,lag_order,horizon,shock):
+    """Impulse response function (IRF).
+    Args:
+
+    Returns:
+    
+    """
     baseline = VAR_forecast(Vector,VAR_estimates,lag_order,horizon,shock=None)
     impact = VAR_forecast(Vector,VAR_estimates,lag_order,horizon,shock=shock.T)
     return (impact-baseline)
 
 
 def lag_series(series, lag=None):
+    """Lag a series.
+    Args:
+
+    Returns:
+    
+    """
     lagged_series = pd.Series(series).shift(1)
     return lagged_series.values
 
 
-def lag(x,lag=None):
+def lag(x, lag=None):
+    """Lag a variable.
+    Args:
+
+    Returns:
+    
+    """
     if lag==None: lag=1
     lag_values = np.empty_like(x)
     for i in np.arange(0,len(x)):
@@ -87,6 +112,12 @@ def lag(x,lag=None):
 
 
 def cov_matrix(u):
+    """Calculate a covariance matrix.
+    Args:
+        (u):
+    Returns:
+        ():
+    """
     k = len(u[0])
     matrix = np.ones((k,k))
     for i in np.arange(0,k):

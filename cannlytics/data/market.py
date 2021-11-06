@@ -37,14 +37,21 @@ from ocean_lib.web3_internal.wallet import Wallet
 def get_wallet(ocean, private_key):
     """Get a user's wallet given their private key.
     Args:
-
+        ocean ():
+        private_key (str):
     Returns:
 
     """
     return Wallet(ocean.web3, private_key, ocean.config.block_confirmations)
 
 def initialize_market(env_file='env.yaml'):
-    """Initialize an Ocean data marketplace."""
+    """Initialize an Ocean data marketplace.
+    Args:
+        env_file (str): An environment variable file,
+            `env.yaml` by default.
+    Returns:
+    
+    """
     config = None
     with open(env_file, 'r') as f:
         config = yaml.load(f, Loader=yaml.FullLoader)
@@ -66,7 +73,14 @@ def publish_data(
     The service urls will be encrypted before going on-chain.
     They're only decrypted for datatoken owners upon consume.
     Args:
-
+        ocean ():
+        private_key (str):
+        files (list):
+        name (str):
+        symbol (str):
+        author (str):
+        data_license (str): The license for the data,
+            `CC0: Public Domain` by default.
     Returns:
         ()
     """
@@ -161,7 +175,12 @@ def buy_data(
     Define wallet, verify that there is enough ganache ETH and OCEAN.
     Create an exchange_id for a new exchange.
     Args:
-
+        ocean ():
+        private_key (str):
+        token_address (str):
+        seller_wallet (Wallet):
+        min_amount (float):
+        max_amount (float):
     Returns:
 
     """

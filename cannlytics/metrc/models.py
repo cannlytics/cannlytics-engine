@@ -1,6 +1,6 @@
 """
 Metrc Models | Cannlytics
-Copyright (c) 2021 CAnnlytics and Cannlytics Contributors
+Copyright (c) 2021 Cannlytics and Cannlytics Contributors
 
 Author: Keegan Skeate <keegan@cannlytics.com>
 Created: 11/5/2021
@@ -8,23 +8,20 @@ Updated: 11/5/2021
 
 This module contains common Metrc models.
 """
-
-# External imports
+# External imports.
 from datetime import datetime
 
-# Internal imports
-from cannlytics.firebase import get_document, update_document
-
-# Local imports
-from .utils import (
+# Internal imports.
+from ..firebase import get_document, update_document
+from ..utils.utils import (
+    camel_to_snake,
     clean_dictionary,
     clean_nested_dictionary,
-    camel_to_snake,
-    snake_to_camel,
-    update_context,
+    get_timestamp,
     remove_dict_fields,
     remove_dict_nulls,
-    get_timestamp,
+    snake_to_camel,
+    update_dict,
 )
 
 
@@ -154,7 +151,7 @@ class Model(object):
 #     def update(self, **kwargs):
 #         """Update the receipt given parameters as keyword arguments."""
 #         context = self.to_dict().copy()
-#         data = update_context(context, **kwargs)
+#         data = update_dict(context, **kwargs)
 #         data = remove_dict_nulls(data)
 #         self.client.update_receipts([data], self._license)
 
@@ -355,7 +352,7 @@ class Strain(Model):
     def update(self, **kwargs):
         """Update the strain given parameters as keyword arguments."""
         context = self.to_dict()
-        data = update_context(context, **kwargs)
+        data = update_dict(context, **kwargs)
         self.client.update_strains([data], license_number=self._license)
 
     def delete(self):
@@ -452,7 +449,7 @@ class Item(Model):
     def update(self, **kwargs):
         """Update the item given parameters as keyword arguments."""
         context = self.to_dict().copy()
-        data = update_context(context, **kwargs)
+        data = update_dict(context, **kwargs)
         data = remove_dict_fields(data, self.RETURNED_VALUES.keys())
         data = remove_dict_nulls(data)
         self.client.update_items([data], self._license)
@@ -843,7 +840,7 @@ class Patient(Model):
     def update(self, **kwargs):
         """Update the patient given parameters as keyword arguments."""
         context = self.to_dict().copy()
-        data = update_context(context, **kwargs)
+        data = update_dict(context, **kwargs)
         data = remove_dict_nulls(data)
         self.client.update_patients([data], self._license)
 
@@ -1060,7 +1057,7 @@ class Transfer(Model):
     def update(self, **kwargs):
         """Update the transfer given parameters as keyword arguments."""
         context = self.to_dict().copy()
-        data = update_context(context, **kwargs)
+        data = update_dict(context, **kwargs)
         data = remove_dict_fields(data, self.RETURNED_VALUES.keys())
         data = remove_dict_nulls(data)
         self.client.update_transfers([data], self._license)
@@ -1103,7 +1100,7 @@ class TransferTemplate(Model):
     def update(self, **kwargs):
         """Update the transfer template given parameters as keyword arguments."""
         context = self.to_dict().copy()
-        data = update_context(context, **kwargs)
+        data = update_dict(context, **kwargs)
         data = remove_dict_fields(data, self.RETURNED_VALUES.keys())
         data = remove_dict_nulls(data)
         self.client.update_transfer_templates([data], self._license)
@@ -1190,7 +1187,7 @@ class Transaction(Model):
     def update(self, **kwargs):
         """Update the transaction given parameters as keyword arguments."""
         context = self.to_dict().copy()
-        data = update_context(context, **kwargs)
+        data = update_dict(context, **kwargs)
         data = remove_dict_fields(data, self.RETURNED_VALUES.keys())
         data = remove_dict_nulls(data)
         self.client.update_transactions([data], self._license)
@@ -1259,7 +1256,7 @@ class Receipt(Model):
     def update(self, **kwargs):
         """Update the receipt given parameters as keyword arguments."""
         context = self.to_dict().copy()
-        data = update_context(context, **kwargs)
+        data = update_dict(context, **kwargs)
         data = remove_dict_nulls(data)
         self.client.update_receipts([data], self._license)
 
