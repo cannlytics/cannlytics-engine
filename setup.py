@@ -1,12 +1,11 @@
-# -*- coding: utf-8 -*-
 """
-setup.py | Cannlytics
+Module Setup | Cannlytics
 
 Author: Keegan Skeate <keegan@cannlytics.com>
 Contact: <keegan@cannlytics.com>
 Created: 1/21/2021
-Updated: 11/5/2021
-License: MIT
+Updated: 11/6/2021
+License: MIT <https://opensource.org/licenses/MIT>
 """
 from setuptools import find_namespace_packages, setup
 
@@ -23,7 +22,10 @@ install_requirements = [
     'django',
     'firebase_admin',
     'googlemaps',
+    'matplotlib',
+    'numpy',
     'pandas',
+    'statsmodels',
 ]
 
 # Required to run setup.py:
