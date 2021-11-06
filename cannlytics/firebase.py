@@ -1,5 +1,6 @@
 """
 Firebase Module | Cannlytics
+Copyright (c) 2021 CAnnlytics and Cannlytics Contributors
 
 Authors: Keegan Skeate <contact@cannlytics.com>  
 Created: 2/7/2021  

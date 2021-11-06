@@ -1,28 +1,41 @@
-# -*- coding: utf-8 -*-
 """
 Metrc Client | Cannlytics
+Copyright (c) 2021 CAnnlytics and Cannlytics Contributors
+
+Author: Keegan Skeate <keegan@cannlytics.com>
+Created: 11/5/2021
+Updated: 11/5/2021
 
 This module contains the Client class responsible for
 communicating with the Metrc API.
 """
+# Standard imports.
+import logging
 
-# External imports
+# External imports.
 from json import dumps
 from requests import Session
 
-# Local imports
+# Internal imports.
 from .exceptions import MetrcAPIError
 from .models import *
 from .urls import *
 from .utils import format_params
 
+logger = logging.getLogger('metrc')
+
 
 class Client(object):
-    """An instance of this class communicates with
-    the Metrc API.
-    """
+    """An instance of this class communicates with the Metrc API."""
 
-    def __init__(self, vendor_api_key, user_api_key, primary_license='', state='ok', test=False):
+    def __init__(
+            self,
+            vendor_api_key,
+            user_api_key,
+            primary_license='',
+            state='ok',
+            test=True,
+    ):
         """Initialize a Metrc API client.
         Args:
 
@@ -39,6 +52,8 @@ class Client(object):
                 on individual requests.
 
             state (str): The state of the licensee, Oklahoma (ok) by default.
+
+            test (bool): Whether or not to use the test sandbox, True by default.
 
         Example:
 
@@ -57,9 +72,20 @@ class Client(object):
         self.session = Session()
         self.session.auth = (vendor_api_key, user_api_key)
         self.test = test
-        self.base = METRC_API_BASE_URL % state
         if test:
             self.test_api = METRC_API_BASE_URL_TEST % state
+        else:
+            self.base = METRC_API_BASE_URL % state
+        # logging.basicConfig(
+        #     filename='./tmp/cannlytics.log',
+        #     filemode='w+',
+        #     level=logging.DEBUG,
+        #     format='%(asctime)s %(message)s',
+        #     datefmt='%Y-%m-%dT%H:%M:%S',
+        # )
+        # console = logging.StreamHandler()
+        # console.setLevel(logging.ERROR)
+        # logging.getLogger('').addHandler(console)
 
     def request(
             self,
@@ -67,7 +93,6 @@ class Client(object):
             endpoint,
             data=None,
             params=None,
-            verbose=False,
     ):
         """Make a request to the Metrc API."""
         url = self.base + endpoint
@@ -78,15 +103,15 @@ class Client(object):
         except ConnectionError:
             self.session = Session()
             self.session.auth = (self.vendor_api_key, self.user_api_key)
-            response = getattr(self.session, method)(url, json=data, params=params)
-        if verbose:
-            print('\n\nREQUEST:', response.request.url)
-            print('\n\nBODY:\n\n', response.request.body)
-            print('\n\nSTATUS CODE:', response.status_code)
-            try:
-                print('\n\nRESPONSE:\n\n', dumps(response.json()), '\n\n')
-            except ValueError:
-                print('\n\nRESPONSE:\n\n', response.text, '\n\n')
+            response = getattr(self.session, method)(url, json=data, params=params)            
+        logger.debug(f'Request: {response.request.url}')
+        logger.debug(f'Body: {response.request.body}')
+        logger.debug(f'Status code: {response.status_code}')
+        try:
+            log = dumps(response.json())
+            logger.debug(f'Response: {log}')
+        except ValueError:
+            logger.debug(f'Response: {response.text}')
         if response.status_code == 200:
             try:
                 return response.json()
@@ -94,6 +119,56 @@ class Client(object):
                 return response.text
         else:
             raise MetrcAPIError(response)
+
+    #------------------------------------------------------------------
+    # NEW HELPER FUNCTIONS (TODO: Document, test, and put where they belong)
+    #------------------------------------------------------------------
+
+    def get_location_types(self, license_number=''):
+        """Get all location types for a given license.
+        Args:
+            license_number (str): A specific license number.
+        """
+        url = METRC_LOCATIONS_URL % 'types'
+        params = format_params(license_number=license_number or self.primary_license)
+        return self.request('get', url, params=params)
+
+
+    def get_waste_methods(self, license_number=''):
+        """Get all waste methods for a given license.
+        Args:
+            license_number (str): A specific license number.
+        """
+        url = METRC_PLANTS_URL % 'waste/methods'
+        params = format_params(license_number=license_number or self.primary_license)
+        return self.request('get', url, params=params)
+
+
+    def get_waste_reasons(self, license_number=''):
+        """Get all waste reasons for plants for a given license.
+        Args:
+            license_number (str): A specific license number.
+        """
+        url = METRC_PLANTS_URL % 'waste/reasons'
+        params = format_params(license_number=license_number or self.primary_license)
+        return self.request('get', url, params=params)
+
+
+    def get_waste_types(self, license_number=''):
+        """Get all waste types for harvests for a given license.
+        Args:
+            license_number (str): A specific license number.
+        """
+        url = METRC_HARVESTS_URL % 'waste/types'
+        params = format_params(license_number=license_number or self.primary_license)
+        return self.request('get', url, params=params)
+
+
+    # Write get_harvest_waste_reasons
+    # wt = track.get_harvests(action='waste/types', license_number=l)
+    # get_item_categories
+    # get_adjustment_reasons
+    # get_test_types
 
 
     #------------------------------------------------------------------
@@ -116,6 +191,123 @@ class Client(object):
         url = METRC_FACILITIES_URL
         response = self.request('get', url)
         return [Facility(self, x) for x in response]
+
+
+    def get_facility(self, license_number):
+        """Get a given facility by its license number."""
+        url = METRC_FACILITIES_URL
+        response = self.request('get', url)
+        facility = None
+        facilities = [Facility(self, x) for x in response]
+        for f in facilities:
+            if f.license_number == license_number:
+                facility = f
+                break
+        return facility
+
+    #------------------------------------------------------------------
+    # Deliveries
+    #------------------------------------------------------------------
+
+    def create_deliveries(self, data, license_number=''):
+        """Create home deliver(ies).
+        Args:
+            data (list): A list of deliveries (dict) to create.
+            license_number (str): A specific license number.
+        """
+        url = METRC_SALES_URL % 'deliveries'
+        params = format_params(license_number=license_number or self.primary_license)
+        return self.request('post', url, data=data, params=params)
+
+
+    def get_deliveries(
+            self,
+            uid='',
+            action='active',
+            license_number='',
+            start='',
+            end='',
+            sales_start='',
+            sales_end='',
+    ):
+        """Get sale(s).
+        Args:
+            uid (str): The UID for a delivery.
+            action (str): The action to apply to the delivery, with options:
+                `active` or `inactive`
+            license_number (str): A specific license number.
+            start (str): An ISO 8601 formatted string to restrict the start
+                by the last modified time.
+            end (str): An ISO 8601 formatted string to restrict the end
+                by the last modified time.
+            sales_start (str): An ISO 8601 formatted string to restrict the start
+                by the sales time.
+            sales_end (str): An ISO 8601 formatted string to restrict the end
+                by the sales time.
+        Returns:
+            (list): Returns a list of Receipts.
+        """
+        if uid:
+            url = METRC_SALES_URL % f'delivery/{uid}'
+        else:
+            url = METRC_SALES_URL % f'deliveries/{action}'
+        params = format_params(
+            license_number=license_number or self.primary_license,
+            start=start,
+            end=end,
+            sales_start=sales_start,
+            sales_end=sales_end,
+        )
+        response = self.request('get', url, params=params)
+        try:
+            return Receipt(self, response, license_number)
+        except AttributeError:
+            return [Receipt(self, x, license_number) for x in response]
+
+
+    def get_return_reasons(self, license_number=''):
+        """Get the possible return reasons for home delivery items.
+        Args:
+            license_number (str): A specific license number.
+        Returns:
+            (list): A list of return reasons.
+        """
+        url = METRC_SALES_URL % 'delivery/returnreasons'
+        params = format_params(license_number=license_number or self.primary_license)
+        return self.request('get', url, params=params)
+
+    
+    def complete_deliveries(self, data, license_number=''):
+        """Complete home deliver(ies).
+        Args:
+            data (list): A list of deliveries (dict) to complete.
+            license_number (str): A specific license number.
+        """
+        url = METRC_SALES_URL % 'deliveries/complete'
+        params = format_params(license_number=license_number or self.primary_license)
+        return self.request('put', url, data=data, params=params)
+
+
+    def delete_delivery(self, uid, license_number=''):
+        """Delete a home delivery.
+        Args:
+            uid (str): The UID of a home delivery to delete.
+            license_number (str): A specific license number.
+        """
+        url = METRC_SALES_URL % f'delivery/{uid}'
+        params = format_params(license_number=license_number or self.primary_license)
+        return self.request('delete', url, params=params)
+
+
+    def update_deliveries(self, data, license_number=''):
+        """Update home deliver(ies).
+        Args:
+            data (list): A list of deliveries (dict) to create.
+            license_number (str): A specific license number.
+        """
+        url = METRC_SALES_URL % 'deliveries'
+        params = format_params(license_number=license_number or self.primary_license)
+        return self.request('put', url, data=data, params=params)
 
 
     #------------------------------------------------------------------
@@ -285,7 +477,7 @@ class Client(object):
         url = METRC_ITEMS_URL % uid
         params = format_params(license_number=license_number or self.primary_license)
         return self.request('delete', url, params=params)
-    
+
 
     def get_item_categories(self, license_number=''):
         """Get all item categories.
@@ -560,7 +752,7 @@ class Client(object):
         url = METRC_PACKAGES_URL % 'change/note'
         params = format_params(license_number=license_number or self.primary_license)
         return self.request('put', url, data=data, params=params)
-    
+
 
     def get_package_types(self, license_number=''):
         """Get all facilities.

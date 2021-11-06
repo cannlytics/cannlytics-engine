@@ -1,5 +1,10 @@
 """
 Cannlytics Module | Cannlytics
+Copyright (c) 2021 CAnnlytics and Cannlytics Contributors
+
+Author: Keegan Skeate <keegan@cannlytics.com>
+Created: 11/5/2021
+Updated: 11/5/2021
 
 This module contains the Cannlytics class,
 the entry point into Cannlytics features and functionality.

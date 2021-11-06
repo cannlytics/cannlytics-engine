@@ -1,6 +1,10 @@
-# -*- coding: utf-8 -*-
 """
 Metrc Models | Cannlytics
+Copyright (c) 2021 CAnnlytics and Cannlytics Contributors
+
+Author: Keegan Skeate <keegan@cannlytics.com>
+Created: 11/5/2021
+Updated: 11/5/2021
 
 This module contains common Metrc models.
 """
@@ -53,6 +57,8 @@ class Model(object):
         Args:
             client (Client): A Metrc client instance.
             ref (str): The reference to the document in Firestore.
+        Returns:
+            (Model): A Metrc model.
         """
         data = get_document(ref)
         obj = cls(client, data)
@@ -83,6 +89,78 @@ class Model(object):
             update_document(ref, data)
 
     # TODO: Add create_from_json to all models.
+
+
+# TODO: Delivery model
+# class Delivery(Model):
+#     """A class that represents a cannabis home delivery.
+#     Sales are reported to record the transfer of cannabis
+#     products to a consumer, patient or caregiver.
+
+#     When you request receipts you receive the following object.
+#     ```js
+#     {
+#         "Id": 1,
+#         "ReceiptNumber": null,
+#         "SalesDateTime": "2016-01-01T17:35:45.000",
+#         "SalesCustomerType": "Consumer",
+#         "PatientLicenseNumber": null,
+#         "CaregiverLicenseNumber": null,
+#         "IdentificationMethod": null,
+#         "TotalPackages": 0,
+#         "TotalPrice": 0.0,
+#         "Transactions": [],
+#         "IsFinal": false,
+#         "ArchivedDate": null,
+#         "RecordedDateTime": "0001-01-01T00:00:00+00:00",
+#         "RecordedByUserName": null,
+#         "LastModified": "0001-01-01T00:00:00+00:00"
+#     }
+#     ```
+
+#     When you create a receipt, you pass the following object.
+#     ```js
+#     {
+#         "SalesDateTime": "2016-10-04T16:44:53.000",
+#         "SalesCustomerType": "Consumer",
+#         "PatientLicenseNumber": null,
+#         "CaregiverLicenseNumber": null,
+#         "IdentificationMethod": null,
+#         "Transactions": [
+#             {
+#                 "PackageLabel": "ABCDEF012345670000010331",
+#                 "Quantity": 1.0,
+#                 "UnitOfMeasure": "Ounces",
+#                 "TotalAmount": 9.99
+#             }
+#         ]
+#     }
+#     ```
+#     """
+
+#     @classmethod
+#     def create_from_json(cls, client, json):
+#         """Initiate a class instance from a dictionary."""
+#         obj = cls(client, json)
+#         obj.create()
+#         return obj
+
+#     def create(self):
+#         """Create a receipt record in Metrc."""
+#         context = self.to_dict()
+#         data = clean_nested_dictionary(context, snake_to_camel)
+#         self.client.create_receipts([data], license_number=self._license)
+
+#     def update(self, **kwargs):
+#         """Update the receipt given parameters as keyword arguments."""
+#         context = self.to_dict().copy()
+#         data = update_context(context, **kwargs)
+#         data = remove_dict_nulls(data)
+#         self.client.update_receipts([data], self._license)
+
+#     def delete(self):
+#         """Delete the receipt."""
+#         self.client.delete_receipt(self.id, self._license)
 
 
 class Employee(Model):
@@ -386,7 +464,7 @@ class Item(Model):
 
 class Plant(Model):
     """A class that represents a cannabis plant.
-    
+
     Plants are tagged at the immature lot growth phase and at the mature / flowering growth
     phase.
     A UID number is assigned to an immature plant lot of
@@ -452,14 +530,14 @@ class Plant(Model):
         )
 
     def destroy(
-        self,
-        weight,
-        method='Compost',
-        material='Soil',
-        note='n/a',
-        reason='Contamination',
-        uom='grams',
-        ):
+            self,
+            weight,
+            method='Compost',
+            material='Soil',
+            note='n/a',
+            reason='Contamination',
+            uom='grams',
+    ):
         """Destroy the plant.
         Args:
             weight (float): Required weight of the waste.
@@ -486,12 +564,12 @@ class Plant(Model):
         )
 
     def manicure(
-        self,
-        weight,
-        harvest_name=None,
-        location_name=None,
-        patient_license=None,
-        uom='Grams',
+            self,
+            weight,
+            harvest_name=None,
+            location_name=None,
+            patient_license=None,
+            uom='Grams',
     ):
         """Manicure the plant.
         Args:
@@ -519,12 +597,12 @@ class Plant(Model):
         )
 
     def harvest(
-        self,
-        harvest_name,
-        weight,
-        location_name=None,
-        patient_license=None,
-        uom='Grams',
+            self,
+            harvest_name,
+            weight,
+            location_name=None,
+            patient_license=None,
+            uom='Grams',
     ):
         """Harvest the plant.
         Args:
@@ -554,7 +632,7 @@ class Plant(Model):
 
 class Harvest(Model):
     """A class that represents a cannabis harvest.
-    
+
     A harvest batch is created and given a
     unique Harvest Name when plants
     or plant material are harvested.
