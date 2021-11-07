@@ -456,6 +456,15 @@ class Client(object):
         url = METRC_ITEMS_URL % 'create'
         params = self.format_params(license_number=license_number or self.primary_license)
         return self.request('post', url, data=data, params=params)
+    
+
+    def create_item(self, data, license_number=''):
+        """Create items.
+        Args:
+            data (dict): An item to create.
+            license_number (str): A specific license number.
+        """
+        return self.create_items(self, [data], license_number=license_number)
 
 
     def update_items(self, data, license_number=''):
@@ -467,6 +476,15 @@ class Client(object):
         url = METRC_ITEMS_URL % 'update'
         params = self.format_params(license_number=license_number or self.primary_license)
         return self.request('post', url, data=data, params=params)
+    
+
+    def update_item(self, data, license_number=''):
+        """Update an item.
+        Args:
+            data (dict): An item to update.
+            license_number (str): A specific license number.
+        """
+        return self.update_items(self, [data], license_number=license_number)
 
 
     def delete_item(self, uid, license_number=''):
@@ -825,6 +843,26 @@ class Client(object):
     # Plant Batches
     # TODO: Implement parameter isFromMotherPlant on POST /plantbatches/v1/createpackages
     #------------------------------------------------------------------
+
+    def create_plant_batch(self, data, license_number=''):
+        """
+        Args:
+            data (dict): A plant batch to create.
+            license_number (str): A specific license number.
+        Returns:
+            (PlantBatch): Returns a plant batch class.
+        """
+        return self.create_plant_batches([data], license_number=license_number)
+
+    def create_plant_batches(self, data, license_number=''):
+        """
+        Args:
+            data (list): A list of plant batches (dict) to create.
+            license_number (str): A specific license number.
+        Returns:
+            (list): Returns a list of plant batch classes.
+        """
+        return self.manage_batches(data, 'createplantings', license_number=license_number)
 
     def get_batches(
             self,

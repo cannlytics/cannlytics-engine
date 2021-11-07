@@ -9,14 +9,27 @@ Updated: 11/6/2021
 from .client import Client
 
 
-def authorize(vendor_api_key, user_api_key, client_class=Client):
-    """Authorize use of the Leaf Data Systems API
-    using an API key and MME (licensee) code.
-
-    This is a shortcut function which
-    instantiates `client_class`.
-    By default :class:`cannlytics.traceability.leaf.Client` is used.
-    
-    Returns: `client_class` instance.
+def initialize_metrc(
+        vendor_api_key,
+        user_api_key,
+        primary_license='',
+        state='ca',
+        client_class=Client,
+):
+    """This is a shortcut function which instantiates a Metrc
+    client using a user API key and the vendor API key.    
+    Args:
+        vendor_api_key (str): The vendor's API key.
+        user_api_key (str): The user's API key.
+        primary_license (str): An optional primary license to use if no license is specified.
+        state (str): The state of the traceability system, `ca` by default.
+        client_class: By default :class:`cannlytics.metrc.client.Client` is used.
+    Returns:
+        (client_class): Returns an instance of the client.
     """
-    return client_class(vendor_api_key, user_api_key)
+    return client_class(
+        vendor_api_key,
+        user_api_key,
+        primary_license=primary_license,
+        state=state
+    )
