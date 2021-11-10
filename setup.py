@@ -19,12 +19,14 @@ dev_requirements = []
 # or pip install -e .
 install_requirements = [
     'beautifulsoup4',
+    'dateutil',
     'django',
     'firebase_admin',
     'googlemaps',
     'matplotlib',
     'numpy',
     'pandas',
+    'pytz',
     'statsmodels',
 ]
 
