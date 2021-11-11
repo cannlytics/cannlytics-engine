@@ -1,42 +1,44 @@
-# -*- coding: utf-8 -*-
 """
 Metrc Exceptions | Cannlytics
 Copyright (c) 2021 Cannlytics and Cannlytics Contributors
 
 Author: Keegan Skeate <keegan@cannlytics.com>
 Created: 11/5/2021
-Updated: 11/5/2021
+Updated: 11/8/2021
 
 Exceptions used when interfacing with the Metrc API.
 """
 
 
-class TraceabilityException(Exception):
-    """A base class for traceability system exceptions."""
-
-
-class MetrcAPIError(TraceabilityException):
-    """A primary error raised by the API.
+class MetrcAPIError(Exception):
+    """A primary error raised by the Metrc API.
     Insufficient permissions for a request typically
     result in a 401 unauthorized error.
     """
 
     def __init__(self, response):
-        super(MetrcAPIError, self).__init__(self._extract_text(response))
+        message = self.get_response_messages(response)
+        super().__init__(message)
         self.response = response
 
-    def _extract_text(self, response):
-        return self._text_from_detail(response) or response.text
-
-    def _text_from_detail(self, response):
+    def get_response_messages(self, response):
+        """Extract error messages from a Metrc API response.
+        Args:
+            response (Response): A request response from the Metrc API.
+        Returns:
+            (str): Returns any error messages.
+        """
         try:
             errors = response.json()
             if isinstance(errors, list):
-                message = '\n'.join(errors)
-                return f'\n---------------\n{message}\n---------------'
+                try:
+                    message = '\n'.join(errors)
+                except TypeError:
+                    message = '\n'.join([x.get('message') for x in errors])
+            elif isinstance(errors, dict):
+                message = errors.get('Message', errors.get('message'))
             else:
-                message = errors['Message']
-                return f'\n---------------\n{message}\n---------------'
+                message = response.text
         except (AttributeError, KeyError, ValueError):
-            message = 'Unknown API error'
-            return f'\n---------------\n{message}\n---------------'
+            message = 'Unknown Metrc API error'
+        return message

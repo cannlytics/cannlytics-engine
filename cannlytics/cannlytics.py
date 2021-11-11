@@ -4,7 +4,7 @@ Copyright (c) 2021 Cannlytics and Cannlytics Contributors
 
 Author: Keegan Skeate <keegan@cannlytics.com>
 Created: 11/5/2021
-Updated: 11/6/2021
+Updated: 11/8/2021
 
 This module contains the Cannlytics class,
 the entry point into Cannlytics features and functionality.
@@ -13,18 +13,14 @@ the entry point into Cannlytics features and functionality.
 from dotenv import dotenv_values
 import logging
 from os import environ
-from typing import Dict, Optional
-# from typing import List, Type, Union
+from typing import Dict, Optional # List, Type, Union
 
 # External imports.
 from enforce_typing import enforce_types
 
 # Internal imports.
-# from .exceptions import CannlyticsError
 from .firebase import initialize_firebase
 from .metrc import initialize_metrc
-
-logger = logging.getLogger('cannlytics')
 
 
 class Cannlytics:
@@ -46,7 +42,34 @@ class Cannlytics:
         else:
             config = dotenv_values('./.env')
         self.config = config
-        logger.debug('Cannlytics instance initialized.')
+        self.initialize_logs()
+
+
+    # Optional: Reduce duplication of logging code in the Metrc module?
+    def create_log(self, message):
+        """Create a log.
+        Args:
+            (message): Print a given message to the logs.
+        """
+        self.logger.debug(message)
+
+
+    def initialize_logs(self):
+        """Initialize logs.
+        """
+        logging.getLogger('cannlytics').handlers.clear()
+        logging.basicConfig(
+            filename='./tmp/cannlytics.log',
+            filemode='w+',
+            level=logging.DEBUG,
+            format='%(asctime)s %(message)s',
+            datefmt='%Y-%m-%dT%H:%M:%S',
+        )
+        console = logging.StreamHandler()
+        console.setLevel(logging.DEBUG)
+        self.logger = logging.getLogger('cannlytics')
+        self.logger.addHandler(console)
+
 
     def initialize_firebase(self, config=None):
         """Initialize a Firebase account for back-end, cloud services."""
@@ -56,8 +79,10 @@ class Cannlytics:
         environ['GOOGLE_APPLICATION_CREDENTIALS'] = credentials
         self.db = initialize_firebase()
         self.storage_bucket = config.get('FIREBASE_STORAGE_BUCKET')
-        logger.debug('Firebase client initialized.')
+        self.create_log('Firebase client initialized.')
+        return self.db
     
+
     def initialize_traceability(self, config=None, primary_license=None, state=None):
         """Initialize the traceability client.
         Args:
@@ -74,4 +99,4 @@ class Cannlytics:
             primary_license=primary_license,
             state=state,
         )
-        logger.debug('Traceability client initialized.')
+        return self.track

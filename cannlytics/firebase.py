@@ -57,7 +57,7 @@ try:
         pass
 
     # Internal imports.
-    from cannlytics.utils.utils import snake_case
+    from .utils.utils import snake_case
 except:
     pass # FIXME: Ignore import in Docs
 
@@ -514,7 +514,7 @@ def verify_token(token):
     return auth.verify_id_token(token)
 
 
-def verify_session_cookie(session_cookie, check_revoked=True, app=None): # FIXME: Don't hardcode
+def verify_session_cookie(session_cookie, check_revoked=True, app=None):
     """Verify a user's session cookie.
     Args:
         session_cookie (str): A session cookie to authenticate a user.
@@ -606,7 +606,7 @@ def delete_user(uid):
     auth.delete_user(uid)
 
 
-# Optional: Implement custom password-reset email.
+# TODO: Implement custom password-reset email.
 # def send_password_reset(email):
 #     """Send a password reset to a user given an email."""
 #     link = auth.generate_password_reset_link(email)

@@ -4,13 +4,20 @@ Copyright (c) 2021 Cannlytics and Cannlytics Contributors
 
 Author: Keegan Skeate <keegan@cannlytics.com>
 Created: 11/6/2021
-Updated: 11/6/2021
+Updated: 11/8/2021
 
 This module contains general cannabis analytics utility functions.
 """
 # Standard imports.
 from datetime import datetime, timedelta
+from pytz import timezone
 from re import sub, findall
+
+# External imports.
+from dateutil import parser
+
+# Internal imports.
+from .constants import state_time_zones
 
 
 def camelcase(string):
@@ -77,16 +84,24 @@ def get_keywords(string):
     return keywords
 
 
-def get_timestamp(past=0, future=0, time_zone='local'):
+def get_timestamp(date=None, past=0, future=0, tz='utc'):
     """Get an ISO formatted timestamp.
     Args:
+        date (str): An optional date to pin the timestamp to a specific time.
         past (int): Number of minutes in the past to get a timestamp.
         future (int): Number of minutes into the future to get a timestamp.
-        time_zone (str): UNIMPLEMENTED Set a given timezone.
+        tz (str): A specific timezone or US state abbreviation, e.g. CA.
     Returns:
-        (str): An ISO formatted date/time string.
+        (str): An ISO formatted date/time string in the specified time zone,
+            UTC by default.
     """
-    now = datetime.now()
+    time_zone = state_time_zones.get(str(tz).upper(), tz)
+    if date:
+        now = parser.parse(date).replace(tzinfo=timezone(time_zone))
+    elif time_zone is None:
+        now = datetime.now()
+    else:
+        now = datetime.now(timezone(time_zone))
     now += timedelta(minutes=future)
     now -= timedelta(minutes=past)
     if time_zone is None:
