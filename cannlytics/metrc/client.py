@@ -18,7 +18,7 @@ from pandas import read_excel
 from requests import Session
 
 # Internal imports.
-from .constants import parameters
+from .constants import parameters, recall
 from .exceptions import MetrcAPIError
 from .models import *
 from .urls import *
@@ -73,6 +73,7 @@ class Client(object):
         self.session.auth = (vendor_api_key, user_api_key)
         self.state = state
         self.test = test
+        self.recall = recall
         if test:
             self.base = METRC_API_BASE_URL_TEST % state
         else:
@@ -159,14 +160,14 @@ class Client(object):
         return [Facility(self, x) for x in response]
 
 
-    def get_facility(self, license_number):
+    def get_facility(self, license_number=''):
         """Get a given facility by its license number."""
         url = METRC_FACILITIES_URL
         response = self.request('get', url)
         facility = None
         facilities = [Facility(self, x) for x in response]
         for f in facilities:
-            if f.license_number == license_number:
+            if f.license_number == license_number or f.license_number == self.primary_license:
                 facility = f
                 break
         return facility
@@ -455,24 +456,45 @@ class Client(object):
                 return response
 
 
-    def create_item(self, data, license_number=''):
+    def create_item(self, data, license_number='', return_obs=False):
         """Create items.
         Args:
             data (dict): An item to create.
             license_number (str): A specific license number.
+            return_obs (bool): Whether or not to get and return the newly created item.
         """
-        return self.create_items([data], license_number=license_number)
+        response = self.create_items([data], license_number=license_number)
+        if return_obs:
+            item_name = data['Name']
+            items = self.get_items()
+            for item in items:
+                if item_name in item.name:
+                    return item
+            return None
+        return response
 
 
-    def create_items(self, data, license_number=''):
+    def create_items(self, data, license_number='', return_obs=False):
         """Create items.
         Args:
             data (list): A list of items (dict) to create.
             license_number (str): A specific license number.
+            return_obs (bool): Whether or not to get and return the newly created items.
         """
         url = METRC_ITEMS_URL % 'create'
         params = self.format_params(license_number=license_number or self.primary_license)
-        return self.request('post', url, data=data, params=params)
+        response = self.request('post', url, data=data, params=params)
+        if not return_obs or not response:
+            return response
+        else:
+            item_names = [x['Name'] for x in data]
+            return_items = []
+            items = self.get_items()
+            for item in items:
+                for item_name in item_names:
+                    if item_name in item.name:
+                        return_items.append(item)
+            return return_items
 
 
     def update_items(self, data, license_number=''):
@@ -955,10 +977,9 @@ class Client(object):
 
     #------------------------------------------------------------------
     # Plant Batches
-    # TODO: Implement parameter isFromMotherPlant on POST /plantbatches/v1/createpackages
     #------------------------------------------------------------------
 
-    def create_plant_batch(self, data, license_number=''):
+    def create_plant_batch(self, data, license_number='', return_obs=False):
         """
         Args:
             data (dict): A plant batch to create.
@@ -966,20 +987,42 @@ class Client(object):
         Returns:
             (PlantBatch): Returns a plant batch class.
         """
-        return self.create_plant_batches([data], license_number=license_number)
+        response = self.create_plant_batches([data], license_number=license_number)
+        if return_obs:
+            name = data['Name']
+            start = get_timestamp(past=self.client.recall, tz=self.client.state)
+            objects = self.get_batches(start=start)
+            for obs in objects:
+                if obs.name == name:
+                    return obs
+            return None
+        return response
 
 
-    def create_plant_batches(self, data, license_number=''):
+    def create_plant_batches(self, data, license_number='', return_obs=False):
         """
         Args:
             data (list): A list of plant batches (dict) to create.
             license_number (str): A specific license number.
+            return_obs (bool): Whether or not to get and return the newly created item.
         Returns:
             (list): Returns a list of plant batch classes.
         """
         if self.state == 'ca':
             raise MetrcAPIError({'message': 'The request POST /plantbatches/v1/createplantings will not work in California due to "CanCreateOpeningBalancePlantBatches": false, this request is used in other states that allow Plant Batche creation.'})
-        return self.manage_batches(data, 'createplantings', license_number=license_number)
+        response = self.manage_batches(data, 'createplantings', license_number=license_number)
+        if not return_obs:
+            return response
+        else:
+            names = [x['Name'] for x in data]
+            return_obs = []
+            start = get_timestamp(past=self.client.recall, tz=self.client.state)
+            objects = self.get_batches(start=start)
+            for obs in objects:
+                for name in names:
+                    if obs.name == name:
+                        return_obs.append(obs)
+            return return_obs
 
 
     # TODO: get_plant_batch()
@@ -1041,6 +1084,15 @@ class Client(object):
         url = METRC_BATCHES_URL % action
         params = self.format_params(from_mother=from_mother, license_number=license_number or self.primary_license)
         return self.request('post', url, data=data, params=params)
+    
+
+    # TODO: Implement parameter isFromMotherPlant on POST /plantbatches/v1/createpackages
+
+    # TODO: Implement create_plantings
+
+    # TODO: Implement change_plant_batch_growth_phase
+
+    # TODO: Implement add_plant_batch_additives
     
 
     def create_plant_package_from_batch(self, data, license_number=''):
@@ -1288,6 +1340,7 @@ class Client(object):
         params = self.format_params(license_number=license_number or self.primary_license)
         return self.request('get', url, params=params)
 
+    # TODO: Make create_receipt(s) more function-like?
     
     def create_receipt(self, data, license_number=''):
         """Create a receipt.
@@ -1648,7 +1701,7 @@ class Client(object):
     # Miscellaneous
     #------------------------------------------------------------------
 
-    def get_uom(self, license_number=''):
+    def get_units_of_measure(self, license_number=''):
         """Get all units of measurement."""
         url = METRC_UOM_URL
         params = self.format_params(license_number=license_number or self.primary_license)

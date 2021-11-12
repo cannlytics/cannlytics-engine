@@ -458,11 +458,11 @@ class Item(Model):
             except KeyError:
                 pass
 
-    def create(self, license_number=''):
+    def create(self, license_number='', return_obs=False):
         """Create an item record in Metrc."""
         context = self.to_dict()
         data = clean_dictionary(context, snake_to_camel)
-        self.client.create_items([data], license_number)
+        self.client.create_items([data], license_number, return_obs=return_obs)
 
     def update(self, **kwargs):
         """Update the item given parameters as keyword arguments."""
@@ -1237,6 +1237,8 @@ class PlantBatch(Model):
                 self.__dict__[v] = properties[k]
             except KeyError:
                 pass
+    
+    # TODO: Implement add_additive, add_additives
 
     def create(self, license_number=''):
         """Create a plant batch record in Metrc."""
@@ -1246,8 +1248,8 @@ class PlantBatch(Model):
 
     def create_package(
         self,
-        tag,
         item_name,
+        tag,
         count,
         location='',
         note='',
@@ -1258,7 +1260,7 @@ class PlantBatch(Model):
         data = {
             'id': self.uid,
             'count': count,
-            'location': location or self.location,
+            'location': location or self.location_name,
             'item': item_name,
             'tag': tag,
             'note': note,
@@ -1268,6 +1270,8 @@ class PlantBatch(Model):
         }
         data = clean_dictionary(data, snake_to_camel)
         self.client.manage_batches([data], 'createpackages', self._license)
+
+    # TODO: Implement create_packages
 
     def create_package_from_mother(
         self,
@@ -1283,7 +1287,7 @@ class PlantBatch(Model):
         data = {
             'PlantBatch': self.name,
             'Count': count,
-            'Location': location or self.location,
+            'Location': location or self.location_name,
             'Item': item,
             'Tag': tag,
             'Note': note,
@@ -1298,9 +1302,35 @@ class PlantBatch(Model):
             self._license,
         )
 
-    def change_growth_phase(self, data):
-        """Change the growth phase of the batch."""
-        data = clean_dictionary(data, snake_to_camel)
+    def change_growth_phase(
+        self,
+        tag,
+        count=1,
+        growth_phase='Vegetative',
+        location=None,
+        patient_license=None,
+    ):
+        """Change the growth phase of the batch.
+        Args:
+            tag (str): A plant tag for the new growth phase for the plants.
+                Subsequent tags will be used for plants beyond the first.
+            count (int): The number of plants to change growth phase, 1 by
+                default.
+            growth_phase (str): The growth phase for the plant(s), Flowering
+                or Vegetative. Vegetative is used by default.
+            location (str): A location for the plants, the current location of
+                the plant batch is used by default.
+            patient_license (str): An optional patient license number.
+        """
+        data = {
+            'Name': self.name,
+            'Count': count,
+            'StartingTag': tag,
+            'GrowthPhase': growth_phase,
+            'NewLocation': location or self.location_name,
+            'GrowthDate': get_timestamp(tz=self.client.state),
+            'PatientLicenseNumber': patient_license,
+        }
         self.client.manage_batches([data], 'changegrowthphase', self._license)
 
     def destroy_plants(self, count, reason):
@@ -1328,7 +1358,7 @@ class PlantBatch(Model):
             'PlantBatch': self.name,
             'GroupName': name,
             'Count': count,
-            'Location': location or self.location,
+            'Location': location or self.location_name,
             'Strain': self.strain_name,
             'PatientLicenseNumber': None,
             'ActualDate': get_timestamp(tz=self.client.state),
