@@ -4,7 +4,7 @@ Copyright (c) 2021 Cannlytics and Cannlytics Contributors
 
 Author: Keegan Skeate <keegan@cannlytics.com>
 Created: 11/5/2021
-Updated: 11/9/2021
+Updated: 11/12/2021
 
 This module contains common Metrc models.
 """
@@ -50,7 +50,7 @@ class Model(object):
     def uid(self):
         """The model's unique ID."""
         return self.__dict__.get('id')
-    
+
     @classmethod
     def from_dict(cls, client, json):
         """Initiate a class instance from a dictionary."""
@@ -264,6 +264,7 @@ class Facility(Model):
             [location_type],
             self.license_number
         )
+        # TODO: Implement return_obs
 
     def create_locations(self, names, types=[]):
         """Create locations at the facility.
@@ -274,6 +275,7 @@ class Facility(Model):
                 `default` is assigned by default.
         """
         return self.client.create_locations(names, types, self.license_number)
+        # TODO: Implement return_obs
 
     def update_locations(self, ids, names, types=[]):
         """Update locations at the facility.
@@ -299,6 +301,7 @@ class Facility(Model):
             license_number=self.license_number
         )
         return response
+        # TODO: Implement return_obs
 
     def delete_location(self, uid):
         """Delete a location at the facility.
@@ -530,6 +533,7 @@ class Plant(Model):
             action='create/plantings',
             license_number=self._license
         )
+        # TODO: Implement return_obs
 
     def create_plant_package(
             self,
@@ -575,6 +579,7 @@ class Plant(Model):
             action='create/plantbatch/packages',
             license_number=self._license
         )
+        # TODO: Implement return_obs
 
     def flower(self, tag, location_name=None):
         """Change the growth phase of the plant to flowering.
@@ -679,6 +684,7 @@ class Plant(Model):
             action='manicureplants',
             license_number=self._license
         )
+        # TODO: Implement return_obs
 
     def harvest(
             self,
@@ -712,6 +718,7 @@ class Plant(Model):
             action='harvestplants',
             license_number=self._license
         )
+        # TODO: Implement return_obs
 
 
 class Harvest(Model):
@@ -785,6 +792,7 @@ class Harvest(Model):
             [data],
             license_number=self._license,
         )
+        # TODO: Implement return_obs
 
     def create_packages(
             self,
@@ -824,6 +832,7 @@ class Harvest(Model):
                 'UnitOfWeight': uom,
             })
         self.client.create_harvest_packages(data, license_number=self._license)
+        # TODO: Implement return_obs
 
     def create_testing_packages(self, data):
         """Create testing packages from a harvest.
@@ -831,6 +840,7 @@ class Harvest(Model):
             data (list): The package data.
         """
         self.client.create_harvest_testing_packages(data, license_number=self._license)
+        # TODO: Implement return_obs
 
     def remove_waste(self, weight, waste_type='Waste', uom='Grams'):
         """Remove waste from the harvest.
@@ -1001,8 +1011,9 @@ class Package(Model):
             [data],
             license_number=self._license,
         )
+        # TODO: Implement return_obs
 
-    # TODO: Implement
+    # TODO: Implement (with return_obs)
     def create_packages(
             self,
     ):
@@ -1237,7 +1248,7 @@ class PlantBatch(Model):
                 self.__dict__[v] = properties[k]
             except KeyError:
                 pass
-    
+
     # TODO: Implement add_additive, add_additives
 
     def create(self, license_number=''):
@@ -1247,14 +1258,14 @@ class PlantBatch(Model):
         self.client.manage_batches([data], 'createplantings', license_number)
 
     def create_package(
-        self,
-        item_name,
-        tag,
-        count,
-        location='',
-        note='',
-        trade_sample=False,
-        donation=False,
+            self,
+            item_name,
+            tag,
+            count,
+            location='',
+            note='',
+            trade_sample=False,
+            donation=False,
     ):
         """Create a package from the plant batch."""
         data = {
@@ -1270,18 +1281,19 @@ class PlantBatch(Model):
         }
         data = clean_dictionary(data, snake_to_camel)
         self.client.manage_batches([data], 'createpackages', self._license)
+        # TODO: Implement return_obs
 
     # TODO: Implement create_packages
 
     def create_package_from_mother(
-        self,
-        tag,
-        item,
-        count,
-        location=None,
-        note='',
-        trade_sample=False,
-        donation=False,
+            self,
+            tag,
+            item,
+            count,
+            location=None,
+            note='',
+            trade_sample=False,
+            donation=False,
     ):
         """Create a package from the plant batch mother plant."""
         data = {
@@ -1301,14 +1313,15 @@ class PlantBatch(Model):
             '/create/packages/frommotherplant',
             self._license,
         )
+        # TODO: Implement return_obs
 
     def change_growth_phase(
-        self,
-        tag,
-        count=1,
-        growth_phase='Vegetative',
-        location=None,
-        patient_license=None,
+            self,
+            tag,
+            count=1,
+            growth_phase='Vegetative',
+            location=None,
+            patient_license=None,
     ):
         """Change the growth phase of the batch.
         Args:
@@ -1346,7 +1359,7 @@ class PlantBatch(Model):
             'ActualDate': get_timestamp(tz=self.client.state),
         }
         self.client.manage_batches([data], 'destroy', self._license)
-    
+
     def split(self, name, count, location=None):
         """Split the batch.
         Args:
@@ -1364,6 +1377,7 @@ class PlantBatch(Model):
             'ActualDate': get_timestamp(tz=self.client.state),
         }
         self.client.manage_batches([data], 'split', self._license)
+        # TODO: Implement return_obs
 
 
 class LabResult(Model):
@@ -1383,7 +1397,7 @@ class LabResult(Model):
         context = self.to_dict()
         result = clean_dictionary(data, snake_to_camel)
         self.client.post_lab_results([{**context, **result}], self._license)
-    
+
     def post(self, data={}):
         """Post lab result data. Equivalent alternative of `create`."""
         self.create(data)
@@ -1403,7 +1417,7 @@ class LabResult(Model):
 
 class Transfer(Model):
     """A class that represents a cannabis transfer. Metrc documentation states:
-    
+
     Transfers are a key component of the chain of custody process.
     A transfer must be created anytime a package moves from one licensee to
     another, even if the two facilities are located on the same property.
@@ -1669,7 +1683,7 @@ class Receipt(Model):
 
 class Waste(Model):
     """A class that represents cannabis waste. Metrc documentation states:
-    
+
     A harvest batch is created and given a unique Harvest Name when plants or
     plant material are harvested. [The following regulations need to be met.]
 

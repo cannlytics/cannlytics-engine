@@ -24,7 +24,8 @@
   "python.linting.pylintEnabled": true,
   "[python]": {
     "editor.insertSpaces": true,
-    "editor.tabSize": 4  
+    "editor.tabSize": 4,
+    "editor.rulers": [79, 100],
   },
   "todo-tree.highlights.customHighlight": {
     "TODO": {
