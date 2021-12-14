@@ -1,13 +1,12 @@
-# -*- coding: utf-8 -*-
 """
 Logistics Utilities | Cannlytics
 Copyright (c) 2021 Cannlytics and Cannlytics Contributors
 
 Author: Keegan Skeate <keegan@cannlytics.com>
 Created: 11/5/2021
-Updated: 11/6/2021
+Updated: 12/5/2021
 
-This script contains functions that are useful for logistics.
+Description: This script contains functions that are useful for logistics.
 """
 # Standard imports.
 from time import sleep
@@ -71,11 +70,11 @@ def geocode_addresses(df):
 def search_for_address(query, api_key=None, fields=['formatted_address']):
     """Search for the address of a given name.
     Args:
-        query ():
+        query (str): The text to use to search for an address.
         api_key (): Optional, None by default.
         fields (list): Optional, `formatted_address` is included by default.
     Returns:
-
+        (list): A list of potential results.
     """
     if api_key is None:
         api_key = get_google_maps_api_key()
@@ -87,11 +86,11 @@ def search_for_address(query, api_key=None, fields=['formatted_address']):
 def get_place_details(query, api_key=None, fields=[]):
     """Get the place details for a given a name.
     Args:
-        query ():
-        api_key (): Optional, None by default,
-        fields (list): Optional
+        query (str): The text to use to search for a place.
+        api_key (str): Optional Google Maps API key, None by default.
+        fields (list): Optional fields to retrieve.
     Returns:
-    
+        (dict): A dictionary of place details.
     """
     if api_key is None:
         api_key = get_google_maps_api_key()

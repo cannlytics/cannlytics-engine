@@ -31,13 +31,14 @@ from pandas import read_excel
 from requests import Session
 
 # Internal imports.
-from .constants import parameters, recall
+from .constants import parameters, default_time_period
 from .exceptions import MetrcAPIError
 from .models import *
 from .urls import *
+from ..utils.utils import clean_dictionary
 
 
-class Client(object):
+class Metrc(object):
     """An instance of this class communicates with the Metrc API."""
 
     def __init__(
@@ -78,7 +79,7 @@ class Client(object):
         self.logs = logs
         self.parameters = parameters
         self.primary_license = primary_license
-        self.recall = recall
+        self.default_time_period = default_time_period
         self.state = state
         self.test = test
         self.user_api_key = user_api_key
@@ -122,7 +123,7 @@ class Client(object):
     def create_log(self, response):
         """Create a log given an HTTP response.
         Args:
-            (response): An HTTP request response.
+            response (HTTPResponse): An HTTP request response.
         """
         try:
             self.logger.debug(f'Request: {response.request.method} {response.request.url}')
@@ -182,7 +183,7 @@ class Client(object):
         facility = None
         facilities = [Facility(self, x) for x in response]
         for obs in facilities:
-            if obs.license_number == license_number or obs.license_number == self.primary_license:
+            if obs.license_number == license_number:
                 facility = obs
                 break
         return facility
@@ -526,7 +527,7 @@ class Client(object):
             data (dict): An item to update.
             license_number (str): A specific license number.
         """
-        return self.update_items(self, [data], license_number=license_number)
+        return self.update_items(self, [data], license_number)
         # TODO: Optionally return updated item.
 
 
@@ -625,6 +626,10 @@ class Client(object):
         params = self.format_params(license_number=license_number or self.primary_license)
         return self.request('post', url, data=data, params=params)
         # TODO: Optionally return created lab result.
+        # track.get_packages(
+        #     label=lab_package.label,
+        #     license_number=lab.license_number
+        # )
 
 
     def upload_coas(self, data, license_number=''):
@@ -732,7 +737,10 @@ class Client(object):
     def create_locations(self, names, types=[], license_number='', return_obs=False):
         """Create location(s).
         Args:
-            data (list): A list of locations (dict) to create.
+            names (list): A list of locations (dict) to create.
+            types (list): An optional list of location types:
+                `default`, `planting`, or `packing`.
+                `default` is assigned by default.
             license_number (str): Optional license number filter.
         """
         data = []
@@ -1063,7 +1071,7 @@ class Client(object):
         response = self.create_plant_batches([data], license_number=license_number)
         if return_obs:
             name = data['Name']
-            start = get_timestamp(past=self.client.recall, tz=self.client.state)
+            start = get_timestamp(past=self.client.default_time_period, tz=self.client.state)
             objects = self.get_batches(start=start, license_number=license_number)
             for obs in objects:
                 if obs.name == name:
@@ -1090,7 +1098,7 @@ class Client(object):
         else:
             names = [x['Name'] for x in data]
             return_obs = []
-            start = get_timestamp(past=self.client.recall, tz=self.client.state)
+            start = get_timestamp(past=self.client.default_time_period, tz=self.client.state)
             objects = self.get_batches(start=start, license_number=license_number)
             for obs in objects:
                 for name in names:
@@ -1253,7 +1261,7 @@ class Client(object):
         else:
             names = [x['PlantLabel'] for x in data]
             return_obs = []
-            start = get_timestamp(past=self.client.recall, tz=self.client.state)
+            start = get_timestamp(past=self.client.default_time_period, tz=self.client.state)
             objects = self.get_plants(
                 action='vegetative',
                 start=start,
@@ -1557,9 +1565,19 @@ class Client(object):
         Args:
             data (dict): A strain to create.
             license_number (str): A specific license number.
+            return_obs (bool): Whether or not to get and return the created
+                strain (Strain).
+        Returns:
+            (Strain): Returns a strain class.
         """
-        return self.create_strains([data], license_number=license_number)
-        # TODO: Optionally return the created strain.
+        response = self.create_strains(
+            [data],
+            license_number=license_number,
+            return_obs=return_obs,
+        )
+        if response:
+            return response[0]
+        return response
 
 
     def create_strains(self, data, license_number='', return_obs=False):
@@ -1567,23 +1585,67 @@ class Client(object):
         Args:
             data (list): A list of strains (dict) to create.
             license_number (str): A specific license number.
+            return_obs (bool): Whether or not to get and return the created
+                strains (Strain).
+        Returns:
+            (list): Returns a list of strains (Strains) classes.
         """
         url = METRC_STRAINS_URL % 'create'
         params = self.format_params(license_number=license_number or self.primary_license)
-        return self.request('post', url, data=data, params=params)
-        # TODO: Optionally return the created strains.
+        response = self.request('post', url, data=data, params=params)
+        if not return_obs:
+            return response
+        else:
+            names = [x['Name'] for x in data]
+            return_obs = []
+            objects = self.get_strains(license_number=license_number)
+            for obs in objects:
+                for name in names:
+                    if obs.name == name:
+                        return_obs.append(obs)
+            return return_obs
 
 
-    def update_strains(self, data, license_number=''):
+    def update_strain(self, data, license_number='', return_obs=False):
+        """Update strain(s).
+        Args:
+            data (list): A strain (dict) to update.
+            license_number (str): A specific license number.
+            return_obs (bool): Whether or not to get and return the created strains.
+        Returns:
+            (Strain): Returns the updated strain.
+        """
+        response = self.update_strains(
+            [data],
+            license_number=license_number,
+            return_obs=return_obs,
+        )
+        if response:
+            return response[0]
+        return response
+
+
+    def update_strains(self, data, license_number='', return_obs=False):
         """Update strain(s).
         Args:
             data (list): A list of strains (dict) to update.
             license_number (str): A specific license number.
+            return_obs (bool): Whether or not to get and return the created strains.
+        Returns:
+            (list): Returns a list of strains (Strain) classes.
         """
         url = METRC_STRAINS_URL % 'update'
         params = self.format_params(license_number=license_number or self.primary_license)
-        return self.request('post', url, data=data, params=params)
-        # TODO: Optionally return the updated strains.
+        response = self.request('post', url, data=data, params=params)
+        if not return_obs:
+            return response
+        else:
+            ids = [x['Id'] for x in data]
+            return_obs = []
+            for obs_id in ids:
+                obs = self.get_strains(uid=obs_id, license_number=license_number)
+                return_obs.append(obs)
+            return return_obs
 
 
     def delete_strain(self, uid, license_number=''):
@@ -1650,16 +1712,24 @@ class Client(object):
         """Get all transfer types.
         Args:
             license_number (str): A specific license number.
+        Returns:
+            (list): Returns transfer types (dict).
         """
         url = METRC_TRANSFERS_URL % 'types'
         params = self.format_params(license_number=license_number or self.primary_license)
-        return self.request('get', url, params=params)
+        response = self.request('get', url, params=params)
+        try:
+            return [clean_dictionary(x) for x in response]
+        except:
+            return response
 
 
     def get_package_statuses(self, license_number=''):
         """Get all package status choices.
         Args:
             license_number (str): A specific license number.
+        Returns:
+            (list): Returns package statuses (dict).
         """
         url = METRC_TRANSFERS_URL % 'delivery/packages/states'
         params = self.format_params(license_number=license_number or self.primary_license)
@@ -1684,11 +1754,35 @@ class Client(object):
         return self.request('get', url)
 
 
+    def create_transfer(self, data, license_number='', return_obs=False):
+        """Create a transfer.
+        Args:
+            data (dict): A transfer to create.
+            license_number (str): A specific license number.
+            return_obs (bool): Whether or not to get and return the created
+                transfer.
+        Returns:
+            (Transfer): Returns the created transfer.
+        """
+        response = self.create_transfers(
+            [data],
+            license_number=license_number,
+            return_obs=return_obs,
+        )
+        if response:
+            return response[0]
+        return response
+
+
     def create_transfers(self, data, license_number='', return_obs=False):
         """Create transfer(s).
         Args:
             data (list): A list of transfers (dict) to create.
             license_number (str): A specific license number.
+            return_obs (bool): Whether or not to get and return the created
+                transfer.
+        Returns:
+            (list): Returns a list of transfers (Transfer).
         """
         url = METRC_TRANSFERS_URL % 'external/incoming'
         params = self.format_params(license_number=license_number or self.primary_license)
@@ -1696,10 +1790,23 @@ class Client(object):
         # TODO: Optionally return the created transfers.
 
 
-    # TODO: Implement
     def update_transfer(self, data, license_number='', return_obs=False):
-        """Update a given transfer."""
-        return self.update_transfers([data], license_number=license_number, return_obs=return_obs)
+        """Update a given transfer.
+        Args:
+            data (dict): A transfer to update.
+            license_number (str): A specific license number.
+            return_obs (bool): Whether or not to get and return the created transfer.
+        Returns:
+            (Transfer): Returns transfer class.
+        """
+        response = self.update_transfers(
+            [data],
+            license_number=license_number,
+            return_obs=return_obs,
+        )
+        if response:
+            return response[0]
+        return response
 
 
     def update_transfers(self, data, license_number='', return_obs=False):
@@ -1707,11 +1814,22 @@ class Client(object):
         Args:
             data (list): A list of transfers (dict) to update.
             license_number (str): A specific license number.
+            return_obs (bool): Whether or not to get and return the updated transfers.
+        Returns:
+            (list): Returns a list of transfers (Transfer).
         """
         url = METRC_TRANSFERS_URL % 'external/incoming'
         params = self.format_params(license_number=license_number or self.primary_license)
-        return self.request('put', url, data=data, params=params)
-        # TODO: Optionally return the updated transfers.
+        response = self.request('put', url, data=data, params=params)
+        if not return_obs:
+            return response
+        else:
+            ids = [x['TransferId'] for x in data]
+            return_obs = []
+            for obs_id in ids:
+                obs = self.get_transfers(uid=obs_id, license_number=license_number)
+                return_obs.append(obs)
+            return return_obs
 
 
     def delete_transfer(self, uid, license_number=''):
@@ -1838,7 +1956,7 @@ class Client(object):
     def get_units_of_measure(self, license_number=''):
         """Get all units of measurement.
         Args:
-
+            license_number (str): A specific license number.
         Returns:
             (list): Returns a list of units of measure (dict).
         """

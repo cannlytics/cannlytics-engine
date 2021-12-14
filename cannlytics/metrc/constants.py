@@ -4,14 +4,14 @@ Copyright (c) 2021 Cannlytics and Cannlytics Contributors
 
 Author: Keegan Skeate <keegan@cannlytics.com>
 Created: 11/5/2021
-Updated: 11/9/2021
+Updated: 12/10/2021
 
 This module contains Metrc variables that are constant.
 """
 
 # The number of minutes in the past to check the Metrc API
 # when creating and updating objects and returning observations.
-recall = 5
+default_time_period = 5
 
 additive_types = [
     'Fertilizer',

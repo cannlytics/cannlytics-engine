@@ -2,11 +2,11 @@
 Cannlytics Module | Cannlytics
 Copyright (c) 2021 Cannlytics and Cannlytics Contributors
 
-Author: Keegan Skeate <keegan@cannlytics.com>
+Authors: Keegan Skeate <keegan@cannlytics.com>
 Created: 11/5/2021
 Updated: 11/8/2021
 
-This module contains the Cannlytics class,
+Description: This module contains the Cannlytics class,
 the entry point into Cannlytics features and functionality.
 """
 # Standard imports.
@@ -15,44 +15,40 @@ import logging
 from os import environ
 from typing import Dict, Optional # List, Type, Union
 
-# External imports.
-from enforce_typing import enforce_types
-
 # Internal imports.
 from .firebase import initialize_firebase
 from .metrc import initialize_metrc
 
 
 class Cannlytics:
-    """An instance of this class is the entry point into Cannlytics."""
+    """An instance of this class is the entry point the top-level Cannlytics logic."""
 
-    @enforce_types
-    def __init__(self, config: Optional[Dict]) -> None:
-        """Initialize Cannlytics class.
-
-        Usage: Make a new Cannlytics instance
-
-        `cannlytics = Cannlytics({...})`
-
-        This class provides the main top-level functions in Cannlytics.
+    def __init__(self, config: Optional[Dict], env_file: str = './.env') -> None:
+        """Initialize a Cannlytics class.
+        Args:
+            config (dict): Configuration options, including: `GOOGLE_APPLICATION_CREDENTIALS`,
+                `METRC_VENDOR_API_KEY`, `METRC_USER_API_KEY`, and `METRC_STATE`.
+            env_file (str): An optional .env file path to use instead of config.
         """
         if isinstance(config, dict):
-            config_dict = {}
-            config = {**config_dict, **config}
+            self.config = config
         else:
-            config = dotenv_values('./.env')
-        self.config = config
+            self.config = dotenv_values(env_file)
+        self.db = None
+        self.license = None
+        self.state = None
+        self.storage = None
+        self.track = None
         self.initialize_logs()
-
+        # TODO: Initialize Firebase and Metrc by default?
 
     # Optional: Reduce duplication of logging code in the Metrc module?
-    def create_log(self, message):
+    def create_log(self, message: str):
         """Create a log.
         Args:
             (message): Print a given message to the logs.
         """
         self.logger.debug(message)
-
 
     def initialize_logs(self):
         """Initialize logs.
@@ -70,18 +66,23 @@ class Cannlytics:
         self.logger = logging.getLogger('cannlytics')
         self.logger.addHandler(console)
 
-
-    def initialize_firebase(self, config=None):
-        """Initialize a Firebase account for back-end, cloud services."""
+    def initialize_firebase(self, config: Optional[Dict] = None):
+        """Initialize a Firebase account for back-end, cloud services.
+        Args:
+            config (dict): Optional configuration options to override any
+                options provided to the Cannlytics class instance.
+        Returns:
+            (Client): A Firestore database client instance.
+        """
         if config is None:
             config = self.config
         credentials = config['GOOGLE_APPLICATION_CREDENTIALS']
         environ['GOOGLE_APPLICATION_CREDENTIALS'] = credentials
         self.db = initialize_firebase()
         self.storage_bucket = config.get('FIREBASE_STORAGE_BUCKET')
+        # TODO: Map all firebase function to cannlytics.<function_name>, passing DB as an argument.
         self.create_log('Firebase client initialized.')
         return self.db
-    
 
     def initialize_traceability(self, config=None, primary_license=None, state=None):
         """Initialize the traceability client.
@@ -94,8 +95,8 @@ class Cannlytics:
         if state is None:
             state = config.get('METRC_STATE', 'ca')
         self.track = initialize_metrc(
-            vendor_api_key=config['METRC_TEST_VENDOR_API_KEY'],
-            user_api_key=config['METRC_TEST_USER_API_KEY'],
+            vendor_api_key=config['METRC_VENDOR_API_KEY'],
+            user_api_key=config['METRC_USER_API_KEY'],
             primary_license=primary_license,
             state=state,
         )

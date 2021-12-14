@@ -1,43 +1,41 @@
 """
-Module Setup | Cannlytics
+Module Setup | Cannlytics Engine
+Copyright (c) Cannlytics
 
-Author: Keegan Skeate <keegan@cannlytics.com>
+Authors: Keegan Skeate <keegan@cannlytics.com>
 Contact: <keegan@cannlytics.com>
 Created: 1/21/2021
-Updated: 11/6/2021
+Updated: 12/10/2021
 License: MIT <https://opensource.org/licenses/MIT>
 """
 from setuptools import find_namespace_packages, setup
 
+# Get the project description.
+README = ''
 with open('README.md', 'r', encoding='utf-8') as readme_file:
-    readme = readme_file.read()
+    README = readme_file.read()
 
-# Possibly required by developers of cannlytics:
+# Requirements installed by `pip install cannlytics`.
+REQUIREMENTS = []
+with open('requirements.txt', 'r') as f:
+    REQUIREMENTS = [i[:-1] for i in f if i[0] != '#']
+
+# Requirements for development.
 dev_requirements = []
 
-# Installed by pip install ocean-lib
-# or pip install -e .
-install_requirements = [
-    'beautifulsoup4',
-    'dateutil',
-    'django',
-    'firebase_admin',
-    'googlemaps',
-    'matplotlib',
-    'numpy',
-    'pandas',
-    'pytz',
-    'statsmodels',
-]
-
-# Required to run setup.py:
+# Requirements for setup.
 setup_requirements = []
 
+# Requirements for testing.
 test_requirements = []
 
-# Get packages.
-packages = find_namespace_packages(include=['cannlytics'], exclude=['*test*'])
+# Get the packages.
+packages = find_namespace_packages(
+    include=['cannlytics'],
+    exclude=['*test*']
+)
 
+# Publish the module.
 setup(
     author='Cannlytics',
     author_email='dev@cannlytics.com',
@@ -45,22 +43,22 @@ setup(
         'Intended Audience :: Developers',
         'License :: OSI Approved :: MIT License',
         'Natural Language :: English',
-        'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
     ],
     description='🔥 Cannlytics is simple, easy-to-use, end-to-end cannabis analytics software designed to make your data and information accessible.',
     extras_require={
-        "test": test_requirements,
-        "dev": dev_requirements + test_requirements,
+        'test': test_requirements,
+        'dev': dev_requirements + test_requirements,
     },
     include_package_data=True,
-    install_requires=install_requirements,
+    install_requires=REQUIREMENTS,
     keywords='cannlytics',
     license='MIT',
-    long_description=readme,
+    long_description=README,
     long_description_content_type='text/markdown',
     name='cannlytics',
     packages=packages,
-    python_requires='>=3.8',
+    python_requires='>=3.9',
     setup_requires=setup_requirements,
     test_suite='tests',
     tests_require=test_requirements,

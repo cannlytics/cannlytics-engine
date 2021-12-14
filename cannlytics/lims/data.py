@@ -1,19 +1,19 @@
 """
 Data Collection | Cannlytics
+Copyright (c) 2021 Cannlytics and Cannlytics Contributors
 
-Authors:  
-  Keegan Skeate <keegan@cannlytics.com>  
-  Charles Rice <charles@ufosoftwarellc.com>  
-Created: 6/15/2021  
-Updated: 8/10/2021  
+Authors:
+  Keegan Skeate <keegan@cannlytics.com>
+  Charles Rice <charles@ufosoftwarellc.com>
+Created: 6/15/2021
+Updated: 8/10/2021
 """
 try:
 
-    # External imports
+    # External imports.
     import pandas as pd
-    import xlwings
 
-    # Internal imports
+    # Internal imports.
     from cannlytics.utils.utils import snake_case
     from cannlytics.firebase import update_document
 
@@ -25,24 +25,25 @@ def clean_column_names(df, column):
     """
     Args:
         df (DataFrame): A DataFrame with any column names.
+        column (str): The name of the column(s) to clean
     Returns:
         (DataFrame): A DataFrame with snake_case column names.
     """
     df[column] = df[column].str.strip()
     df[column] = df[column].str.rstrip('.)]')
-    df[column] = df[column].str.replace('%',  'percent', regex=True)
-    df[column] = df[column].str.replace('#',  'number', regex=True)
-    df[column] = df[column].str.replace('[/,-]',  '_', regex=True)
-    df[column] = df[column].str.replace('[.,(,)]',  '', regex=True)
+    df[column] = df[column].str.replace('%', 'percent', regex=True)
+    df[column] = df[column].str.replace('#', 'number', regex=True)
+    df[column] = df[column].str.replace('[/,-]', '_', regex=True)
+    df[column] = df[column].str.replace('[.,(,)]', '', regex=True)
     df[column] = df[column].str.replace("\'",'', regex=True)
-    df[column] = df[column].str.replace("[[]",  '_', regex=True)
-    df[column] = df[column].str.replace(r"[]]",  '', regex=True)
-    df[column] = df[column].str.replace(' ',  '_', regex=True)
-    df[column] = df[column].str.replace('β',  'beta', regex=True)
-    df[column] = df[column].str.replace('Δ',  'delta', regex=True)
-    df[column] = df[column].str.replace('δ',  'delta', regex=True)
-    df[column] = df[column].str.replace('α',  'alpha', regex=True)
-    df[column] = df[column].str.replace('__',  '', regex=True)
+    df[column] = df[column].str.replace("[[]", '_', regex=True)
+    df[column] = df[column].str.replace(r"[]]", '', regex=True)
+    df[column] = df[column].str.replace(' ', '_', regex=True)
+    df[column] = df[column].str.replace('β', 'beta', regex=True)
+    df[column] = df[column].str.replace('Δ', 'delta', regex=True)
+    df[column] = df[column].str.replace('δ', 'delta', regex=True)
+    df[column] = df[column].str.replace('α', 'alpha', regex=True)
+    df[column] = df[column].str.replace('__', '', regex=True)
     df[column] = df[column].str.lower()
     return df
 
@@ -50,7 +51,7 @@ def clean_column_names(df, column):
 def import_data_model(directory):
     """Import analyses to Firestore from a .csv or .xlsx file.
     Args:
-        filename (str): The full filename of a data file.
+        directory (str): The full filename of a data file.
     """
     analyses = pd.read_excel(directory + 'analyses.xlsx')
     analytes = pd.read_excel(directory + 'analytes.xlsx')
@@ -76,11 +77,7 @@ def import_data_model(directory):
 
 
 def import_measurements():
-    """Import measurements taken by scientific instruments.
-    Args:
-
-    Returns:
-    """
+    """Import measurements taken by scientific instruments."""
 
     print('Importing measurements...')
 
@@ -92,6 +89,8 @@ def get_sample_name(df, sheetname='Sheet1', var='samplename'):
     Converts the first column of the first sheet to lowercase.
     Args:
         df (DataFrame): A DataFrame.
+        sheetname (str): The worksheet name, 'Sheet1' by default.
+        var (str): The variable used as a sample ID, 'samplename' by default.
     Returns:
         (dict): The sample name as a key, value pair.
     """
@@ -106,6 +105,7 @@ def get_compound_dataframe(df, sheetname='Compound'):
     handle NaN values.
     Args:
         df (DataFrame): A DataFrame.
+        sheetname (str): The worksheet name, 'Compound' by default.
     Returns:
         (DataFrame): A DataFrame with renamed compounds.
     """
@@ -127,7 +127,7 @@ def import_agilent_gc_residual_solvents(file_name):
     add the analyte names and measurements to an array of dictionaries,
     and add that to the main array.
     Args:
-        df (DataFrame): A DataFrame.
+        file_name (str): A data file path.
     Returns:
         (dict): A dictionary of sample results.
     """
@@ -144,7 +144,7 @@ def import_agilent_gc_terpenes(file_name):
     replace special characters, add the analyte names and measurements
     to an array of dictionaries, and add that to the main array.
     Args:
-        df (DataFrame): A DataFrame.
+        file_name (str): A data file path.
     Returns:
         (list): A list of measurements (dict).
     """
@@ -159,7 +159,7 @@ def import_agilent_gc_terpenes(file_name):
 def import_agilent_cannabinoids(file_name):
     """This is the same as residual solvents routine.
     Args:
-        df (DataFrame): A DataFrame.
+        file_name (str): A data file path.
     Returns:
         (dict): A dictionary of sample results.
     """
@@ -169,7 +169,7 @@ def import_agilent_cannabinoids(file_name):
 def import_heavy_metals(file_name):
     """
     Args:
-        df (DataFrame): A DataFrame.
+        file_name (str): A data file path.
     Returns:
         (list): A list of measurements (dict).
     """
@@ -182,7 +182,8 @@ def import_heavy_metals(file_name):
     log_df.dropna(subset = ['Sample Mass (g)'], inplace = True)
 
     # Rename columns to make parsing clearer.
-    summary_df.rename(columns = {'Analysis':'analyte','-':'mass'}, inplace = True)
+    columns = {'Analysis': 'analyte', '-': 'mass'}
+    summary_df.rename(columns=columns, inplace=True)
 
     # Get list of samples.
     sample_ids = log_df['Sample ID'].tolist()
@@ -198,7 +199,7 @@ def import_heavy_metals(file_name):
 
         analytes = []
         measurements['measurements'] = analytes
-        index  = summary_df.index[(summary_df['analyte'] == 'ID:') & (summary_df['mass'] == sample_id)].tolist()
+        index = summary_df.index[(summary_df['analyte'] == 'ID:') & (summary_df['mass'] == sample_id)].tolist()
         for offset in range(index[0] + 20, index[0] + 27):
             analyte = {}
             analyte['analyte'] = summary_df.iloc[offset].analyte

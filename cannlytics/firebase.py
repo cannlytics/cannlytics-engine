@@ -1,19 +1,13 @@
 """
 Firebase Module | Cannlytics
-Copyright (c) 2021 Cannlytics and Cannlytics Contributors
+Copyright (c) 2021 Cannlytics
 
-Authors: Keegan Skeate <contact@cannlytics.com>  
-Created: 2/7/2021  
-Updated: 7/30/2021  
+Authors: Keegan Skeate <contact@cannlytics.com>
+Created: 2/7/2021
+Updated: 7/30/2021
 
-Resources:
-
-- https://firebase.google.com/docs/
-
-Description:
-
-A wrapper of firebase_admin to make interacting with the Firestore database
-and Firebase Storage buckets even easier.
+Description: A wrapper of firebase_admin to make interacting with the Firestore database
+and Firebase Storage buckets even easier. See <https://firebase.google.com/docs/>.
 
 Example:
 
@@ -32,34 +26,35 @@ bucket_name = environ.get('FIREBASE_STORAGE_BUCKET')
 db = initialize_firebase()
 ```
 """
+# try:
+# Standard imports
+from datetime import datetime, timedelta
+from os import listdir
+from os.path import isfile, join
+
+# External imports
+import requests
+import ulid
+from django.utils.crypto import get_random_string
+from firebase_admin import auth, firestore, initialize_app, storage
+from google.cloud import secretmanager
 try:
-    # Standard imports
-    from datetime import datetime, timedelta
-    from os import listdir
-    from os.path import isfile, join
-
-    # External imports
-    import requests
-    import ulid
-    from django.utils.crypto import get_random_string
-    from firebase_admin import auth, firestore, initialize_app, storage
-    from google.cloud import secretmanager
-    try:
-        from google.cloud.firestore import ArrayUnion, ArrayRemove, Increment
-        from google.cloud.firestore_v1.collection import CollectionReference
-        from google.cloud.firestore_v1.transforms import DELETE_FIELD
-    except:
-        pass
-    try:
-        from pandas import notnull, read_csv, read_excel, DataFrame, Series
-    except:
-        # FIXME: pandas has problems with Django on Cloud Run
-        pass
-
-    # Internal imports.
-    from .utils.utils import snake_case
+    from google.cloud.firestore import ArrayUnion, ArrayRemove, Increment
+    from google.cloud.firestore_v1.collection import CollectionReference
+    from google.cloud.firestore_v1.transforms import DELETE_FIELD
 except:
-    pass # FIXME: Ignore import in Docs
+    pass
+try:
+    from pandas import notnull, read_csv, read_excel, DataFrame, Series
+except:
+    # FIXME: pandas has problems with Django on Cloud Run
+    print('Warning: Operating without Pandas. Limited data wrangling capabilities.')
+    pass
+
+# Internal imports.
+from .utils.utils import snake_case
+# except:
+#     pass # FIXME: Ignore import in Docs
 
 # ------------------------------------------------------------#
 # Firestore

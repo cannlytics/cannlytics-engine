@@ -6,11 +6,11 @@ Author: Keegan Skeate <keegan@cannlytics.com>
 Created: 11/6/2021
 Updated: 11/8/2021
 
-This module contains general cannabis analytics utility functions.
+Description: This module contains general cannabis analytics utility functions.
 """
 # Standard imports.
 from datetime import datetime, timedelta
-from pytz import timezone
+from zoneinfo import ZoneInfo
 from re import sub, findall
 
 # External imports.
@@ -97,11 +97,11 @@ def get_timestamp(date=None, past=0, future=0, tz='utc'):
     """
     time_zone = state_time_zones.get(str(tz).upper(), tz)
     if date:
-        now = parser.parse(date).replace(tzinfo=timezone(time_zone))
+        now = parser.parse(date).replace(tzinfo=ZoneInfo(time_zone))
     elif time_zone is None:
         now = datetime.now()
     else:
-        now = datetime.now(timezone(time_zone))
+        now = datetime.now(ZoneInfo(time_zone))
     now += timedelta(minutes=future)
     now -= timedelta(minutes=past)
     if time_zone is None:

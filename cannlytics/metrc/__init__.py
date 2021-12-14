@@ -1,12 +1,12 @@
 """
 Cannlytics Metrc Client Initialization | Cannlytics
-Copyright (c) 2021 Cannlytics and Cannlytics Contributors
+Copyright (c) 2021 Cannlytics
 
 Author: Keegan Skeate <keegan@cannlytics.com>
 Created: 11/6/2021
 Updated: 11/6/2021
 """
-from .client import Client
+from .client import Metrc
 
 
 def initialize_metrc(
@@ -14,7 +14,7 @@ def initialize_metrc(
         user_api_key,
         primary_license='',
         state='ca',
-        client_class=Client,
+        client_class=Metrc,
 ):
     """This is a shortcut function which instantiates a Metrc
     client using a user API key and the vendor API key.    
@@ -25,7 +25,7 @@ def initialize_metrc(
         state (str): The state of the traceability system, `ca` by default.
         client_class: By default :class:`cannlytics.metrc.client.Client` is used.
     Returns:
-        (client_class): Returns an instance of the client.
+        (Metrc): Returns an instance of the Metrc client.
     """
     return client_class(
         vendor_api_key,

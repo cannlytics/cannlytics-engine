@@ -516,7 +516,7 @@ class Plant(Model):
             count (int): The number of clones being planted.
             location (str): An optional new location for the plant batch.
             batch_type (str): The type of planting, Seed of Clone, with Clone
-            as the default.
+                as the default.
         """
         data = {
             'PlantLabel': self.label,
@@ -1017,10 +1017,7 @@ class Package(Model):
     def create_packages(
             self,
     ):
-        """Create multiple packages from a harvest.
-        Args:
-
-        """
+        """Create multiple packages from a harvest."""
         raise NotImplementedError
 
     def change_item(self, item_name):
