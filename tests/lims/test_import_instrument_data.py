@@ -2,7 +2,7 @@
 Import Instrument Data Test | Cannlytics
 Copyright © 2021 Cannlytics
 
-Author: Keegan Skeate
+Authors: Keegan Skeate
 Contact: <keegan@cannlytics.com>
 Created: Wed Apr 28 07:22:17 2021
 License: GPLv3+ GNU GPL version 3 or later <https://gnu.org/licenses/gpl.html>

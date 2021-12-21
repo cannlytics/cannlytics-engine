@@ -1,27 +1,25 @@
-<div style="text-align:center; margin-top:1rem; margin-bottom: 1rem;">
+<div align="center" style="text-align:center; margin-top:1rem; margin-bottom: 1rem;">
   <img style="height:180px" alt="" src="https://firebasestorage.googleapis.com/v0/b/cannlytics.appspot.com/o/public%2Fimages%2Flogos%2Fcannlytics_calyx_detailed.svg?alt=media&token=108fea9c-29a8-40ba-aced-65aef39611e9">
-  <div style="margin-top:1rem; margin-bottom:1rem;">
+  <div style="margin-top:0.5rem;">
     <h3>Simple, easy, cannabis analytics.</h3>
   </div>
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-darkgreen.svg)](https://opensource.org/licenses/MIT)
-[![Version](https://img.shields.io/pypi/v/cannlytics.svg)](https://pypi.org/project/cannlytics)
-
 <https://cannlytics.com>
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-darkgreen.svg)](https://opensource.org/licenses/MIT)
+[![Version](https://img.shields.io/pypi/v/cannlytics.svg)](https://pypi.org/project/cannlytics)
+[![Coverage Status](https://coveralls.io/repos/github/cannlytics/cannlytics-ai/badge.svg?branch=main)](https://coveralls.io/github/cannlytics/cannlytics-ai?branch=main)
+
+
 </div>
 
-
-<div style="text-align:center; margin-top:1rem; margin-bottom: 1rem;">
-  <img style="max-width:720px" width="100%" alt="" src="./samples/cannlytics_metrc_package.png">
-</div>
-
-Cannlytics provides a user-friendly interface to quickly receive samples, perform analyses, collect and review results, and publish certificates of analysis (CoAs). There are also built in logistics, CRM (client relationship management), inventory management, and invoicing tools. The Cannlytics engine comes with **batteries included**, but you are always welcome to supercharge your setup with modifications and custom components.
+🔥 Cannlytics is simple, easy-to-use, **end-to-end** cannabis analytics software designed to make your data and information accessible. We believe that everyone in the cannabis industry should be able to access their rich, valuable data quickly and easily and that you will be better off for it. The Cannlytics Engine comes with **batteries included**, but you are always welcome to supercharge your setup with modifications and custom components.
 
 - [🚀 Installation](#installation)
-- [🐱‍👓 Documentation](#documentation)
+- [👩‍🏫 Documentation](#documentation)
 - [🗝️ Authentication, Data, and File Management](#development)
 - [🧐 Traceability](#automation)
+- [👩‍🔬 Testing](#testing)
 - [🤝 Contributing](#contributing)
 - [❤️ Support](#support)
 - [🏛️ License](#license)
@@ -64,17 +62,21 @@ Retail workflow:
 
 <img style="max-width:100%" width="540px" alt="" src="./samples/metrc_retail_workflow.png">
 
-<!-- ## Contributing -->
+## 👩‍🔬 Testing <a name="testing"></a>
 
-<!-- This should include how new contributors to the project can help. This includes developing new features, fixing known issues, adding documentation, adding new tests, or reporting issues. -->
+You can run tests with code coverage with `pytest`.
+
+```
+pytest --cov=ai tests/
+```
 
 ## 🤝 Contributing <a name="contributing"></a>
 
-Contributions are always welcome! You are encouraged to submit issues, functionality, and features that you want to be addressed. You can email <keegan@cannlytics.com> to get a quick start. Anyone is welcome to contribute anything.
+Contributions are always welcome! You are encouraged to submit issues, functionality, and features that you want to be addressed. You can also develop your own new features, fix known issues, and add documentation, tests, and examples. Anyone is welcome to contribute anything. Please see the [contributing guide](https://docs.cannlytics.com/developers/contributing) for more information.
 
 ## ❤️ Support <a name="support"></a>
 
-Cannlytics is made available with ❤️ and <a href="https://opencollective.com/cannlytics-company">your good will</a>. Please consider making a contribution to keep the good work coming 🚢
+Cannlytics is made available with ❤️ and <a href="https://opencollective.com/cannlytics-company">your good will</a>. Please consider making a contribution to keep the good work coming. Thank you 🙏
 
 🥞 Bitcoin donation address: 34CoUcAFprRnLnDTHt6FKMjZyvKvQHb6c6
 

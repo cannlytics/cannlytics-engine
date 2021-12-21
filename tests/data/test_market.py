@@ -1,23 +1,27 @@
 """
 Test Data Market
+Copyright (c) 2021 Cannlytics
 
 Authors: Keegan Skeate <keegan@cannlytics.com>
 Created: 10/11/2021
-Updated: 10/26/2021
+Updated: 12/21/2021
+License: <https://github.com/cannlytics/cannlytics-engine/blob/main/LICENSE>
 """
 # Standard imports.
 import os
 import sys
-import yaml
 
 # External imports.
+from dotenv import dotenv_values
 from ocean_lib.example_config import ExampleConfig
+from ocean_lib.ocean.mint_fake_ocean import mint_fake_OCEAN
 from ocean_lib.ocean.ocean import Ocean
+
 
 # Internal imports.
 sys.path.append('../../')
-from cannlytics.data import market # pylint: disable=import-error
-from cannlytics.firebase import (
+from cannlytics.data import market # pylint: disable=import-error,wrong-import-position
+from cannlytics.firebase import ( # pylint: disable=import-error,wrong-import-position
     initialize_firebase,
     update_document,
 )
@@ -29,9 +33,7 @@ BUYER_KEY = 'TEST_PRIVATE_KEY2'
 
 def initialize_ocean_market():
     """Initialize a test Ocean data market."""
-    local_config = None
-    with open('../../env.yaml', 'r') as f:
-        local_config = yaml.load(f, Loader=yaml.FullLoader)
+    local_config = dotenv_values('../../.env')
     os.environ['OCEAN_NETWORK_URL'] = local_config['OCEAN_NETWORK_URL']
     config = ExampleConfig.get_config()
     ocean = Ocean(config)
@@ -43,9 +45,8 @@ def test_publish_data(dataset):
 
     # Initialize Ocean market.
     ocean, config = initialize_ocean_market()
-    
+
     # Mint a test OCEAN.
-    from ocean_lib.ocean.mint_fake_ocean import mint_fake_OCEAN
     os.environ['FACTORY_DEPLOYER_PRIVATE_KEY'] = config['FACTORY_DEPLOYER_PRIVATE_KEY']
     mint_fake_OCEAN(ocean.config)
 
@@ -66,7 +67,7 @@ def test_publish_data(dataset):
     ref = f'public/market/datasets/{asset.asset_id}'
     entry = {**dataset, **asset.as_dictionary()}
     update_document(ref, entry)
-    
+
     return data_token, asset
 
 
@@ -114,8 +115,8 @@ def test_buy_data(data_token, asset):
     )
 
 if __name__ == '__main__':
-    
-    dataset = {
+
+    test_dataset = {
         'sample_file': '',
         'terms': '',
         'price_usd': 3867,
@@ -144,10 +145,10 @@ if __name__ == '__main__':
     }
 
     # Test publishing a dataset.
-    data_token, asset = test_publish_data(dataset)
+    test_data_token, test_asset = test_publish_data(test_dataset)
 
     # Test selling a dataset.
-    test_sell_data(data_token)
+    test_sell_data(test_data_token)
 
     # Test buying a dataset.
-    test_buy_data(data_token, asset)
+    test_buy_data(test_data_token, test_asset)

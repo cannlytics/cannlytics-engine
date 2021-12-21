@@ -1,7 +1,7 @@
 """
 Metrc Integration Test | Cannlytics
 
-Author: Keegan Skeate
+Authors: Keegan Skeate
 Contact: keegan@cannlytics.com
 Created: Mon Mar 29 14:18:18 2021
 License: MIT License

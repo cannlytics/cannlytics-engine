@@ -1,7 +1,7 @@
 """
 Test Instrument Data Collection | Cannlytics
 
-Author: Keegan Skeate <keegan@cannlytics.com>
+Authors: Keegan Skeate <keegan@cannlytics.com>
 Created: 8/20/2021
 Updated: 8/20/2021
 License: MIT License <https://opensource.org/licenses/MIT>

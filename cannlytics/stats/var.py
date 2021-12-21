@@ -1,19 +1,14 @@
 """
 VAR Functions | Cannlytics
+Copyright (c) 2021 Cannlytics
+Copyright (c) 2017-2021 Keegan Skeate
 
 Authors: Keegan Skeate <keegan@cannlytics.com>
 Created: 4/14/2021
 Updated: 11/6/2021
-License: MIT License <https://opensource.org/licenses/MIT>
+License: <https://github.com/cannlytics/cannlytics-engine/blob/main/LICENSE>
 
-Description:
-
-    Crude VAR functions.
-
-Resources:
-
-    https://www.statsmodels.org/stable/generated/statsmodels.tsa.tsatools.lagmat.html
-
+Description: Crude VAR functions.
 """
 import numpy as np
 import pandas as pd

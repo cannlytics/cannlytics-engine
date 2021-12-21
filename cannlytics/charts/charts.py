@@ -1,10 +1,11 @@
- """
+"""
 Charts | Cannlytics
+Copyright (c) 2021 Cannlytics
 
 Authors: Keegan Skeate <keegan@cannlytics.com>
 Created: 9/16/2021
 Updated: 9/23/2021
-License: MIT License <https://opensource.org/licenses/MIT>
+License: <https://github.com/cannlytics/cannlytics-engine/blob/main/LICENSE>
 
 Plotting Resources:
     https://scentellegher.github.io/visualization/2018/10/10/beautiful-bar-plots-matplotlib.html

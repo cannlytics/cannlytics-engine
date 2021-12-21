@@ -15,18 +15,18 @@ README = ''
 with open('README.md', 'r', encoding='utf-8') as readme_file:
     README = readme_file.read()
 
-# Requirements installed by `pip install cannlytics`.
+# Specify requirements installed by `pip install cannlytics`.
 REQUIREMENTS = []
 with open('requirements.txt', 'r') as f:
     REQUIREMENTS = [i[:-1] for i in f if i[0] != '#']
 
-# Requirements for development.
+# Specify requirements for development.
 dev_requirements = []
 
-# Requirements for setup.
+# Specify requirements for setup.
 setup_requirements = []
 
-# Requirements for testing.
+# Specify requirements for testing.
 test_requirements = []
 
 # Get the packages.
@@ -45,7 +45,7 @@ setup(
         'Natural Language :: English',
         'Programming Language :: Python :: 3.9',
     ],
-    description='🔥 Cannlytics is simple, easy-to-use, end-to-end cannabis analytics software designed to make your data and information accessible.',
+    description='🔥 Cannlytics is simple, easy-to-use, end-to-end cannabis analytics software designed to make your data and information accessible.', #pylint: disable=line-too-long
     extras_require={
         'test': test_requirements,
         'dev': dev_requirements + test_requirements,

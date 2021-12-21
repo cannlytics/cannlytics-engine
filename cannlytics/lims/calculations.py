@@ -1,7 +1,7 @@
 """
 Calculation Parser | Cannlytics
 
-Author: Keegan Skeate  
+Authors: Keegan Skeate  
 Contact: <keegan@cannlytics.com>  
 Created: 6/8/2021  
 Updated: 6/8/2021  

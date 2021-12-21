@@ -2,11 +2,12 @@
 Data Models | Cannlytics Engine
 Copyright (c) 2021 Cannlytics and Cannlytics Contributors
 
-Author: Keegan Skeate <keegan@cannlytics.com>  
-Created: 5/8/2021  
-Updated: 11/5/2021  
+Authors: Keegan Skeate <keegan@cannlytics.com>
+Created: 5/8/2021
+Updated: 11/5/2021
+License: <https://github.com/cannlytics/cannlytics-engine/blob/main/LICENSE>
 
-Base data model schema for Cannlytics data models.
+Description: Base data model schema for Cannlytics data models.
 """
 
 # Standard imports.

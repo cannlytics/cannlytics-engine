@@ -2,7 +2,7 @@
 Cannlytics Metrc Client Initialization | Cannlytics
 Copyright (c) 2021 Cannlytics
 
-Author: Keegan Skeate <keegan@cannlytics.com>
+Authors: Keegan Skeate <keegan@cannlytics.com>
 Created: 11/6/2021
 Updated: 11/6/2021
 """

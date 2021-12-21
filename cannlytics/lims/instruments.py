@@ -1,7 +1,7 @@
 """
 Instruments | Cannlytics
 
-Author: Keegan Skeate <keegan@cannlytics.com>  
+Authors: Keegan Skeate <keegan@cannlytics.com>  
 Created: 8/3/2021  
 Updated: 8/21/2021  
 License: MIT License <https://opensource.org/licenses/MIT>  

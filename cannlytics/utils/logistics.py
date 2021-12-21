@@ -2,18 +2,22 @@
 Logistics Utilities | Cannlytics
 Copyright (c) 2021 Cannlytics and Cannlytics Contributors
 
-Author: Keegan Skeate <keegan@cannlytics.com>
+Authors: Keegan Skeate <keegan@cannlytics.com>
 Created: 11/5/2021
 Updated: 12/5/2021
+License: <https://github.com/cannlytics/cannlytics-engine/blob/main/LICENSE>
 
 Description: This script contains functions that are useful for logistics.
 """
 # Standard imports.
 from time import sleep
+from typing import List, Optional
 
 # External imports.
 from googlemaps import Client, places
-from firebase_admin import initialize_app, firestore
+
+# Internal imports.
+from ..firebase import initialize_firebase, get_document
 
 
 def get_google_maps_api_key():
@@ -22,28 +26,25 @@ def get_google_maps_api_key():
         (str): Returns the Google Maps API key stored
             in the Firestore database.
     """
-    db = firestore.client()
-    admin = db.collection('admin')
-    google = admin.document('google').get()
-    google_data = google.to_dict()
+    # FIXME: Prefer using secret manager to Firestore for secrets.
+    database = initialize_firebase()
+    google_doc = get_document('admin/google', database=database)
+    google_data = google_doc.to_dict()
     return google_data['google_maps_api_key']
 
 
-def geocode_addresses(df):
+def geocode_addresses(df, api_key: Optional[str] = None):
     """Geocode addresses in a dataframe.
     Args:
         df (DataFrame): A DataFrame containing the addresses to geocode.
     Returns:
         (DataFrame): Returns the DataFrame with geocoded latitudes and longitudes.
     """
-    try:
-        initialize_app()
-    except ValueError:
-        pass
-    api_key = get_google_maps_api_key()
+    if api_key is None:
+        api_key = get_google_maps_api_key()
     gmaps = Client(key=api_key)
     for index, item in df.iterrows():
-        # FIXME: Handle existing lat and long more elegantly.
+        # TODO: Handle existing lat and long more elegantly.
         # try:
         #     if item.latitude and item.longitude:
         #         continue
@@ -63,11 +64,15 @@ def geocode_addresses(df):
                 if key == 'administrative_area_level_2':
                     df.at[index, 'county'] = info['long_name']
 
-        sleep(2)  # Prevents spamming Google's servers (necessary?)
+        sleep(.2) # Prevents spamming Google's servers (necessary?).
     return df
 
 
-def search_for_address(query, api_key=None, fields=['formatted_address']):
+def search_for_address(
+        query: str,
+        api_key: Optional[str] = None,
+        fields: Optional[List[str]] = None,
+) -> List[dict]:
     """Search for the address of a given name.
     Args:
         query (str): The text to use to search for an address.
@@ -78,12 +83,18 @@ def search_for_address(query, api_key=None, fields=['formatted_address']):
     """
     if api_key is None:
         api_key = get_google_maps_api_key()
+    if fields is None:
+        fields = ['formatted_address']
     gmaps = Client(key=api_key)
     place = places.find_place(gmaps, query, 'textquery', fields=fields)
     return place['candidates']
 
 
-def get_place_details(query, api_key=None, fields=[]):
+def get_place_details(
+        query: str,
+        api_key: Optional[str] = None,
+        fields: Optional[List[str]] = None,
+):
     """Get the place details for a given a name.
     Args:
         query (str): The text to use to search for a place.

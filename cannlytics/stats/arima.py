@@ -1,11 +1,12 @@
 """
 Box Jenkins ARIMA Forecasting Methodology
+Copyright (c) 2021 Cannlytics
 Copyright (c) 2017-2021 Keegan Skeate
 
-Author: Keegan Skeate <keegan@cannlytics.com>
+Authors: Keegan Skeate <keegan@cannlytics.com>
 Created: March 2017
 Updated: 10/27/2021
-License: MIT License <https://opensource.org/licenses/MIT>
+License: <https://github.com/cannlytics/cannlytics-engine/blob/main/LICENSE>
 """
 import numpy as np
 import pandas as pd

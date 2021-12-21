@@ -4,16 +4,19 @@ Copyright (c) 2021 Cannlytics and Cannlytics Contributors
 
 Authors: Keegan Skeate <keegan@cannlytics.com>
 Created: 11/5/2021
-Updated: 11/8/2021
+Updated: 12/21/2021
+License: <https://github.com/cannlytics/cannlytics-engine/blob/main/LICENSE>
 
 Description: This module contains the Cannlytics class,
 the entry point into Cannlytics features and functionality.
 """
 # Standard imports.
-from dotenv import dotenv_values
 import logging
 from os import environ
 from typing import Dict, Optional # List, Type, Union
+
+# External imports
+from dotenv import dotenv_values
 
 # Internal imports.
 from .firebase import initialize_firebase
@@ -79,7 +82,7 @@ class Cannlytics:
         credentials = config['GOOGLE_APPLICATION_CREDENTIALS']
         environ['GOOGLE_APPLICATION_CREDENTIALS'] = credentials
         self.db = initialize_firebase()
-        self.storage_bucket = config.get('FIREBASE_STORAGE_BUCKET')
+        self.storage = config.get('FIREBASE_STORAGE_BUCKET')
         # TODO: Map all firebase function to cannlytics.<function_name>, passing DB as an argument.
         self.create_log('Firebase client initialized.')
         return self.db

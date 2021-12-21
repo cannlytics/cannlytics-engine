@@ -1,25 +1,29 @@
 """
 Data Market | Cannlytics
+Copyright (c) 2021 Cannlytics
 
 Authors: Keegan Skeate <keegan@cannlytics.com>
 Created: 10/11/2021
 Updated: 10/11/2021
+License: <https://github.com/cannlytics/cannlytics-engine/blob/main/LICENSE>
+
 TODO:
-    - Write docstrings.
-    - Allow selling data as a pool.
-    - Allow user to pass a Wallet instead of private_key.
 
-1. Publish assets metadata and associated services
-    - Each asset is assigned a unique DID and a DID Document (DDO)
-    - The DDO contains the asset's services including the metadata
-    - The DID is registered on-chain with a URL of the metadata store
-        to retrieve the DDO from
-    `asset = ocean.assets.create(metadata, publisher_wallet)`
+    1. Refactor
+        - Write docstrings.
+        - Allow selling data as a pool.
+        - Allow user to pass a Wallet instead of private_key.
+
+    2. Publish assets metadata and associated services
+        - Each asset is assigned a unique DID and a DID Document (DDO)
+        - The DDO contains the asset's services including the metadata
+        - The DID is registered on-chain with a URL of the metadata store
+            to retrieve the DDO from
+        `asset = ocean.assets.create(metadata, publisher_wallet)`
+
 """
-
 # Internal packages.
 from datetime import datetime
-from decimal import Decimal
 import os
 import yaml
 

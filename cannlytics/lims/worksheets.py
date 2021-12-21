@@ -1,7 +1,7 @@
 """
 Worksheets | Cannlytics
 
-Author: Keegan Skeate <keegan@cannlytics.com>
+Authors: Keegan Skeate <keegan@cannlytics.com>
 Created: 7/18/2021
 Updated: 7/20/2021
 License: MIT License <https://opensource.org/licenses/MIT>

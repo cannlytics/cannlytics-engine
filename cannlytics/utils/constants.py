@@ -2,11 +2,12 @@
 Constants | Cannlytics
 Copyright (c) 2021 Cannlytics and Cannlytics Contributors
 
-Author: Keegan Skeate <keegan@cannlytics.com>
+Authors: Keegan Skeate <keegan@cannlytics.com>
 Created: 11/8/2021
 Updated: 11/8/2021
+License: <https://github.com/cannlytics/cannlytics-engine/blob/main/LICENSE>
 
-This module contains Metrc variables that are constant.
+Description: This module contains Metrc variables that are constant.
 """
 
 state_time_zones = {

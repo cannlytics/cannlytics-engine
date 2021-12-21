@@ -1,7 +1,11 @@
 """
-Test Firebase Module
+Test Firebase Module | Cannlytics
+Copyright (c) 2021 Cannlytics
+
+Authors: Keegan Skeate <contact@cannlytics.com>
 Created: 1/27/2021
 Updated: 7/20/2021
+License: <https://github.com/cannlytics/cannlytics-engine/blob/main/LICENSE>
 """
 # Standard imports.
 import os
@@ -117,15 +121,16 @@ def test_create_log():
 def test_storage():
     """Test Firebase Storage by managing a test file."""
 
+    # Get the path to your service account.
+    from dotenv import dotenv_values
+    config = dotenv_values('./env')
+    key_path = config['GOOGLE_APPLICATION_CREDENTIALS']
+    bucket_name = config['FIREBASE_STORAGE_BUCKET']
+
     # Initialize Firebase.
-    env = environ.Env()
-    env.read_env('../.env')
-    credentials = env('GOOGLE_APPLICATION_CREDENTIALS')
-    os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = credentials
-    firebase.initialize_firebase()
+    firebase.initialize_firebase(key_path, bucket_name)
 
     # Define file names.
-    bucket_name = env('FIREBASE_STORAGE_BUCKET')
     bucket_folder = 'tests/assets/pdfs'
     destination_blob_name = 'tests/assets/pdfs/pandas_cheat_sheet.pdf'
     local_folder = './assets/pdfs'
@@ -136,27 +141,35 @@ def test_storage():
     file_copy = 'pandas_cheat_sheet_copy.pdf'
     newfile_name = 'tests/assets/pdfs/' + file_copy
 
-    # Upload a file to a Firebase Storage bucket.
-    firebase.upload_file(bucket_name, destination_blob_name, source_file_name)
+    # Upload a file to a Firebase Storage bucket, with and without bucket name.
+    firebase.upload_file(destination_blob_name, source_file_name)
+    firebase.upload_file(destination_blob_name, source_file_name, bucket_name)
 
-    # Upload all files in a folder to a Firebase Storage bucket.
-    firebase.upload_files(bucket_name, bucket_folder, local_folder)
+    # Upload all files in a folder to a Firebase Storage bucket, with and without bucket name.
+    firebase.upload_files(bucket_folder, local_folder)
+    firebase.upload_files(bucket_folder, local_folder, bucket_name)
 
-    # List all files in the Firebase Storage bucket folder.
-    files = firebase.list_files(bucket_name, bucket_folder)
+    # List all files in the Firebase Storage bucket folder, with and without bucket name.
+    files = firebase.list_files(bucket_folder)
+    assert isinstance(files, list)
+    files = firebase.list_files(bucket_folder, bucket_name)
     assert isinstance(files, list)
 
-    # Download a file from Firebase Storage.
-    firebase.download_file(bucket_name, destination_blob_name, download_file_name)
+    # Download a file from Firebase Storage, with and without bucket name.
+    firebase.download_file(destination_blob_name, download_file_name)
+    firebase.download_file(destination_blob_name, download_file_name, bucket_name)
 
-    # Download all files in a given Firebase Storage folder.
-    firebase.download_files(bucket_name, bucket_folder, download_folder)
+    # Download all files in a given Firebase Storage folder, with and without bucket name.
+    firebase.download_files(bucket_folder, download_folder)
+    firebase.download_files(bucket_folder, download_folder, bucket_name)
 
-    # Rename a file in the Firebase Storage bucket.
-    firebase.rename_file(bucket_name, bucket_folder, file_name, newfile_name)
+    # Rename a file in the Firebase Storage bucket, with and without bucket name.
+    firebase.rename_file(bucket_folder, file_name, newfile_name)
+    firebase.rename_file(bucket_folder, file_name, newfile_name, bucket_name)
 
-    # Delete a file from the Firebase Storage bucket.
-    firebase.delete_file(bucket_name, bucket_folder, file_copy)
+    # Delete a file from the Firebase Storage bucket, with and without bucket name.
+    firebase.delete_file(bucket_folder, file_copy)
+    firebase.delete_file(bucket_folder, file_copy, bucket_name)
 
 
 #------------------------------------------------------------#

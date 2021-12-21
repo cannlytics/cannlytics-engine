@@ -2,11 +2,12 @@
 Measurement Model | Cannlytics
 Copyright (c) 2021 Cannlytics and Cannlytics Contributors
 
-Author: Keegan Skeate <keegan@cannlytics.com>  
-Created: 11/5/2021  
-Updated: 11/5/2021  
+Authors: Keegan Skeate <keegan@cannlytics.com>
+Created: 11/5/2021
+Updated: 11/5/2021
+License: <https://github.com/cannlytics/cannlytics-engine/blob/main/LICENSE>
 
-Measurement data model.
+Description: Measurement data model.
 """
 # Standard imports.
 from dataclasses import dataclass, field

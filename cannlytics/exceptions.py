@@ -2,9 +2,10 @@
 Cannlytics Exceptions | Cannlytics
 Copyright (c) 2021 Cannlytics
 
-Author: Keegan Skeate <keegan@cannlytics.com>
+Authors: Keegan Skeate <keegan@cannlytics.com>
 Created: 11/5/2021
 Updated: 11/8/2021
+License: <https://github.com/cannlytics/cannlytics-engine/blob/main/LICENSE>
 
 Description: Exceptions used when interfacing with the Cannlytics module.
 """

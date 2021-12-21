@@ -1,7 +1,7 @@
 """
 Measurement Management | Cannlytics
 
-Author: Keegan Skeate <keegan@cannlytics.com>  
+Authors: Keegan Skeate <keegan@cannlytics.com>  
 Created: 11/2/2021  
 Updated: 11/2/2021  
 License: MIT License <https://opensource.org/licenses/MIT>  

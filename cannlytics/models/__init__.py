@@ -2,9 +2,10 @@
 Cannlytics Models Initialization | Cannlytics
 Copyright (c) 2021 Cannlytics and Cannlytics Contributors
 
-Author: Keegan Skeate <keegan@cannlytics.com>
+Authors: Keegan Skeate <keegan@cannlytics.com>
 Created: 11/6/2021
 Updated: 11/6/2021
+License: <https://github.com/cannlytics/cannlytics-engine/blob/main/LICENSE>
 """
 
 from .analysis import Analysis
@@ -61,4 +62,3 @@ __all__ = [
     'User',
     'Workflow',
 ]
-

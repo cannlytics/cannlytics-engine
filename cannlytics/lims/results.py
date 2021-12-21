@@ -1,7 +1,7 @@
 """
 Result Calculation | Cannlytics
 
-Author: Keegan Skeate <keegan@cannlytics.com>  
+Authors: Keegan Skeate <keegan@cannlytics.com>  
 Created: 6/23/2021  
 Updated: 7/19/2021  
 License: MIT License <https://opensource.org/licenses/MIT>  

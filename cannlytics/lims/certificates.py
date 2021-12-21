@@ -1,7 +1,7 @@
 """
 Certificate of Analysis (CoA) Generation | Cannlytics
 
-Author: Keegan Skeate <keegan@cannlytics.com>  
+Authors: Keegan Skeate <keegan@cannlytics.com>  
 Created: 2/6/2021  
 Updated: 8/9/2021  
 License: MIT LIcense <https://opensource.org/licenses/MIT>
@@ -13,28 +13,24 @@ TODO:
 """
 # Standard imports
 import os
-import environ
 from pathlib import Path
 from shutil import copyfile
 
-try:
+# External packages
+import environ
+import openpyxl
+# from openpyxl.drawing.image import Image
+import pandas as pd
+# import qrcode
 
-    # External packages
-    import openpyxl
-    from openpyxl.drawing.image import Image
-    import pandas as pd
-    # import qrcode
+# Internal imports
+from cannlytics.firebase import (
+    get_document,
+    # update_document,
+    download_file,
+)
+from cannlytics.utils.utils import snake_case
 
-    # Internal imports
-    from cannlytics.firebase import (
-        get_document,
-        update_document,
-        download_file,
-    )
-    from cannlytics.utils.utils import snake_case
-
-except:
-    pass
 
 def create_coa():
     """
@@ -176,7 +172,7 @@ def review_coa(env_file='.env', signature_dest='./tmp/signature.png'):
     env.read_env(env_file)
     bucket_name = env('FIREBASE_STORAGE_BUCKET')
     signature_data = get_document(f'users/{uid}/user_settings/signature')
-    download_file(bucket_name, signature_data['signature_ref'], signature_dest)
+    download_file(signature_data['signature_ref'], signature_dest, bucket_name)
 
     # Insert the signature into the CoA template.
 
