@@ -4,7 +4,7 @@ Copyright (c) 2021 Cannlytics and Cannlytics Contributors
 
 Authors: Keegan Skeate <keegan@cannlytics.com>
 Created: 11/5/2021
-Updated: 11/12/2021
+Updated: 12/21/2021
 License: <https://github.com/cannlytics/cannlytics-engine/blob/main/LICENSE>
 
 This module contains the Client class responsible for
@@ -32,11 +32,51 @@ from pandas import read_excel
 from requests import Session
 
 # Internal imports.
-from .constants import parameters, default_time_period
+from .constants import parameters, DEFAULT_HISTORY
 from .exceptions import MetrcAPIError
-from .models import *
-from .urls import *
-from ..utils.utils import clean_dictionary
+from .models import (
+    Delivery,
+    Category,
+    Employee,
+    Facility,
+    Item,
+    Location,
+    Harvest,
+    Package,
+    Patient,
+    Plant,
+    PlantBatch,
+    LabResult,
+    Receipt,
+    Strain,
+    Transfer,
+    TransferTemplate,
+    Transaction,
+    Waste,
+)
+from .urls import (
+    METRC_API_BASE_URL,
+    METRC_API_BASE_URL_TEST,
+    METRC_BATCHES_URL,
+    METRC_EMPLOYEES_URL,
+    METRC_FACILITIES_URL,
+    METRC_LOCATIONS_URL,
+    METRC_HARVESTS_URL,
+    METRC_ITEMS_URL,
+    METRC_LAB_RESULTS_URL,
+    METRC_PACKAGES_URL,
+    METRC_PATIENTS_URL,
+    METRC_PLANTS_URL,
+    METRC_RECEIPTS_URL,
+    METRC_SALES_URL,
+    METRC_STRAINS_URL,
+    METRC_TRANSACTIONS_URL,
+    METRC_TRANSFERS_URL,
+    METRC_TRANSFER_PACKAGES_URL,
+    METRC_TRANSFER_TEMPLATE_URL,
+    METRC_UOM_URL,
+)
+from ..utils.utils import clean_dictionary, get_timestamp
 
 
 class Metrc(object):
@@ -80,7 +120,7 @@ class Metrc(object):
         self.logs = logs
         self.parameters = parameters
         self.primary_license = primary_license
-        self.default_time_period = default_time_period
+        self.default_time_period = DEFAULT_HISTORY
         self.state = state
         self.test = test
         self.user_api_key = user_api_key
@@ -745,13 +785,13 @@ class Metrc(object):
             license_number (str): Optional license number filter.
         """
         data = []
-        for i in range(len(names)):
+        for index, name in enumerate(names):
             try:
-                location_type = types[i]
+                location_type = types[index]
             except IndexError:
                 location_type = 'Default Location Type'
             data.append({
-                'Name': names[i],
+                'Name': name,
                 'LocationTypeName': location_type
             })
         url = METRC_LOCATIONS_URL % 'create'
@@ -822,7 +862,7 @@ class Metrc(object):
         Returns:
             (Item): Returns an item (Item).
         """
-        response = self.get_packages(uid, action=action, license_number=license_number)
+        response = self.get_packages(uid, label=label, action=action, license_number=license_number)
         try:
             return response[0]
         except AttributeError:
@@ -856,7 +896,8 @@ class Metrc(object):
             url = METRC_PACKAGES_URL % label
         else:
             url = METRC_PACKAGES_URL % action
-        params = self.format_params(license_number=license_number or self.primary_license, start=start, end=end)
+        license_number = license_number or self.primary_license
+        params = self.format_params(license_number=license_number, start=start, end=end)
         response = self.request('get', url, params=params)
         try:
             return Package(self, response, license_number)
@@ -1028,12 +1069,6 @@ class Metrc(object):
         # TODO: Optionally return created patient.
 
 
-    # TODO: Implement update_patient.
-    def create_patient(self, return_obs=False):
-        """Update a given patient."""
-        raise NotImplementedError
-
-
     def update_patients(self, data, license_number='', return_obs=False):
         """Update strain(s).
         Args:
@@ -1072,7 +1107,7 @@ class Metrc(object):
         response = self.create_plant_batches([data], license_number=license_number)
         if return_obs:
             name = data['Name']
-            start = get_timestamp(past=self.client.default_time_period, tz=self.client.state)
+            start = get_timestamp(past=self.default_time_period, zone=self.state)
             objects = self.get_batches(start=start, license_number=license_number)
             for obs in objects:
                 if obs.name == name:
@@ -1099,7 +1134,7 @@ class Metrc(object):
         else:
             names = [x['Name'] for x in data]
             return_obs = []
-            start = get_timestamp(past=self.client.default_time_period, tz=self.client.state)
+            start = get_timestamp(past=self.default_time_period, zone=self.state)
             objects = self.get_batches(start=start, license_number=license_number)
             for obs in objects:
                 for name in names:
@@ -1262,7 +1297,7 @@ class Metrc(object):
         else:
             names = [x['PlantLabel'] for x in data]
             return_obs = []
-            start = get_timestamp(past=self.client.default_time_period, tz=self.client.state)
+            start = get_timestamp(past=self.default_time_period, zone=self.state)
             objects = self.get_plants(
                 action='vegetative',
                 start=start,

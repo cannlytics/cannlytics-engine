@@ -1,5 +1,13 @@
+"""
+Grower Workflow | Cannlytics
+Copyright (c) 2021 Cannlytics
 
-from cannlytics.traceability import metrc
+Authors: Keegan Skeate <contact@cannlytics.com>
+Created: 12/21/2021
+Updated: 12/21/2021
+License: <https://github.com/cannlytics/cannlytics-engine/blob/main/LICENSE>
+"""
+from cannlytics import metrc
 
 # Initialize a Metrc API client.
 track = metrc.authorize('your-vendor-api-key', 'your-user-api-key')
@@ -18,5 +26,3 @@ plant.manicure(harvest_name='Old-Time Moonshine', weight=4.20)
 
 # Harvest the flowering plant.
 plant.harvest(harvest_name='Old-Time Moonshine', weight=420)
-
-

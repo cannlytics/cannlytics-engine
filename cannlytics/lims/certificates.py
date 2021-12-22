@@ -1,15 +1,17 @@
 """
 Certificate of Analysis (CoA) Generation | Cannlytics
+Copyright (c) 2021 Cannlytics
 
-Authors: Keegan Skeate <keegan@cannlytics.com>  
-Created: 2/6/2021  
-Updated: 8/9/2021  
+Authors: Keegan Skeate <keegan@cannlytics.com>
+Created: 2/6/2021
+Updated: 12/21/2021
 License: MIT LIcense <https://opensource.org/licenses/MIT>
 
 TODO:
     - Allow users to create CoA's with a myriad of templates! (.docx, .xlsx, etc.)
-    - Import any docx template styed with jinga-style formatting and let'r'rip.
-    - Use your own templates or download the started templates and customize them to your heart's galore.
+    - Import any docx template styed with Jinga-style formatting and let'r'rip.
+    - Use your own templates or download the started templates and customize
+    them to your heart's galore.
 """
 # Standard imports
 import os

@@ -6,19 +6,13 @@ Authors:
   Keegan Skeate <keegan@cannlytics.com>
   Charles Rice <charles@ufosoftwarellc.com>
 Created: 6/15/2021
-Updated: 8/10/2021
+Updated: 12/21/2021
 """
-try:
+# External imports.
+import pandas as pd
 
-    # External imports.
-    import pandas as pd
-
-    # Internal imports.
-    from cannlytics.utils.utils import snake_case
-    from cannlytics.firebase import update_document
-
-except:
-    pass # FIXME: Docs can't import.
+# Internal imports.
+from cannlytics.firebase import update_document
 
 
 def clean_column_names(df, column):
@@ -63,24 +57,16 @@ def import_data_model(directory):
             analyte_data.append(analyte_item.to_dict(orient='records'))
         analyses.at[index, 'analytes'] = analyte_data 
     analyses_data = analyses.to_dict(orient='records')
-    for index, values in analyses_data.iterrows():
-        doc_id = str(values.key)
-        doc_data = values.to_dict()
-        ref = ''
-        update_document(ref, doc_data)
-        # doc_data = data.to_dict(orient='index')
-        # data_ref = create_reference(db, ref)
-        # data_ref.document(doc_id).set(doc_data, merge=True)
-        # data_ref.set(doc_data, merge=True)
-
     raise NotImplementedError
+    # for index, values in analyses_data.iterrows():
+    #     doc_id = str(values.key)
+    #     doc_data = values.to_dict()
+    #     ref = '' # FIXME:
+    #     update_document(ref, doc_data)    
 
 
 def import_measurements():
     """Import measurements taken by scientific instruments."""
-
-    print('Importing measurements...')
-
     raise NotImplementedError
 
 

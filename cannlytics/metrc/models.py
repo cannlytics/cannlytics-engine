@@ -287,14 +287,14 @@ class Facility(Model):
                 `default`, `planting`, or `packing`.
         """
         data = []
-        for i in range(len(ids)):
+        for index, location_id in enumerate(ids):
             try:
-                location_type = types[i]
+                location_type = types[index]
             except IndexError:
                 location_type = 'Default Location Type'
             data.append({
-                'Id': ids[i],
-                'Name': names[i],
+                'Id': location_id,
+                'Name': names[index],
                 'LocationTypeName': location_type
             })
         response = self.client.update_locations(
@@ -314,79 +314,6 @@ class Facility(Model):
             license_number=self.license_number
         )
         return response
-
-
-class Location(Model):
-    """A class that represents a cannabis-production location.
-    ```js
-        {
-            "Id": 1,
-            "Name": "Harvest Location",
-            "LocationTypeId": 1,
-            "LocationTypeName": "Default",
-            "ForPlantBatches": True,
-            "ForPlants": True,
-            "ForHarvests": True,
-            "ForPackages": True
-        }
-    ```
-    """
-
-    def __init__(self, client, properties, license_number=''):
-        super().__init__(client, properties, license_number)
-        self._parameters = {
-            'name': 'Name',
-            'location_type': 'LocationTypeName',
-            'batches': 'ForPlantBatches',
-            'plants': 'ForPlants',
-            'harvests': 'ForHarvests',
-            'packages': 'ForPackages'
-        }
-
-    def update(self, **kwargs):
-        """Update location."""
-        data = self.to_dict()
-        update = clean_dictionary(data, snake_to_camel)
-        for param in kwargs:
-            key = self._parameters.get(param, param)
-            update[key] = kwargs[param]
-        self.client.update_locations([update])
-
-    def delete(self):
-        """Delete location."""
-        self.client.delete_location(self.id)
-
-
-class Strain(Model):
-    """A class that represents a cannabis strain.
-    ```js
-        {
-            "Id": 1,
-            "Name": "Old-time Moonshine",
-            "TestingStatus": "InHouse",
-            "ThcLevel": 0.1865,
-            "CbdLevel": 0.1075,
-            "IndicaPercentage": 25.0,
-            "SativaPercentage": 75.0
-        }
-    ```
-    """
-
-    def create(self):
-        """Create a strain record in Metrc."""
-        context = self.to_dict()
-        data = clean_dictionary(context, snake_to_camel)
-        self.client.create_strains([data])
-
-    def update(self, **kwargs):
-        """Update the strain given parameters as keyword arguments."""
-        context = self.to_dict()
-        data = update_dict(context, **kwargs)
-        self.client.update_strains([data], license_number=self._license)
-
-    def delete(self):
-        """Delete the strain."""
-        self.client.delete_strain(self.id, license_number=self._license)
 
 
 class Item(Model):
@@ -481,245 +408,45 @@ class Item(Model):
         self.client.delete_item(self.id, self._license)
 
 
-class Plant(Model):
-    """A class that represents a cannabis plant. Metrc documentation states:
-
-    Plants are tagged at the immature lot growth phase and at the mature /
-    flowering growth phase. A UID number is assigned to an immature plant lot
-    of up to 100 seeds or immature plants. Required corresponding UID
-    number labels will need to be produced by the licensee.
-    
-    Once the immature lot has been established in Metrc, the death of an
-    immature plant(s) must be recorded in Metrc by
-    recording the associated waste amount and reducing the total number of the
-    immature plants in the lot for each immature plant that was destroyed.
-
-    Plant tags are assigned to individual plants when they are moved to a
-    designated canopy area, or when the plant begins flowering.
-
-    A plant can be destroyed anytime during the growth phases.
-    Any waste produced by the plant should be recorded prior to the
-    destruction.
-    2. Any waste created during the immature growth phase must be recorded as
-    waste using the Plant Waste function and destroyed.
-    3. When immature plants begin to flower, select the Change Growth Phase
-    button to record the change and associate the new Plant Tag ID to the
-    plant(s).
-    4. In Metrc, anytime something is trimmed from a flowering plant during
-    growing with the intent to sell it, process it, or perform a partial
-    harvest, a Manicure batch must be created.
+class Location(Model):
+    """A class that represents a cannabis-production location.
+    ```js
+        {
+            "Id": 1,
+            "Name": "Harvest Location",
+            "LocationTypeId": 1,
+            "LocationTypeName": "Default",
+            "ForPlantBatches": True,
+            "ForPlants": True,
+            "ForHarvests": True,
+            "ForPackages": True
+        }
+    ```
     """
 
-    def create_planting(self, name, count, location=None, batch_type='Clone'):
-        """Create an immature plant batch from the plant.
-        Args:
-            name (str): The name of the new plant batch.
-            count (int): The number of clones being planted.
-            location (str): An optional new location for the plant batch.
-            batch_type (str): The type of planting, Seed of Clone, with Clone
-                as the default.
-        """
-        data = {
-            'PlantLabel': self.label,
-            'PlantBatchName': name,
-            'PlantBatchType': batch_type,
-            'PlantCount': count,
-            'LocationName': location or self.location_name,
-            'StrainName': self.strain_name,
-            'PatientLicenseNumber': None,
-            'ActualDate': get_timestamp(tz=self.client.state),
+    def __init__(self, client, properties, license_number=''):
+        super().__init__(client, properties, license_number)
+        self._parameters = {
+            'name': 'Name',
+            'location_type': 'LocationTypeName',
+            'batches': 'ForPlantBatches',
+            'plants': 'ForPlants',
+            'harvests': 'ForHarvests',
+            'packages': 'ForPackages'
         }
-        self.client.manage_plants(
-            [data],
-            action='create/plantings',
-            license_number=self._license
-        )
-        # TODO: Implement return_obs
 
-    def create_plant_package(
-            self,
-            name,
-            tag,
-            count=1,
-            batch_type='Clone',
-            trade_sample=False,
-            donation=False,
-            location=None,
-            note='',
-            patient_license=None,
-    ):
-        """Create a package of immature plants from the plant.
-        Args:
-            name (str): The name of the item to create.
-            tag (str): The tag for the package.
-            count (int): The number of immature plants to package, 1 by
-                default.
-            batch_type (str): The batch type, Seed or Clone,
-                with Clone as the default.
-            trade_sample (bool): Whether or not the package is for sale.
-            donation (bool): Whether or not the package is for donation.
-            location (str): An optional new location for the package.
-            note (str): An optional note for the package.
-            patient_license (str): An optional patient license.
-        """
-        data = {
-            'PlantLabel': self.label,
-            'PackageTag': tag,
-            'PlantBatchType': batch_type,
-            'Item': name,
-            'Location': location or self.location_name,
-            'Note': note,
-            'IsTradeSample': trade_sample,
-            'PatientLicenseNumber': patient_license,
-            'IsDonation': donation,
-            'Count': count,
-            'ActualDate': get_timestamp(tz=self.client.state)
-        }
-        self.client.manage_plants(
-            [data],
-            action='create/plantbatch/packages',
-            license_number=self._license
-        )
-        # TODO: Implement return_obs
+    def update(self, **kwargs):
+        """Update location."""
+        data = self.to_dict()
+        update = clean_dictionary(data, snake_to_camel)
+        for param in kwargs:
+            key = self._parameters.get(param, param)
+            update[key] = kwargs[param]
+        self.client.update_locations([update])
 
-    def flower(self, tag, location_name=None):
-        """Change the growth phase of the plant to flowering.
-        Args:
-            tag (str): A tag to assign to the flowering plant.
-            location_name (str): An optional new location for the plant.
-        """
-        if location_name is None:
-            location_name = self.location_name
-        data = {
-            'Label': self.label,
-            'NewTag': tag,
-            'GrowthPhase': 'Flowering',
-            'NewLocation': location_name,
-            'GrowthDate': get_timestamp(tz=self.client.state)
-        }
-        self.client.manage_plants(
-            [data],
-            action='changegrowthphases',
-            license_number=self._license
-        )
-
-    def move(self, location_name):
-        """Move the plant to a new location.
-        Args:
-            location_name (str): The destination's name.
-        """
-        data = {
-            'Id': self.id,
-            'Location': location_name,
-            'ActualDate': get_timestamp(tz=self.client.state)
-        }
-        self.client.manage_plants(
-            [data],
-            action='moveplants',
-            license_number=self._license
-        )
-
-    def destroy(
-            self,
-            weight,
-            method='Compost',
-            material='Soil',
-            note='n/a',
-            reason='Contamination',
-            uom='grams',
-    ):
-        """Destroy the plant.
-        Args:
-            weight (float): Required weight of the waste.
-            material (str): The waste material, e.g soil.
-            method (str): The mechanism of destruction:
-                `Grinder` or `Compost`.
-            reason (str): The reason for destruction:
-                `Contamination` or `Male Plants`.
-        """
-        data = {
-            'Id': self.id,
-            'WasteMethodName': method,
-            'WasteMaterialMixed': material,
-            'WasteWeight': weight,
-            'WasteUnitOfMeasureName': uom,
-            'WasteReasonName': reason,
-            'ReasonNote': note,
-            'ActualDate': get_timestamp(tz=self.client.state)
-        }
-        self.client.manage_plants(
-            [data],
-            action='destroyplants',
-            license_number=self._license
-        )
-
-    def manicure(
-            self,
-            weight,
-            harvest_name=None,
-            location_name=None,
-            patient_license=None,
-            uom='Grams',
-    ):
-        """Manicure the plant.
-        Args:
-            weight (float): Required harvest weight.
-            harvest_name (str): Optional harvest name.
-            location_name (str): The drying location's name.
-            patient_license (str): A patient's license number.
-            uom (str): The unit of measure
-        """
-        if location_name is None:
-            location_name = self.location_name
-        data = {
-            'Plant': self.label,
-            'Weight': weight,
-            'UnitOfWeight': uom,
-            'DryingLocation': location_name,
-            'HarvestName': harvest_name,
-            'PatientLicenseNumber': patient_license,
-            'ActualDate': get_timestamp(tz=self.client.state)
-        }
-        self.client.manage_plants(
-            [data],
-            action='manicureplants',
-            license_number=self._license
-        )
-        # TODO: Implement return_obs
-
-    def harvest(
-            self,
-            harvest_name,
-            weight,
-            location_name=None,
-            patient_license=None,
-            uom='Grams',
-    ):
-        """Harvest the plant.
-        Args:
-            harvest_name (str): Required harvest name.
-            weight (float): Required harvest weight.
-            location_name (str): The harvest location's name.
-            patient_license (str): A patient's license number.
-            uom (str): The unit of measure.
-        """
-        if location_name is None:
-            location_name = self.location_name
-        data = {
-            'Plant': self.label,
-            'Weight': weight,
-            'UnitOfWeight': uom,
-            'DryingLocation': location_name,
-            'HarvestName': harvest_name,
-            'PatientLicenseNumber': patient_license,
-            'ActualDate': get_timestamp(tz=self.client.state)
-        }
-        self.client.manage_plants(
-            [data],
-            action='harvestplants',
-            license_number=self._license
-        )
-        # TODO: Implement return_obs
+    def delete(self):
+        """Delete location."""
+        self.client.delete_location(self.id)
 
 
 class Harvest(Model):
@@ -780,7 +507,7 @@ class Harvest(Model):
             'Item': name,
             'UnitOfWeight': uom or self.unit_of_weight_name,
             'Note': note,
-            'ActualDate': get_timestamp(tz=self.client.state),
+            'ActualDate': get_timestamp(zone=self.client.state),
             'Ingredients': [
                 {
                     'HarvestId': self.id,
@@ -823,7 +550,7 @@ class Harvest(Model):
             'Item': name,
             'UnitOfWeight': uom,
             'Note': note,
-            'ActualDate': get_timestamp(tz=self.client.state),
+            'ActualDate': get_timestamp(zone=self.client.state),
             'Ingredients': []
         }
         for weight in weights:
@@ -855,7 +582,7 @@ class Harvest(Model):
             'WasteType': waste_type,
             'UnitOfWeight': uom,
             'WasteWeight': weight,
-            'ActualDate': get_timestamp(tz=self.client.state)
+            'ActualDate': get_timestamp(zone=self.client.state)
         }
         self.client.remove_waste([data], license_number=self._license)
 
@@ -863,7 +590,7 @@ class Harvest(Model):
         """Finish a harvest."""
         data = {
             'Id': self.uid,
-            'ActualDate': get_timestamp(tz=self.client.state),
+            'ActualDate': get_timestamp(zone=self.client.state),
         }
         self.client.finish_harvests([data], license_number=self._license)
 
@@ -884,7 +611,7 @@ class Harvest(Model):
             "Id": self.uid,
             "HarvestName": harvest_name,
             "DryingLocation": destination,
-            "ActualDate": get_timestamp(tz=self.client.state)
+            "ActualDate": get_timestamp(zone=self.client.state)
         }
         self.client.move_harvest([data], license_number=self._license)
 
@@ -982,19 +709,18 @@ class Package(Model):
             'IsDonation': donation,
             'ProductRequiresRemediation': remediation,
             'UseSameItem': same_item,
-            'ActualDate': get_timestamp(tz=self.client.state),
+            'ActualDate': get_timestamp(zone=self.client.state),
             'Ingredients': []
         }
 
         if labels:
-            for i in range(len(labels)):
-                item_label = labels[i]
+            for index, item_label in enumerate(labels):
                 try:
-                    item_uom = uoms[i]
+                    item_uom = uoms[index]
                 except IndexError:
                     item_uom = uom or self.unit_of_measure_name
                 try:
-                    item_weight = weights[i]
+                    item_weight = weights[index]
                 except IndexError:
                     item_weight = weight
                 data['Ingredients'].append({
@@ -1033,7 +759,7 @@ class Package(Model):
         """Finish a package."""
         data = {
             'Label': self.label,
-            'ActualDate': get_timestamp(tz=self.client.state)
+            'ActualDate': get_timestamp(zone=self.client.state)
         }
         self.client.manage_packages(
             [data],
@@ -1068,7 +794,7 @@ class Package(Model):
             'Quantity': weight,
             'UnitOfMeasure': uom,
             'AdjustmentReason': reason,
-            'AdjustmentDate': get_timestamp(tz=self.client.state),
+            'AdjustmentDate': get_timestamp(zone=self.client.state),
             'ReasonNote': note
         }
         self.client.manage_packages(
@@ -1087,7 +813,7 @@ class Package(Model):
         data = [{
             'PackageLabel': self.label,
             'RemediationMethodName': method,
-            'RemediationDate': get_timestamp(tz=self.client.state),
+            'RemediationDate': get_timestamp(zone=self.client.state),
             'RemediationSteps': steps,
         }]
         self.client.manage_packages(
@@ -1116,7 +842,7 @@ class Package(Model):
         data = [{
             'Label': self.label,
             'Location': location,
-            'MoveDate': get_timestamp(tz=self.client.state)
+            'MoveDate': get_timestamp(zone=self.client.state)
         }]
         self.client.update_package_item_locations(data)
 
@@ -1135,9 +861,9 @@ class Package(Model):
             })
         else:
             # Warning: untested
-            for i in range(len(names)):
-                item_name = names[i]
-                item_label = self.ingredients[i]['PackageLabel']
+            for index, item_name in enumerate(names):
+                item_name = names[index]
+                item_label = self.ingredients[index]['PackageLabel']
                 data.append({
                     'PackageLabel': item_label,
                     'Item': item_name,
@@ -1170,7 +896,7 @@ class Patient(Model):
     def create(self):
         """Create a patient record in Metrc."""
         context = self.to_dict()
-        context['actual_date'] = get_timestamp(tz=self.client.state)
+        context['actual_date'] = get_timestamp(zone=self.client.state)
         data = clean_nested_dictionary(context, snake_to_camel)
         self.client.create_patients([data], license_number=self._license)
 
@@ -1184,6 +910,247 @@ class Patient(Model):
     def delete(self):
         """Delete the patient."""
         self.client.delete_patient(self.id, self._license)
+
+
+class Plant(Model):
+    """A class that represents a cannabis plant. Metrc documentation states:
+
+    Plants are tagged at the immature lot growth phase and at the mature /
+    flowering growth phase. A UID number is assigned to an immature plant lot
+    of up to 100 seeds or immature plants. Required corresponding UID
+    number labels will need to be produced by the licensee.
+    
+    Once the immature lot has been established in Metrc, the death of an
+    immature plant(s) must be recorded in Metrc by
+    recording the associated waste amount and reducing the total number of the
+    immature plants in the lot for each immature plant that was destroyed.
+
+    Plant tags are assigned to individual plants when they are moved to a
+    designated canopy area, or when the plant begins flowering.
+
+    A plant can be destroyed anytime during the growth phases.
+    Any waste produced by the plant should be recorded prior to the
+    destruction.
+    2. Any waste created during the immature growth phase must be recorded as
+    waste using the Plant Waste function and destroyed.
+    3. When immature plants begin to flower, select the Change Growth Phase
+    button to record the change and associate the new Plant Tag ID to the
+    plant(s).
+    4. In Metrc, anytime something is trimmed from a flowering plant during
+    growing with the intent to sell it, process it, or perform a partial
+    harvest, a Manicure batch must be created.
+    """
+
+    def create_planting(self, name, count, location=None, batch_type='Clone'):
+        """Create an immature plant batch from the plant.
+        Args:
+            name (str): The name of the new plant batch.
+            count (int): The number of clones being planted.
+            location (str): An optional new location for the plant batch.
+            batch_type (str): The type of planting, Seed of Clone, with Clone
+                as the default.
+        """
+        data = {
+            'PlantLabel': self.label,
+            'PlantBatchName': name,
+            'PlantBatchType': batch_type,
+            'PlantCount': count,
+            'LocationName': location or self.location_name,
+            'StrainName': self.strain_name,
+            'PatientLicenseNumber': None,
+            'ActualDate': get_timestamp(zone=self.client.state),
+        }
+        self.client.manage_plants(
+            [data],
+            action='create/plantings',
+            license_number=self._license
+        )
+        # TODO: Implement return_obs
+
+    def create_plant_package(
+            self,
+            name,
+            tag,
+            count=1,
+            batch_type='Clone',
+            trade_sample=False,
+            donation=False,
+            location=None,
+            note='',
+            patient_license=None,
+    ):
+        """Create a package of immature plants from the plant.
+        Args:
+            name (str): The name of the item to create.
+            tag (str): The tag for the package.
+            count (int): The number of immature plants to package, 1 by
+                default.
+            batch_type (str): The batch type, Seed or Clone,
+                with Clone as the default.
+            trade_sample (bool): Whether or not the package is for sale.
+            donation (bool): Whether or not the package is for donation.
+            location (str): An optional new location for the package.
+            note (str): An optional note for the package.
+            patient_license (str): An optional patient license.
+        """
+        data = {
+            'PlantLabel': self.label,
+            'PackageTag': tag,
+            'PlantBatchType': batch_type,
+            'Item': name,
+            'Location': location or self.location_name,
+            'Note': note,
+            'IsTradeSample': trade_sample,
+            'PatientLicenseNumber': patient_license,
+            'IsDonation': donation,
+            'Count': count,
+            'ActualDate': get_timestamp(zone=self.client.state)
+        }
+        self.client.manage_plants(
+            [data],
+            action='create/plantbatch/packages',
+            license_number=self._license
+        )
+        # TODO: Implement return_obs
+
+    def flower(self, tag, location_name=None):
+        """Change the growth phase of the plant to flowering.
+        Args:
+            tag (str): A tag to assign to the flowering plant.
+            location_name (str): An optional new location for the plant.
+        """
+        if location_name is None:
+            location_name = self.location_name
+        data = {
+            'Label': self.label,
+            'NewTag': tag,
+            'GrowthPhase': 'Flowering',
+            'NewLocation': location_name,
+            'GrowthDate': get_timestamp(zone=self.client.state)
+        }
+        self.client.manage_plants(
+            [data],
+            action='changegrowthphases',
+            license_number=self._license
+        )
+
+    def move(self, location_name):
+        """Move the plant to a new location.
+        Args:
+            location_name (str): The destination's name.
+        """
+        data = {
+            'Id': self.id,
+            'Location': location_name,
+            'ActualDate': get_timestamp(zone=self.client.state)
+        }
+        self.client.manage_plants(
+            [data],
+            action='moveplants',
+            license_number=self._license
+        )
+
+    def destroy(
+            self,
+            weight,
+            method='Compost',
+            material='Soil',
+            note='n/a',
+            reason='Contamination',
+            uom='grams',
+    ):
+        """Destroy the plant.
+        Args:
+            weight (float): Required weight of the waste.
+            material (str): The waste material, e.g soil.
+            method (str): The mechanism of destruction:
+                `Grinder` or `Compost`.
+            reason (str): The reason for destruction:
+                `Contamination` or `Male Plants`.
+        """
+        data = {
+            'Id': self.id,
+            'WasteMethodName': method,
+            'WasteMaterialMixed': material,
+            'WasteWeight': weight,
+            'WasteUnitOfMeasureName': uom,
+            'WasteReasonName': reason,
+            'ReasonNote': note,
+            'ActualDate': get_timestamp(zone=self.client.state)
+        }
+        self.client.manage_plants(
+            [data],
+            action='destroyplants',
+            license_number=self._license
+        )
+
+    def manicure(
+            self,
+            weight,
+            harvest_name=None,
+            location_name=None,
+            patient_license=None,
+            uom='Grams',
+    ):
+        """Manicure the plant.
+        Args:
+            weight (float): Required harvest weight.
+            harvest_name (str): Optional harvest name.
+            location_name (str): The drying location's name.
+            patient_license (str): A patient's license number.
+            uom (str): The unit of measure
+        """
+        if location_name is None:
+            location_name = self.location_name
+        data = {
+            'Plant': self.label,
+            'Weight': weight,
+            'UnitOfWeight': uom,
+            'DryingLocation': location_name,
+            'HarvestName': harvest_name,
+            'PatientLicenseNumber': patient_license,
+            'ActualDate': get_timestamp(zone=self.client.state)
+        }
+        self.client.manage_plants(
+            [data],
+            action='manicureplants',
+            license_number=self._license
+        )
+        # TODO: Implement return_obs
+
+    def harvest(
+            self,
+            harvest_name,
+            weight,
+            location_name=None,
+            patient_license=None,
+            uom='Grams',
+    ):
+        """Harvest the plant.
+        Args:
+            harvest_name (str): Required harvest name.
+            weight (float): Required harvest weight.
+            location_name (str): The harvest location's name.
+            patient_license (str): A patient's license number.
+            uom (str): The unit of measure.
+        """
+        if location_name is None:
+            location_name = self.location_name
+        data = {
+            'Plant': self.label,
+            'Weight': weight,
+            'UnitOfWeight': uom,
+            'DryingLocation': location_name,
+            'HarvestName': harvest_name,
+            'PatientLicenseNumber': patient_license,
+            'ActualDate': get_timestamp(zone=self.client.state)
+        }
+        self.client.manage_plants(
+            [data],
+            action='harvestplants',
+            license_number=self._license
+        )
+        # TODO: Implement return_obs
 
 
 class PlantBatch(Model):
@@ -1275,7 +1242,7 @@ class PlantBatch(Model):
             'note': note,
             'is_trade_sample': trade_sample,
             'is_donation': donation,
-            'actual_date': get_timestamp(tz=self.client.state)
+            'actual_date': get_timestamp(zone=self.client.state)
         }
         data = clean_dictionary(data, snake_to_camel)
         self.client.manage_batches([data], 'createpackages', self._license)
@@ -1303,7 +1270,7 @@ class PlantBatch(Model):
             'Note': note,
             'IsTradeSample': trade_sample,
             'IsDonation': donation,
-            'ActualDate': get_timestamp(tz=self.client.state),
+            'ActualDate': get_timestamp(zone=self.client.state),
         }
         data = clean_dictionary(data, snake_to_camel)
         self.client.manage_batches(
@@ -1339,7 +1306,7 @@ class PlantBatch(Model):
             'StartingTag': tag,
             'GrowthPhase': growth_phase,
             'NewLocation': location or self.location_name,
-            'GrowthDate': get_timestamp(tz=self.client.state),
+            'GrowthDate': get_timestamp(zone=self.client.state),
             'PatientLicenseNumber': patient_license,
         }
         self.client.manage_batches([data], 'changegrowthphase', self._license)
@@ -1354,7 +1321,7 @@ class PlantBatch(Model):
             'PlantBatch': self.name,
             'Count': count,
             'ReasonNote': reason,
-            'ActualDate': get_timestamp(tz=self.client.state),
+            'ActualDate': get_timestamp(zone=self.client.state),
         }
         self.client.manage_batches([data], 'destroy', self._license)
 
@@ -1372,7 +1339,7 @@ class PlantBatch(Model):
             'Location': location or self.location_name,
             'Strain': self.strain_name,
             'PatientLicenseNumber': None,
-            'ActualDate': get_timestamp(tz=self.client.state),
+            'ActualDate': get_timestamp(zone=self.client.state),
         }
         self.client.manage_batches([data], 'split', self._license)
         # TODO: Implement return_obs
@@ -1411,6 +1378,113 @@ class LabResult(Model):
         context = self.to_dict()
         result = clean_dictionary(data, snake_to_camel)
         self.client.release_lab_results([{**context, **result}], self._license)
+
+
+class Receipt(Model):
+    """A class that represents a cannabis sale receipt. Sales are reported to
+    record the transfer of cannabis products to a consumer, patient or
+    caregiver.
+
+    When you request receipts you receive the following object.
+    ```js
+    {
+        "Id": 1,
+        "ReceiptNumber": null,
+        "SalesDateTime": "2016-01-01T17:35:45.000",
+        "SalesCustomerType": "Consumer",
+        "PatientLicenseNumber": null,
+        "CaregiverLicenseNumber": null,
+        "IdentificationMethod": null,
+        "TotalPackages": 0,
+        "TotalPrice": 0.0,
+        "Transactions": [],
+        "IsFinal": false,
+        "ArchivedDate": null,
+        "RecordedDateTime": "0001-01-01T00:00:00+00:00",
+        "RecordedByUserName": null,
+        "LastModified": "0001-01-01T00:00:00+00:00"
+    }
+    ```
+
+    When you create a receipt, you pass the following object.
+    ```js
+    {
+        "SalesDateTime": "2016-10-04T16:44:53.000",
+        "SalesCustomerType": "Consumer",
+        "PatientLicenseNumber": null,
+        "CaregiverLicenseNumber": null,
+        "IdentificationMethod": null,
+        "Transactions": [
+            {
+                "PackageLabel": "ABCDEF012345670000010331",
+                "Quantity": 1.0,
+                "UnitOfMeasure": "Ounces",
+                "TotalAmount": 9.99
+            }
+        ]
+    }
+    ```
+    """
+
+    RETURNED_VALUES = {
+        'ReceiptNumber': 'receipt_number',
+        'TotalPackages': 'total_packages',
+        'TotalPrice': 'total_price',
+        'IsFinal': 'is_final',
+        'RecordedDateTime': 'recorded_date_time',
+        'RecordedByUserName': 'recorded_by_user_name',
+        'LastModified': 'last_modified',
+    }
+
+    def create(self):
+        """Create a receipt record in Metrc."""
+        context = self.to_dict()
+        data = clean_nested_dictionary(context, snake_to_camel)
+        self.client.create_receipts([data], license_number=self._license)
+
+    def update(self, **kwargs):
+        """Update the receipt given parameters as keyword arguments."""
+        context = self.to_dict().copy()
+        data = update_dict(context, **kwargs)
+        data = remove_dict_fields(data, self.RETURNED_VALUES.keys())
+        data = remove_dict_nulls(data)
+        self.client.update_receipts([data], self._license)
+
+    def delete(self):
+        """Delete the receipt."""
+        self.client.delete_receipt(self.id, self._license)
+
+
+class Strain(Model):
+    """A class that represents a cannabis strain.
+    ```js
+        {
+            "Id": 1,
+            "Name": "Old-time Moonshine",
+            "TestingStatus": "InHouse",
+            "ThcLevel": 0.1865,
+            "CbdLevel": 0.1075,
+            "IndicaPercentage": 25.0,
+            "SativaPercentage": 75.0
+        }
+    ```
+    """
+
+    def create(self):
+        """Create a strain record in Metrc."""
+        context = self.to_dict()
+        data = clean_dictionary(context, snake_to_camel)
+        self.client.create_strains([data])
+
+    def update(self, **kwargs):
+        """Update the strain given parameters as keyword arguments."""
+        context = self.to_dict()
+        data = update_dict(context, **kwargs)
+        self.client.update_strains([data], license_number=self._license)
+
+    def delete(self):
+        """Delete the strain."""
+        self.client.delete_strain(self.id, license_number=self._license)
 
 
 class Transfer(Model):
@@ -1601,82 +1675,6 @@ class Transaction(Model):
         data = remove_dict_fields(data, self.RETURNED_VALUES.keys())
         data = remove_dict_nulls(data)
         self.client.update_transactions([data], self._license)
-
-
-
-class Receipt(Model):
-    """A class that represents a cannabis sale receipt. Sales are reported to
-    record the transfer of cannabis products to a consumer, patient or
-    caregiver.
-
-    When you request receipts you receive the following object.
-    ```js
-    {
-        "Id": 1,
-        "ReceiptNumber": null,
-        "SalesDateTime": "2016-01-01T17:35:45.000",
-        "SalesCustomerType": "Consumer",
-        "PatientLicenseNumber": null,
-        "CaregiverLicenseNumber": null,
-        "IdentificationMethod": null,
-        "TotalPackages": 0,
-        "TotalPrice": 0.0,
-        "Transactions": [],
-        "IsFinal": false,
-        "ArchivedDate": null,
-        "RecordedDateTime": "0001-01-01T00:00:00+00:00",
-        "RecordedByUserName": null,
-        "LastModified": "0001-01-01T00:00:00+00:00"
-    }
-    ```
-
-    When you create a receipt, you pass the following object.
-    ```js
-    {
-        "SalesDateTime": "2016-10-04T16:44:53.000",
-        "SalesCustomerType": "Consumer",
-        "PatientLicenseNumber": null,
-        "CaregiverLicenseNumber": null,
-        "IdentificationMethod": null,
-        "Transactions": [
-            {
-                "PackageLabel": "ABCDEF012345670000010331",
-                "Quantity": 1.0,
-                "UnitOfMeasure": "Ounces",
-                "TotalAmount": 9.99
-            }
-        ]
-    }
-    ```
-    """
-
-    RETURNED_VALUES = {
-        'ReceiptNumber': 'receipt_number',
-        'TotalPackages': 'total_packages',
-        'TotalPrice': 'total_price',
-        'IsFinal': 'is_final',
-        'RecordedDateTime': 'recorded_date_time',
-        'RecordedByUserName': 'recorded_by_user_name',
-        'LastModified': 'last_modified',
-    }
-
-    def create(self):
-        """Create a receipt record in Metrc."""
-        context = self.to_dict()
-        data = clean_nested_dictionary(context, snake_to_camel)
-        self.client.create_receipts([data], license_number=self._license)
-
-    def update(self, **kwargs):
-        """Update the receipt given parameters as keyword arguments."""
-        context = self.to_dict().copy()
-        data = update_dict(context, **kwargs)
-        data = remove_dict_fields(data, self.RETURNED_VALUES.keys())
-        data = remove_dict_nulls(data)
-        self.client.update_receipts([data], self._license)
-
-    def delete(self):
-        """Delete the receipt."""
-        self.client.delete_receipt(self.id, self._license)
 
 
 class Waste(Model):

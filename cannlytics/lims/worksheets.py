@@ -1,30 +1,25 @@
 """
 Worksheets | Cannlytics
+Copyright (c) 2021 Cannlytics
 
 Authors: Keegan Skeate <keegan@cannlytics.com>
 Created: 7/18/2021
-Updated: 7/20/2021
+Updated: 12/21/2021
 License: MIT License <https://opensource.org/licenses/MIT>
 """
+# Standard packages
+from ast import literal_eval
+import os
 
-try:
+# External packages.
+from dotenv import load_dotenv
+from pandas import DataFrame, to_datetime
+import requests
+import xlwings
+from xlwings.utils import rgb_to_int
 
-    # Standard packages
-    from ast import literal_eval
-    import os
-
-    # External packages.
-    from dotenv import load_dotenv
-    from pandas import DataFrame, to_datetime
-    import requests
-    import xlwings
-    from xlwings.utils import rgb_to_int
-
-    # Internal packages.
-    from cannlytics.utils.utils import snake_case
-
-except:
-    pass # FIXME: Docs can't import.
+# Internal packages.
+from cannlytics.utils.utils import snake_case
 
 
 def get_data_block(sheet, coords, expand=None):

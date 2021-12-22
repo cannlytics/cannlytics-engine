@@ -21,7 +21,7 @@ with open('requirements.txt', 'r') as f:
     REQUIREMENTS = [i[:-1] for i in f if i[0] != '#']
 
 # Specify requirements for development.
-dev_requirements = []
+dev_requirements = ['xlwings']
 
 # Specify requirements for setup.
 setup_requirements = []

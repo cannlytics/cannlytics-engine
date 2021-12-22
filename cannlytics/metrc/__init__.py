@@ -6,18 +6,19 @@ Authors: Keegan Skeate <keegan@cannlytics.com>
 Created: 11/6/2021
 Updated: 11/6/2021
 """
+from typing import Any, Optional
 from .client import Metrc
 
 
 def initialize_metrc(
-        vendor_api_key,
-        user_api_key,
-        primary_license='',
-        state='ca',
-        client_class=Metrc,
-):
+        vendor_api_key: str,
+        user_api_key: str,
+        primary_license: Optional[str] = '',
+        state: Optional[str] = 'ca',
+        client_class: Any = Metrc,
+) -> Metrc:
     """This is a shortcut function which instantiates a Metrc
-    client using a user API key and the vendor API key.    
+    client using a user API key and the vendor API key.
     Args:
         vendor_api_key (str): The vendor's API key.
         user_api_key (str): The user's API key.

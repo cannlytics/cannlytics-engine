@@ -1,54 +1,50 @@
-# Python Packaging
+# Packaging Cannlytics
 
 Packaging Python modules and deploying them to [PyPI](https://pypi.org) is super easy.
 
-## Testing
+1. [Test the package](#test).
+2. [Install developer tools](#install).
+3. [Publish the package](#publish).
 
-First, ensure that all tests are passed.
+## 1. Test the package <a name="test"></a>
 
-```shell
+First, it is recommended that you ensure that all tests pass with:
+
+```bash
 cd ./tests
 pytest --disable-pytest-warnings
 cd ../
 ```
 
-## Installation
+## 2. Install developer tools <a name="install"></a>
 
-Make sure you have the latest versions of setuptools and wheel installed:
+Second, it is recommended to install the latest versions of `setuptools`, `wheel`, and `Twine` before each publish with:
 
-```shell
-pip install --user --upgrade setuptools wheel
+```bash
+pip install --user --upgrade setuptools wheel twine
 ```
 
-You will also need to install Twine:
+## 3. Publish the package <a name="publish"></a>
 
-```shell
-pip install --user --upgrade twine
-```
+Finally, when you are ready to publish, you can build the package from the same directory where `setup.py` is located with:
 
-## Deploying
-
-First, build the package from the same directory where setup.py is located:
-
-```shell
+```bash
 python setup.py sdist bdist_wheel
 ```
 
-Next, run Twine to upload all of the archives under dist:
+Next, you can run Twine to upload all of the archives under `dist`. If you are deploying to test, then run:
 
-DEV:
-
- ```shell
+```bash
 python -m twine upload --repository testpypi dist/*
- ```
+```
 
- PRODUCTION
+When you are ready to deploy to production, then run:
 
-```shell
+```bash
 python -m twine upload dist/*
- ```
+```
 
-You will be prompted for a username and password. For the username, use `__token__`. For the password, use your API key issued on PyPi, including the pypi- prefix. On Windows, when entering your password, right click the taskbar, then select `Edit` > `Paste`, because other pasting methods do not work for this password field.
+You will be prompted for a username and password. For the username, use `__token__`. For the password, use your API key issued on [PyPI](https://pypi.org), including the *pypi-* prefix. On Windows, when entering your password, right click the taskbar, then select `Edit` > `Paste`, because other pasting methods do not work for this password field.
 
 ## Resources
 

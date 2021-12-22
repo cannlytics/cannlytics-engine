@@ -1,34 +1,31 @@
 """
 Instruments | Cannlytics
+Copyright (c) 2021 Cannlytics
 
-Authors: Keegan Skeate <keegan@cannlytics.com>  
-Created: 8/3/2021  
-Updated: 8/21/2021  
-License: MIT License <https://opensource.org/licenses/MIT>  
+Authors: Keegan Skeate <keegan@cannlytics.com>
+Created: 8/3/2021
+Updated: 12/21/2021
+License: MIT License <https://opensource.org/licenses/MIT>
 
-Manage scientific instruments and measurements from the instruments.
+Description: Manage scientific instruments and measurements from the instruments.
 """
 # Standard imports
 import os
-import environ
 from datetime import datetime, timedelta
 
-try:
+# External imports
+import environ # TODO: Replace with dot_env
+import pandas as pd
+import requests
 
-    # External imports
-    import pandas as pd
-    import requests
+# Internal imports
+from cannlytics.firebase import (
+    get_collection,
+    initialize_firebase,
+    update_document
+)
+from cannlytics.utils.utils import snake_case
 
-    # Internal imports
-    from cannlytics.firebase import (
-        get_collection,
-        initialize_firebase,
-        update_document
-    )
-    from cannlytics.utils.utils import snake_case
-
-except:
-    pass
 
 API_BASE = 'https://console.cannlytics.com'
 

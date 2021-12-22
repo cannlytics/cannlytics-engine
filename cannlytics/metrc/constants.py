@@ -12,7 +12,7 @@ This module contains Metrc variables that are constant.
 
 # The number of minutes in the past to check the Metrc API
 # when creating and updating objects and returning observations.
-default_time_period = 5
+DEFAULT_HISTORY = 5
 
 additive_types = [
     'Fertilizer',

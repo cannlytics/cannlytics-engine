@@ -94,6 +94,7 @@
     "inplace",
     "isnan",
     "iterrows",
+    "Jinga",
     "keegan",
     "keychain",
     "lims",
@@ -141,8 +142,10 @@
     "unfinish",
     "unitsofmeasure",
     "untracked",
+    "uoms",
     "urandom",
     "wsgi",
+    "xlwings",
     "zondicons"
   ],
   "yaml.customTags": [

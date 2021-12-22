@@ -1,4 +1,6 @@
-# Metrc
+# Cannlytics Metrc Module
+
+TODO: Write docs...
 
 ## Permissions
 
