@@ -34,6 +34,9 @@ from cannlytics.firebase import (
 from cannlytics.utils.utils import snake_case
 
 
+# TODO: This file needs a MAJOR refactor.
+
+
 def create_coa():
     """
     Creates a certificate of analysis.
@@ -359,7 +362,7 @@ def generate_coas(
     excel.EnableEvents = True
 
 
-# FIXME: Do it without Excel :(
+# FIXME: This requires that Excel is installed on Windows. Try to do this without Excel :(
 def create_coa_pdfs(render_file, ws_index_list, output_file, tight=False):
     """Generate PDFs for rendred CoAs.
     Args:

@@ -7,20 +7,21 @@ Created: 12/10/2021
 Updated: 12/10/2021
 License: MIT License
 """
-# # Standard imports.
-# import logging
+# Standard imports.
+import logging
 
-# # External imports.
-# from json import dumps
-# from pandas import read_excel
-# from requests import Session
+# External imports.
+from json import dumps
+from pandas import read_excel
+from requests import Session
 
-# # Internal imports.
+# Internal imports.
 # from .constants import parameters, recall
 # from .exceptions import MetrcAPIError
 # from .models import *
 # from .urls import *
 # from ..utils.utils import clean_dictionary
+from ..exceptions import CannlyticsAPIError
 
 
 class LIMS(object):
@@ -56,11 +57,11 @@ class LIMS(object):
             except ValueError:
                 self.logger.debug(f'Response: {response.text}')
         except KeyError:
-            raise MetrcAPIError({'message': '`logs=True` but no logger initialized. Use `client.initialize_logs()`.'})
+            raise CannlyticsAPIError({'message': '`logs=True` but no logger initialized. Use `client.initialize_logs()`.'})
 
     def initialize_logs(self):
         """Initialize Metrc logs."""
-        logging.getLogger('metrc').handlers.clear()
+        logging.getLogger('lims').handlers.clear()
         logging.basicConfig(
             filename='./tmp/cannlytics.log',
             filemode='w+',
@@ -70,7 +71,7 @@ class LIMS(object):
         )
         console = logging.StreamHandler()
         console.setLevel(logging.DEBUG)
-        self.logger = logging.getLogger('metrc')
+        self.logger = logging.getLogger('lims')
         self.logger.addHandler(console)
 
     #------------------------------------------------------------------

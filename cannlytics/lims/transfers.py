@@ -8,6 +8,7 @@ License: MIT License <https://opensource.org/licenses/MIT>
 
 Tools to help manage transfers of laboratory samples.
 """
+# TODO: Does this belong in crm?
 
 def create_transfer():
     """Create a transfer of samples to a lab for analysis. The sending
@@ -21,7 +22,7 @@ def create_transfer():
     return NotImplementedError
 
 
-def receive_transfer(transfer_id):
+def receive_transfer(transfer_id: str):
     """
     Receive a transfer of laboratory samples.
     """

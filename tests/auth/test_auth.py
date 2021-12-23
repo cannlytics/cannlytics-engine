@@ -9,6 +9,8 @@ License: MIT License <https://opensource.org/licenses/MIT>
 """
 
 # TODO: Implement auth tests
+# https://stackoverflow.com/questions/2036202/how-to-mock-users-and-requests-in-django
+# https://stackoverflow.com/questions/47089299/mocking-request-and-the-response-inside-django-rest-fbv
 from ...cannlytics.auth import (
     authenticate_request,
     get_user_from_api_key,

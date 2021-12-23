@@ -11,7 +11,7 @@ Description: This module contains general cannabis analytics utility functions.
 """
 # Standard imports.
 from datetime import datetime, timedelta
-from typing import List, Optional
+from typing import Any, List, Optional
 from zoneinfo import ZoneInfo
 from re import sub, findall
 
@@ -42,6 +42,31 @@ def camel_to_snake(string: str) -> str:
         (str): Returns the string in snake_case.
     """
     return sub(r'(?<!^)(?=[A-Z])', '_', string).lower()
+
+
+def clean_column_names(data: Any, column: str) -> Any:
+    """
+    Args:
+        data (DataFrame): A DataFrame with any column names.
+        column (str): The column of the DataFrame to clean.
+    Returns:
+        (DataFrame): A DataFrame with snake_case column names.
+    """
+    data[column] = data[column].str.strip()
+    data[column] = data[column].str.rstrip('.)]')
+    data[column] = data[column].str.replace('%', 'percent', regex=True)
+    data[column] = data[column].str.replace('#', 'number', regex=True)
+    data[column] = data[column].str.replace('[/,]', '_', regex=True)
+    data[column] = data[column].str.replace('[.,(,)]', '', regex=True)
+    data[column] = data[column].str.replace("\'", '', regex=True)
+    data[column] = data[column].str.replace("[[]", '_', regex=True)
+    data[column] = data[column].str.replace(r"[]]", '', regex=True)
+    data[column] = data[column].str.replace('β', 'beta', regex=True)
+    data[column] = data[column].str.replace('Δ', 'delta', regex=True)
+    data[column] = data[column].str.replace('δ', 'delta', regex=True)
+    data[column] = data[column].str.replace('α', 'alpha', regex=True)
+    data[column] = data[column].str.replace('__', '', regex=True)
+    return data
 
 
 def clean_dictionary(data: dict, function: function = camel_to_snake) -> dict:

@@ -9,15 +9,4 @@ License: MIT License <https://opensource.org/licenses/MIT>
 Manage your laboratory projects.
 """
 
-# def record_measurement(config):
-#     """Record a laboratory measurement, e.g. a measured sample weight."""
-#     # pics = []
-#     # return pics
-#     return NotImplementedError
-
-
-# if __name__ == '__main__':
-    
-#     # TODO: Test recording a measurement.
-#     record_measurement({})
-
+# TODO: Implement various project helper functions here.

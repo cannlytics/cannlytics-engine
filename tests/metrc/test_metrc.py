@@ -58,7 +58,7 @@ if __name__ == '__main__' and False:
     #------------------------------------------------------------------
     # Initialization
     #------------------------------------------------------------------
-    
+
     # Initialize the current time.
     now = datetime.now()
     current_time = now.isoformat()
