@@ -10,6 +10,9 @@ License: MIT <https://opensource.org/licenses/MIT>
 """
 from setuptools import find_packages, setup
 
+# Define the package version.
+version = '0.0.10'
+
 # Get the project description.
 README = ''
 with open('README.md', 'r', encoding='utf-8') as readme_file:
@@ -57,6 +60,6 @@ setup(
     test_suite='tests',
     tests_require=test_requirements,
     url='https://github.com/cannlytics/cannlytics-engine',
-    version='0.0.9',
+    version=version,
     zip_safe=False,
 )
