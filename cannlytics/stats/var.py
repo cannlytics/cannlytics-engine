@@ -1,6 +1,6 @@
 """
 VAR Functions | Cannlytics
-Copyright (c) 2021 Cannlytics
+Copyright (c) 2021-2022 Cannlytics
 Copyright (c) 2017-2021 Keegan Skeate
 
 Authors: Keegan Skeate <keegan@cannlytics.com>

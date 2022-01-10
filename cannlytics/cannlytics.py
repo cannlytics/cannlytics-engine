@@ -1,10 +1,10 @@
 """
 Cannlytics Module | Cannlytics
-Copyright (c) 2021 Cannlytics and Cannlytics Contributors
+Copyright (c) 2021-2022 Cannlytics and Cannlytics Contributors
 
 Authors: Keegan Skeate <keegan@cannlytics.com>
 Created: 11/5/2021
-Updated: 12/21/2021
+Updated: 1/10/2022
 License: <https://github.com/cannlytics/cannlytics-engine/blob/main/LICENSE>
 
 Description: This module contains the Cannlytics class,
@@ -37,7 +37,7 @@ class Cannlytics:
             self.config = config
         else:
             self.config = dotenv_values(env_file)
-        self.db = None
+        self.database = None
         self.license = None
         self.state = None
         self.storage = None
@@ -81,11 +81,11 @@ class Cannlytics:
             config = self.config
         credentials = config['GOOGLE_APPLICATION_CREDENTIALS']
         environ['GOOGLE_APPLICATION_CREDENTIALS'] = credentials
-        self.db = initialize_firebase()
+        self.database = initialize_firebase()
         self.storage = config.get('FIREBASE_STORAGE_BUCKET')
         # TODO: Map all firebase function to cannlytics.<function_name>, passing DB as an argument.
         self.create_log('Firebase client initialized.')
-        return self.db
+        return self.database
 
     def initialize_traceability(self, config=None, primary_license=None, state=None):
         """Initialize the traceability client.

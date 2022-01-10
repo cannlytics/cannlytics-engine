@@ -1,6 +1,6 @@
 """
 Utility Functions | Cannlytics
-Copyright (c) 2021 Cannlytics and Cannlytics Contributors
+Copyright (c) 2021-2022 Cannlytics and Cannlytics Contributors
 
 Authors: Keegan Skeate <keegan@cannlytics.com>
 Created: 11/6/2021
@@ -11,9 +11,10 @@ Description: This module contains general cannabis analytics utility functions.
 """
 # Standard imports.
 from datetime import datetime, timedelta
-from typing import Any, List, Optional
+from typing import Any, Callable, List, Optional
 from zoneinfo import ZoneInfo
 from re import sub, findall
+import secrets
 
 # External imports.
 from dateutil import parser
@@ -69,7 +70,7 @@ def clean_column_names(data: Any, column: str) -> Any:
     return data
 
 
-def clean_dictionary(data: dict, function: function = camel_to_snake) -> dict:
+def clean_dictionary(data: dict, function: Callable = camel_to_snake) -> dict:
     """Format dictionary keys with given function, snake case by default.
     Args:
         d (dict): A dictionary to clean.
@@ -80,7 +81,7 @@ def clean_dictionary(data: dict, function: function = camel_to_snake) -> dict:
     return {function(k): v for k, v in data.items()}
 
 
-def clean_nested_dictionary(data: dict, function: function = camel_to_snake) -> dict:
+def clean_nested_dictionary(data: dict, function: Callable = camel_to_snake) -> dict:
     """Format nested (at most 2 levels) dictionary keys with a given function,
     snake case by default.
     Args:
@@ -109,6 +110,50 @@ def get_keywords(string: str) -> List[str]:
     keywords = [x.strip() for x in keywords if x]
     keywords = list(set(keywords))
     return keywords
+
+
+RANDOM_STRING_CHARS = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+
+def get_random_string(length, allowed_chars=RANDOM_STRING_CHARS):
+    """
+    Return a securely generated random string.
+
+    The bit length of the returned value can be calculated with the formula:
+        log_2(len(allowed_chars)^length)
+
+    For example, with default `allowed_chars` (26+26+10), this gives:
+      * length: 12, bit length =~ 71 bits
+      * length: 22, bit length =~ 131 bits
+
+    Copyright (c) Django Software Foundation and individual contributors.
+    All rights reserved.
+    
+    Redistribution and use in source and binary forms, with or without modification,
+    are permitted provided that the following conditions are met:
+    
+        1. Redistributions of source code must retain the above copyright notice,
+           this list of conditions and the following disclaimer.
+    
+        2. Redistributions in binary form must reproduce the above copyright
+           notice, this list of conditions and the following disclaimer in the
+           documentation and/or other materials provided with the distribution.
+    
+        3. Neither the name of Django nor the names of its contributors may be used
+           to endorse or promote products derived from this software without
+           specific prior written permission.
+    
+    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+    ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+    WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+    DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+    ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+    (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+    LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+    ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+    (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+    """
+    return ''.join(secrets.choice(allowed_chars) for i in range(length))
 
 
 def get_timestamp(
@@ -199,7 +244,7 @@ def snake_to_camel(string: str) -> str:
     return ''.join([*map(str.title, string.split('_'))])
 
 
-def update_dict(context: dict, function: function = snake_to_camel, **kwargs) -> dict:
+def update_dict(context: dict, function: Callable = snake_to_camel, **kwargs) -> dict:
     """Update dictionary with keyword arguments.
     Args:
         context (dict): A dictionary of context to update.

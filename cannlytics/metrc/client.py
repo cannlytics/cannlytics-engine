@@ -1,6 +1,6 @@
 """
 Metrc Client | Cannlytics
-Copyright (c) 2021 Cannlytics and Cannlytics Contributors
+Copyright (c) 2021-2022 Cannlytics and Cannlytics Contributors
 
 Authors: Keegan Skeate <keegan@cannlytics.com>
 Created: 11/5/2021
@@ -24,10 +24,10 @@ Future Work:
 
 """
 # Standard imports.
+from json import dumps
 import logging
 
 # External imports.
-from json import dumps
 from pandas import read_excel
 from requests import Session
 

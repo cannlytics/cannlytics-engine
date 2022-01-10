@@ -2,9 +2,16 @@ beautifulsoup4
 django
 dotenv
 firebase_admin
+google-cloud-secret-manager
+google-cloud-firestore
 googlemaps
 matplotlib
 numpy
+# ocean-lib # FIXME: Breaks App Engine deployments.
 openpyxl
 pandas
 statsmodels
+ulid-py
+
+# Optional dependency:
+# xlwings # Breaks App Engine deployments.

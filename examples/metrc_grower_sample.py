@@ -1,16 +1,21 @@
 """
 Grower Workflow | Cannlytics
-Copyright (c) 2021 Cannlytics
+Copyright (c) 2021-2022 Cannlytics
 
 Authors: Keegan Skeate <contact@cannlytics.com>
 Created: 12/21/2021
-Updated: 12/21/2021
+Updated: 1/10/2022
 License: <https://github.com/cannlytics/cannlytics-engine/blob/main/LICENSE>
 """
 from cannlytics import metrc
 
 # Initialize a Metrc API client.
-track = metrc.authorize('your-vendor-api-key', 'your-user-api-key')
+track = metrc.authorize(
+    'your-vendor-api-key',
+    'your-user-api-key',
+    primary_license='your-user-license-number',
+    state='ma',
+)
 
 # Get a plant by it's ID.
 plant = track.get_plants(uid='123')

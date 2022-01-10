@@ -1,6 +1,6 @@
 """
 Authentication Logic | Cannlytics
-Copyright (c) 2021 Cannlytics
+Copyright (c) 2021-2022 Cannlytics
 
 Authors: Keegan Skeate <keegan@cannlytics.com>
 Created: 1/22/2021
@@ -11,7 +11,7 @@ Description: Authentication mechanisms for the Cannlytics API, including API key
 utility functions, request authentication and verification helpers,
 and the authentication endpoints.
 """
-# External imports.
+# Standard imports.
 import hmac
 from hashlib import sha256
 

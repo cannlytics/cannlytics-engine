@@ -1,6 +1,6 @@
 """
 Charts | Cannlytics
-Copyright (c) 2021 Cannlytics
+Copyright (c) 2021-2022 Cannlytics
 
 Authors: Keegan Skeate <keegan@cannlytics.com>
 Created: 9/16/2021
@@ -14,6 +14,7 @@ Plotting Resources:
     http://www.randalolson.com/2014/06/28/how-to-make-beautiful-data-visualizations-in-python-with-matplotlib/
     https://www.machinelearningplus.com/plots/top-50-matplotlib-visualizations-the-master-plots-python/
 """
+# External imports.
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mtick
 

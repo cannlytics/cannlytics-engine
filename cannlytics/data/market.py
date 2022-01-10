@@ -1,6 +1,6 @@
 """
 Data Market | Cannlytics
-Copyright (c) 2021 Cannlytics
+Copyright (c) 2021-2022 Cannlytics
 
 Authors: Keegan Skeate <keegan@cannlytics.com>
 Created: 10/11/2021
@@ -28,14 +28,18 @@ import os
 import yaml
 
 # External packages.
-from ocean_lib.common.agreements.service_types import ServiceTypes
-from ocean_lib.common.ddo.service import Service
-from ocean_lib.data_provider.data_service_provider import DataServiceProvider
-from ocean_lib.models.btoken import BToken # BToken is ERC20
-from ocean_lib.ocean.ocean import Ocean
-from ocean_lib.web3_internal.constants import ZERO_ADDRESS
-from ocean_lib.web3_internal.currency import pretty_ether_and_wei, to_wei, from_wei
-from ocean_lib.web3_internal.wallet import Wallet
+try:
+    from ocean_lib.common.agreements.service_types import ServiceTypes
+    from ocean_lib.services.service import Service
+    from ocean_lib.data_provider.data_service_provider import DataServiceProvider
+    from ocean_lib.models.btoken import BToken # BToken is ERC20
+    from ocean_lib.ocean.ocean import Ocean
+    from ocean_lib.web3_internal.constants import ZERO_ADDRESS
+    from ocean_lib.web3_internal.currency import pretty_ether_and_wei, to_wei, from_wei
+    from ocean_lib.web3_internal.wallet import Wallet
+except:
+    # FIXME: ocean_lib doesn't like the App Engine environment.
+    pass
 
 
 def get_wallet(ocean, private_key):

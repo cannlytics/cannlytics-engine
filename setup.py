@@ -1,6 +1,6 @@
 """
 Module Setup | Cannlytics Engine
-Copyright (c) Cannlytics
+Copyright (c) 2021-2022 Cannlytics
 
 Authors: Keegan Skeate <keegan@cannlytics.com>
 Contact: <keegan@cannlytics.com>

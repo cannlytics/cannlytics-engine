@@ -1,6 +1,6 @@
 """
 Contact Relationship Management | Cannlytics Module
-Copyright (c) 2021 Cannlytics
+Copyright (c) 2021-2022 Cannlytics
 
 Authors: Keegan Skeate <contact@cannlytics.com>
 Created: 11/2/2021

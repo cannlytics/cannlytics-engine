@@ -1,6 +1,6 @@
 """
 Instruments | Cannlytics
-Copyright (c) 2021 Cannlytics
+Copyright (c) 2021-2022 Cannlytics
 
 Authors: Keegan Skeate <keegan@cannlytics.com>
 Created: 8/3/2021
@@ -20,12 +20,12 @@ import pandas as pd
 import requests
 
 # Internal imports
-from cannlytics.firebase import (
+from ..firebase import (
     get_collection,
     initialize_firebase,
     update_document
 )
-from cannlytics.utils.utils import clean_column_names, snake_case
+from ..utils.utils import clean_column_names, snake_case
 
 
 API_BASE = 'https://console.cannlytics.com'

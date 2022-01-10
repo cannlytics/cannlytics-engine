@@ -1,6 +1,6 @@
 """
 Metrc Utility Functions | Cannlytics
-Copyright (c) 2021 Cannlytics and Cannlytics Contributors
+Copyright (c) 2021-2022 Cannlytics and Cannlytics Contributors
 
 Authors: Keegan Skeate <keegan@cannlytics.com>
 Created: 11/5/2021
@@ -13,7 +13,7 @@ This module contains common Metrc utility functions.
 from base64 import b64encode, decodebytes
 from datetime import datetime, timedelta
 from re import sub
-from typing import List
+from typing import Callable, List
 
 # External imports.
 from pandas import read_csv
@@ -42,7 +42,7 @@ def snake_to_camel(text: str) -> str:
     return ''.join([*map(str.title, text.split('_'))])
 
 
-def clean_dictionary(data: dict, function: function = camel_to_snake) -> dict:
+def clean_dictionary(data: dict, function: Callable = camel_to_snake) -> dict:
     """Format dictionary keys with given function, snake case by default.
     Args:
         data (dict): A dictionary to clean.
@@ -53,7 +53,7 @@ def clean_dictionary(data: dict, function: function = camel_to_snake) -> dict:
     return {function(k): v for k, v in data.items()}
 
 
-def clean_nested_dictionary(data: dict, function: function = camel_to_snake) -> dict:
+def clean_nested_dictionary(data: dict, function: Callable = camel_to_snake) -> dict:
     """Format nested (at most 2 levels) dictionary keys with a given function,
     snake case by default.
     Args:
@@ -149,7 +149,7 @@ def remove_dict_nulls(data: dict) -> dict:
     return {k: v for k, v in data.items() if v is not None}
 
 
-def update_context(context: dict, function: function = snake_to_camel, **kwargs: dict) -> dict:
+def update_context(context: dict, function: Callable = snake_to_camel, **kwargs: dict) -> dict:
     """Update context with keyword arguments.
     Args:
         context (dict): Data to be formatted.

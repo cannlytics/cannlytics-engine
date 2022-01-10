@@ -1,5 +1,5 @@
 <div align="center" style="text-align:center; margin-top:1rem; margin-bottom: 1rem;">
-  <img style="height:180px" alt="" src="https://firebasestorage.googleapis.com/v0/b/cannlytics.appspot.com/o/public%2Fimages%2Flogos%2Fcannlytics_calyx_detailed.svg?alt=media&token=108fea9c-29a8-40ba-aced-65aef39611e9">
+  <img style="height:180px" alt="" src="https://firebasestorage.googleapis.com/v0/b/cannlytics.appspot.com/o/public%2Fimages%2Flogos%2Fcannlytics-engine-logo.png?alt=media&token=85e11a96-ac74-479d-a69b-e61a3a47b4d2">
   <div style="margin-top:0.5rem;">
     <h3>Simple, easy, cannabis analytics.</h3>
   </div>
@@ -8,12 +8,10 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-darkgreen.svg)](https://opensource.org/licenses/MIT)
 [![Version](https://img.shields.io/pypi/v/cannlytics.svg)](https://pypi.org/project/cannlytics)
-[![Coverage Status](https://coveralls.io/repos/github/cannlytics/cannlytics-ai/badge.svg?branch=main)](https://coveralls.io/github/cannlytics/cannlytics-ai?branch=main)
-
 
 </div>
 
-🔥 Cannlytics is simple, easy-to-use, **end-to-end** cannabis analytics software designed to make your data and information accessible. We believe that everyone in the cannabis industry should be able to access their rich, valuable data quickly and easily and that you will be better off for it. The Cannlytics Engine comes with **batteries included**, but you are always welcome to supercharge your setup with modifications and custom components.
+🔥 Cannlytics is simple, easy-to-use, **end-to-end** cannabis analytics software designed to make your data and information accessible. We believe that everyone in the cannabis industry should be able to access their rich, valuable data quickly and easily and that everyone will be better off for it. The Cannlytics Engine comes with **batteries included**, but you are always welcome to supercharge your setup with modifications and custom components.
 
 - [🚀 Installation](#installation)
 - [👩‍🏫 Documentation](#documentation)
@@ -38,36 +36,86 @@ You can also simply clone the repository to get your hands on the Cannlytics sou
 git clone https://github.com/cannlytics/cannlytics-engine.git
 ```
 
-## 🐱‍👓 Documentation <a name="documentation"></a>
+## 👩‍🏫 Documentation <a name="documentation"></a>
 
-Please refer to the [Cannlytics Developer Guide](https://docs.cannlytics.com/) for detailed information about the module.
+Please refer to the [Cannlytics developer documentation](https://docs.cannlytics.com/developers/development/) for detailed information about the module and various use cases.
 
 ## 🗝️ Authentication, Data, and File Management
 
-Cannlytics leverages Firebase by default for a database, file storage, and authentication.
+Cannlytics leverages [Firebase](https://console.firebase.google.com/) by default for a database, file storage, and authentication. You can [refer to the documentation](https://docs.cannlytics.com/cannlytics/firebase/firebase/) for instructions on how to setup your Firebase project for use with Cannlytics.
 
 ## 🧐 Traceability <a name="traceability"></a>
 
-Cannlytics supports the [Metrc](https://api-ok.metrc.com/Documentation) API out-of-the-box with batteries included. Simply plug in (your API keys) and play.
+Cannlytics supports [Metrc](https://api-ca.metrc.com/Documentation) out-of-the-box. Simply plug in your API keys and you're off to the races.
+
+```py
+from cannlytics import metrc
+
+# Initialize a Metrc API client.
+track = metrc.authorize(
+    'your-vendor-api-key',
+    'your-user-api-key',
+    primary_license='your-user-license-number',
+    state='ma',
+)
+```
 
 Producer / processor workflow:
 
-<img style="max-width:100%" width="540px" alt="" src="./samples/metrc_grower_workflow.png">
+```py
+# Get a plant by it's ID.
+plant = track.get_plants(uid='123')
+
+# Change the growth phase from vegetative to flowering.
+plant.flower(tag='your-plant-tag')
+
+# Move the flowering plant to a new room.
+plant.move(location_name='The Flower Room')
+
+# Manicure useable cannabis from the flowering plant.
+plant.manicure(harvest_name='Old-Time Moonshine', weight=4.20)
+
+# Harvest the flowering plant.
+plant.harvest(harvest_name='Old-Time Moonshine', weight=420)
+```
 
 Lab workflow:
 
-<img style="max-width:100%" width="540px" alt="" src="./samples/metrc_lab_workflow.png">
+```py
+# Post lab results.
+track.post_lab_results([{...}, {...}])
+
+# Get a tested package.
+test_package = track.get_packages(label='abc')
+
+# Get the tested package's lab result.
+lab_results = track.get_lab_results(uid=test_package.id)
+```
 
 Retail workflow:
 
-<img style="max-width:100%" width="540px" alt="" src="./samples/metrc_retail_workflow.png">
+```py
+# Get a retail package.
+package = track.get_packages(label='abc')
+
+# Create a sales receipts.
+track.create_receipts([{...}, {...}])
+
+# Get recent receipts.
+sales = track.get_receipts(action='active', start='2021-04-20')
+
+# Update the sales receipt using.
+sale = track.get_receipts(uid='420')
+sale.total_price = 25
+sale.update()
+```
 
 ## 👩‍🔬 Testing <a name="testing"></a>
 
 You can run tests with code coverage with `pytest`.
 
 ```
-pytest --cov=ai tests/
+pytest --cov=cannlytics tests/
 ```
 
 ## 🤝 Contributing <a name="contributing"></a>
@@ -83,7 +131,7 @@ Cannlytics is made available with ❤️ and <a href="https://opencollective.com
 ## 🏛️ License <a name="license"></a>
 
 ```
-Copyright (c) 2021 Cannlytics
+Copyright (c) 2021-2022 Cannlytics
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

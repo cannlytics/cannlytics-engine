@@ -1,14 +1,14 @@
 """
 Metrc Integration Test | Cannlytics
+Copyright (c) 2021-2022 Cannlytics
 
-Authors: Keegan Skeate
-Contact: keegan@cannlytics.com
-Created: Mon Mar 29 14:18:18 2021
+Authors: Keegan Skeate keegan@cannlytics.com
+Created: 3/292021
 License: MIT License
 
 Description:
 
-    Perform required tests for Metrc integration, recording verification items;
+    Perform required tests for Metrc integration, recording verification items:
 
         - Result code: The status code of the response.
         - ID Number: The UID for a created object, typically a 5 digit number. 
@@ -18,39 +18,43 @@ Description:
         - Request Sent: The requested URL.
         - JSON Body: Minified JSON response.
 
-    All successful requests will return a 200 status code. Get support if you cannot
-    obtain a 200 status code for any request.
+    All successful requests will return a 200 status code. Get support if you
+    cannot obtain a 200 status code for any request.
 
 Resources:
 
-    [Metrc Oklahoma Docs](https://api-ok.metrc.com/Documentation)
-    [Metrc Oregon Docs](https://api-or.metrc.com/Documentation)
+    - [Metrc Oklahoma Docs](https://api-ok.metrc.com/Documentation)
+    - [Metrc Oregon Docs](https://api-or.metrc.com/Documentation)
 
 """
-
+# Standard imports.
 import os
-from dotenv import dotenv_values
 from datetime import datetime
 from time import sleep
+
+# External imports.
+from dotenv import dotenv_values
 
 # Import cannlytics locally for testing.
 import sys
 sys.path.insert(0, os.path.abspath('../../../'))
 from cannlytics import firebase as fb
-from cannlytics.traceability import metrc # pylint: disable=no-name-in-module, import-error
-from cannlytics.traceability.metrc.exceptions import MetrcAPIError # pylint: disable=no-name-in-module, import-error
-from cannlytics.traceability.metrc.utils import ( # pylint: disable=no-name-in-module, import-error
+from cannlytics import metrc # pylint: disable=no-name-in-module, import-error
+from cannlytics.metrc.exceptions import MetrcAPIError # pylint: disable=no-name-in-module, import-error
+from cannlytics.metrc.utils import ( # pylint: disable=no-name-in-module, import-error
     clean_nested_dictionary,
     encode_pdf,
     get_timestamp,
 )
      
-from cannlytics.traceability.metrc.models import ( # pylint: disable=no-name-in-module, import-error
+from cannlytics.metrc.models import ( # pylint: disable=no-name-in-module, import-error
     Facility,
     Item,
     PlantBatch,
     TransferTemplate,
 )
+
+# TODO: Refactor into smaller-scope tests.
 
 
 if __name__ == '__main__' and False:
@@ -89,7 +93,7 @@ if __name__ == '__main__' and False:
     facilities = track.get_facilities()
 
     # Define primary cultivator, lab, and retailer for tests.
-    # cultivator, lab, retailer = None, None, None
+    cultivator, lab, retailer = None, None, None
     for facility in facilities:
         license_type = facility.license_type
         if cultivator is None and license_type == 'Grower':
@@ -108,39 +112,42 @@ if __name__ == '__main__' and False:
     
     # Get facilities from Firestore.
     ref = 'tests/metrc/organizations/1/facilities'
-    cultivator = Facility.from_fb(track, f'{ref}/4b-X0002')
-    retailer = Facility.from_fb(track, f'{ref}/3c-X0002')
-    processor = Facility.from_fb(track, f'{ref}/5b-X0002')
-    lab = Facility.from_fb(track, f'{ref}/6a-X0001')
-    transporter = Facility.from_fb(track, f'{ref}/406-X0001')
+    cultivator = Facility.from_fb(track, f'{ref}/redacted')
+    retailer = Facility.from_fb(track, f'{ref}/redacted')
+    processor = Facility.from_fb(track, f'{ref}/redacted')
+    lab = Facility.from_fb(track, f'{ref}/redacted')
+    transporter = Facility.from_fb(track, f'{ref}/redacted')
 
     #------------------------------------------------------------------
     # Locations ✓
     #------------------------------------------------------------------
 
-    # Create a new location using: POST /locations/v1/create
-    cultivation_name = 'MediGrow'
-    cultivation_original_name = 'medi grow'
-    cultivator.create_locations([
-        cultivation_original_name,
-        'Harvest Location',
-        'Plant Location',
-        'Warehouse',
-    ])
+    # # Create a new location.
+    test_metrc_create_locations()
+    # cultivation_name = 'MediGrow'
+    # cultivation_original_name = 'medi grow'
+    # cultivator.create_locations([
+    #     cultivation_original_name,
+    #     'Harvest Location',
+    #     'Plant Location',
+    #     'Warehouse',
+    # ])
     
-    # Get created location
-    cultivation= None
-    locations = track.get_locations(action='active', license_number=cultivator.license_number)
-    for location in locations:
-        if location.name == cultivation_original_name:
-            cultivation = location
+    # # Get created location
+    # cultivation= None
+    # locations = track.get_locations(action='active', license_number=cultivator.license_number)
+    # for location in locations:
+    #     if location.name == cultivation_original_name:
+    #         cultivation = location
 
-    # Update the name of the location using: POST /locations/v1/update
-    cultivator.update_locations([cultivation.uid], [cultivation_name])
+    # # Update the name of the location using: POST /locations/v1/update
+    test_metrc_update_locations()
+    # cultivator.update_locations([cultivation.uid], [cultivation_name])
 
-    # View the location using GET /locations/v1/{id}
-    cultivation_uid = '10705'
-    traced_location = cultivator.get_locations(uid=cultivation_uid)
+    # # View the location using GET /locations/v1/{id}
+    test_metrc_get_location(location_id)
+    # cultivation_uid = 'redacted'
+    # traced_location = cultivator.get_locations(uid=cultivation_uid)
 
 
     #------------------------------------------------------------------
@@ -175,7 +182,7 @@ if __name__ == '__main__' and False:
     new_strain.update(thc_level=0.1333, cbd_level=0.0777)
 
     # View the Strain using GET /strains/v1/{id}
-    strain_uid = '14504'
+    strain_uid = 'redacted'
     traced_strain = track.get_strains(uid=strain_uid, license_number=cultivator.license_number)
     print(traced_strain.name, '| THC:', traced_strain.thc_level, 'CBD:', traced_strain.cbd_level)
 
@@ -227,7 +234,7 @@ if __name__ == '__main__' and False:
     })
 
     # Get the clone for future use.
-    clone_uid = '12324'
+    clone_uid = 'redacted'
     clone_item = track.get_items(uid=clone_uid, license_number=cultivator.license_number)
 
     #------------------------------------------------------------------
@@ -255,7 +262,7 @@ if __name__ == '__main__' and False:
         if b.name == batch_name:
             traced_batch = b
 
-    batch_uid = '8901'
+    batch_uid = 'redacted'
     traced_batch = track.get_batches(uid=batch_uid, license_number=cultivator.license_number)
 
     # Create a package containing 3 clones from
@@ -301,7 +308,7 @@ if __name__ == '__main__' and False:
         license_number=cultivator.license_number,
         start=today
     )
-    plant_id = '20604'
+    plant_id = 'redacted'
     traced_plant = track.get_plants(uid=plant_id, license_number=cultivator.license_number)
 
     # Change the growth phase from Vegetative to Flowering
@@ -316,7 +323,7 @@ if __name__ == '__main__' and False:
 
     # Using the other Plant created by Step 3  in the Plant batch section,
     # Destroy that plant using: POST /plants/v1/destroyplants
-    male_plant_id = '20605'
+    male_plant_id = 'redacted'
     male_plant = track.get_plants(uid=male_plant_id, license_number=cultivator.license_number)
     male_plant.destroy(
         weight=13.37,
@@ -348,7 +355,7 @@ if __name__ == '__main__' and False:
         license_number=cultivator.license_number,
         start=today
     )
-    harvest_id = '4901'
+    harvest_id = 'redacted'
     traced_harvest = track.get_harvests(uid=harvest_id, license_number=cultivator.license_number)
 
     # Step 1 Using the Harvest Created in Step 5 from Plants,
@@ -428,7 +435,7 @@ if __name__ == '__main__' and False:
         'Item': 'New Old-Time Moonshine Teenth',
         'Quantity': 1.75,
         'UnitOfMeasure': 'Grams',
-        # 'PatientLicenseNumber': 'X00001',
+        # 'PatientLicenseNumber': 'redacted',
         'Note': '1st teenth for sale.',
         # 'IsProductionBatch': False,
         # 'ProductionBatchNumber': None,
@@ -499,7 +506,7 @@ if __name__ == '__main__' and False:
         'ActualDate': today,
         'Ingredients': [
             {
-                'Package': 'ABCDEF012345670000013677',
+                'Package': 'redacted',
                 'Quantity': 4.0,
                 'UnitOfMeasure': 'Grams'
             }
@@ -851,7 +858,7 @@ if __name__ == '__main__' and False:
 
     # Create the lab result record.
     encoded_pdf = encode_pdf('../assets/pdfs/example_coa.pdf')
-    test_package_label =  'ABCDEF012345670000015141'
+    test_package_label =  'redacted'
     lab_result_data = {
         'Label': test_package_label,
         'ResultDate': get_timestamp(),
@@ -938,7 +945,7 @@ if __name__ == '__main__' and False:
             break
     # sale = track.get_receipts(uid='409', license_number=retailer.license_number)
     print('Sale:', receipt.id, 'Last modified:', receipt.last_modified)
-    
+
     # Step 2 Update the sales receipt using: PUT /sales/v1/receipts
     sale.total_price = 30
     sale.transactions[0] = {
@@ -959,4 +966,3 @@ if __name__ == '__main__' and False:
     # Get the sale to check it's modified time.
     sales = track.get_receipts(action='inactive', license_number=retailer.license_number)
     print('Sale:', sale.id, 'Last modified:', sale.last_modified)
-

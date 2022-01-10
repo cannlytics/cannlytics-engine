@@ -1,10 +1,10 @@
 """
 Certificate of Analysis (CoA) Generation | Cannlytics
-Copyright (c) 2021 Cannlytics
+Copyright (c) 2021-2022 Cannlytics
 
 Authors: Keegan Skeate <keegan@cannlytics.com>
 Created: 2/6/2021
-Updated: 12/21/2021
+Updated: 1/10/2022
 License: MIT LIcense <https://opensource.org/licenses/MIT>
 
 TODO:
@@ -13,25 +13,25 @@ TODO:
     - Use your own templates or download the started templates and customize
     them to your heart's galore.
 """
-# Standard imports
+# Standard imports.
 import os
 from pathlib import Path
 from shutil import copyfile
 
-# External packages
-import environ
+# External packages.
+from dotenv import dotenv_values
 import openpyxl
 # from openpyxl.drawing.image import Image
 import pandas as pd
 # import qrcode
 
-# Internal imports
-from cannlytics.firebase import (
+# Internal imports.
+from ..firebase import (
     get_document,
     # update_document,
     download_file,
 )
-from cannlytics.utils.utils import snake_case
+from ..utils.utils import snake_case
 
 
 # TODO: This file needs a MAJOR refactor.
@@ -173,9 +173,8 @@ def review_coa(env_file='.env', signature_dest='./tmp/signature.png'):
     uid = ''
 
     # Get the user's signature (if not already downloaded?).
-    env = environ.Env()
-    env.read_env(env_file)
-    bucket_name = env('FIREBASE_STORAGE_BUCKET')
+    env_variables = dotenv_values(env_file)
+    bucket_name = env_variables['FIREBASE_STORAGE_BUCKET']
     signature_data = get_document(f'users/{uid}/user_settings/signature')
     download_file(signature_data['signature_ref'], signature_dest, bucket_name)
 

@@ -1,10 +1,10 @@
 """
 Worksheets | Cannlytics
-Copyright (c) 2021 Cannlytics
+Copyright (c) 2021-2022 Cannlytics
 
 Authors: Keegan Skeate <keegan@cannlytics.com>
 Created: 7/18/2021
-Updated: 12/22/2021
+Updated: 1/10/2022
 License: MIT License <https://opensource.org/licenses/MIT>
 """
 # Standard packages
@@ -15,11 +15,15 @@ from typing import Any, List, Optional, Tuple, Union
 from dotenv import dotenv_values
 from pandas import DataFrame, to_datetime
 import requests
-import xlwings
-from xlwings.utils import rgb_to_int
+try:
+    import xlwings
+    from xlwings.utils import rgb_to_int
+except ImportError:
+    # FIXME: Work on alternatives as xlwings doesn't work in App Engine.
+    pass
 
 # Internal packages.
-from cannlytics.utils.utils import snake_case
+from ..utils.utils import snake_case
 
 
 def format_values(data: Union[list, dict], columns: List[str]) -> List[dict]:

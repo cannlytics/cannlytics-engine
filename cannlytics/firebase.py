@@ -1,10 +1,10 @@
 """
 Firebase Module | Cannlytics
-Copyright (c) 2021 Cannlytics
+Copyright (c) 2021-2022 Cannlytics
 
 Authors: Keegan Skeate <contact@cannlytics.com>
 Created: 2/7/2021
-Updated: 12/21/2021
+Updated: 1/10/2022
 License: <https://github.com/cannlytics/cannlytics-engine/blob/main/LICENSE>
 
 Description: A wrapper of `firebase_admin` to make interacting with a Firestore
@@ -32,7 +32,6 @@ from typing import Any, List, Optional, Tuple
 # External imports
 import requests
 import ulid
-from django.utils.crypto import get_random_string
 from firebase_admin import (
     auth,
     credentials,
@@ -47,7 +46,7 @@ from google.cloud.firestore_v1.transforms import DELETE_FIELD
 from pandas import notnull, read_csv, read_excel, DataFrame, Series
 
 # Internal imports.
-from .utils.utils import snake_case
+from .utils.utils import get_random_string, snake_case
 
 # The maximum number of documents to include in batch updates.
 # The official limit is 500, but pushing too close to the limit
@@ -175,7 +174,7 @@ def increment_value(ref: str, field: str, amount: int = 1, database=None):
 
 
 def initialize_firebase(
-        key_path: Optional[str],
+        key_path: Optional[str] = None,
         bucket_name: Optional[str] = None,
         project_id: Optional[str] = None,
 ):
@@ -266,6 +265,7 @@ def get_collection( #pylint: disable=too-many-arguments
         desc: bool = False,
         filters: List[dict] = None,
         database=None,
+        start_at: dict = None,
 ) -> List[dict]:
     """Get documents from a collection.
     Args:
@@ -279,6 +279,8 @@ def get_collection( #pylint: disable=too-many-arguments
             to the given `key` for the given `value`.
             Operators include: `==`, `>=`, `<=`, `>`, `<`, `!=`,
             `in`, `not_in`, `array_contains`, `array_contains_any`.
+        start_at (dict): Optional starting at value for pagination. Expect a dict
+            of with `key` and `value` fields. For example: `{'key': 'number', 'value': 4 }`.
         database (Client): A Firestore database client.
     Returns:
         (list): A list of documents.
@@ -296,6 +298,8 @@ def get_collection( #pylint: disable=too-many-arguments
         collection = collection.order_by(order_by, direction='DESCENDING')
     elif order_by:
         collection = collection.order_by(order_by)
+    if start_at:
+        collection = collection.start_after({start_at['key']: start_at['value']})
     if limit:
         collection = collection.limit(limit)
     query = collection.stream()  # Only handles streams less than 2 mins.
@@ -707,11 +711,11 @@ def access_secret_version(project_id: str, secret_id: str, version_id: str) -> s
         secret_id (str): An ID for the secret.
         version_id (str): A version for the secret.
     Returns:
-        (str): The secret version's name.
+        (str): The secret value.
     """
     client = secretmanager.SecretManagerServiceClient()
     name = f'projects/{project_id}/secrets/{secret_id}/versions/{version_id}'
-    response = client.access_secret_version(name)
+    response = client.access_secret_version({'name': name})
     return response.payload.data.decode('UTF-8')
 
 
