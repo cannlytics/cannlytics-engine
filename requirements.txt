@@ -7,11 +7,13 @@ google-cloud-firestore
 googlemaps
 matplotlib
 numpy
-# ocean-lib # FIXME: Breaks App Engine deployments.
 openpyxl
 pandas
 statsmodels
 ulid-py
+
+# FIXME:
+# ocean-lib # Breaks App Engine deployments.
 
 # Optional dependency:
 # xlwings # Breaks App Engine deployments.

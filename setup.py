@@ -5,10 +5,10 @@ Copyright (c) 2021-2022 Cannlytics
 Authors: Keegan Skeate <keegan@cannlytics.com>
 Contact: <keegan@cannlytics.com>
 Created: 1/21/2021
-Updated: 12/10/2021
+Updated: 1/20/2022
 License: MIT <https://opensource.org/licenses/MIT>
 """
-from setuptools import find_namespace_packages, setup
+from setuptools import find_packages, setup
 
 # Get the project description.
 README = ''
@@ -21,19 +21,13 @@ with open('requirements.txt', 'r') as f:
     REQUIREMENTS = [i[:-1] for i in f if i[0] != '#']
 
 # Specify requirements for development.
-dev_requirements = ['xlwings']
+dev_requirements = ['ocean-lib', 'xlwings']
 
 # Specify requirements for setup.
 setup_requirements = []
 
 # Specify requirements for testing.
 test_requirements = []
-
-# Get the packages.
-packages = find_namespace_packages(
-    include=['cannlytics'],
-    exclude=['*test*']
-)
 
 # Publish the module.
 setup(
@@ -57,7 +51,7 @@ setup(
     long_description=README,
     long_description_content_type='text/markdown',
     name='cannlytics',
-    packages=packages,
+    packages=find_packages(),
     python_requires='>=3.9',
     setup_requires=setup_requirements,
     test_suite='tests',
