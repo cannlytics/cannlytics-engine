@@ -8,6 +8,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-darkgreen.svg)](https://opensource.org/licenses/MIT)
 [![Version](https://img.shields.io/pypi/v/cannlytics.svg)](https://pypi.org/project/cannlytics)
+[![PyPI download month](https://img.shields.io/pypi/dm/cannlytics.svg)](https://pypi.python.org/pypi/cannlytics/)
 
 </div>
 
