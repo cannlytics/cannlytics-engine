@@ -739,6 +739,7 @@ def create_short_url(api_key: str, long_url: str, project_name: str) -> str:
                 'domainUriPrefix': f'https://{project_name}.page.link',
                 'link': long_url,
             },
+            # TODO: Make suffix a argument.
             'suffix': {'option': 'UNGUESSABLE'}
         }
         response = requests.post(url, json=data)

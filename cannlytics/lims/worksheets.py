@@ -310,3 +310,55 @@ def show_status_message(sheet, coords, message, background=None, color=None):
         sheet.range(coords).color = literal_eval(background)
     if color:
         sheet.range(coords).api.Font.Color = rgb_to_int(literal_eval(color))
+
+
+# openpyxl and pandas methods for reading data.
+
+# def get_worksheet_headers(sheet):
+#     """Get the headres of a worksheet.
+#     Args:
+#         sheet (Worksheet): An openpyx; Excel file object.
+#     Returns:
+#         headers (list): A list of header strings.
+#     """
+#     headers = []
+#     for cell in sheet[1]:
+#         headers.append(snake_case(cell.value))
+#     return headers
+
+
+# def get_worksheet_data(sheet, headers):
+#     """Get the data of a worksheet.
+#     Args:
+#         sheet (Worksheet): An openpyx; Excel file object.
+#         headres (list): A list of headers to map the values.
+#     Returns:
+#         list(dict): A list of dictionaries.
+#     """
+#     data = []
+#     for row in sheet.iter_rows(min_row=2):
+#         values = {}
+#         for key, cell in zip(headers, row):
+#             values[key] = cell.value
+#         data.append(values)
+#     return data
+
+
+# def read_worksheet(path, filename='Upload'):
+#     """Read the imported data, iterating over the rows and
+#     getting value from each cell in row.
+#     Args:
+#         path (str or InMemoryFile): An Excel workbook to read.
+#         filename (str): The name of the worksheet to upload.
+#     Returns:
+#         (DataFrame): A Pandas DataFrame of the results.
+#     """
+#     # try:
+#     #     workbook = openpyxl.load_workbook(path, data_only=True)
+#     #     sheet = workbook.get_sheet_by_name(filename)
+#     #     headers = get_worksheet_headers(sheet)
+#     #     return pd.DataFrame(get_worksheet_data(sheet, headers))
+#     # except:
+#     data = pd.read_csv(path)
+#     data.columns = [snake_case(x) for x in data.columns]
+#     return data

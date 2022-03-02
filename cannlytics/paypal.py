@@ -5,7 +5,7 @@ Copyright (c) 2021-2022 Cannlytics
 Author: Keegan Skeate
 Contact: <keegan@cannlytics.com>
 Created: 11/29/2021
-Updated: 1/21/2022
+Updated: 1/25/2022
 License: MIT License <https://opensource.org/licenses/MIT>
 """
 # Standard imports.
@@ -159,6 +159,49 @@ def update_paypal_product(
 
 
 #------------------------------------------------------------------------------
+# TODO: Payments
+# https://developer.paypal.com/api/payments/v2/
+#------------------------------------------------------------------------------
+
+def get_paypal_payment(
+        access_token: str,
+        capture_id: str,
+        base: Optional[str] = 'https://api-m.paypal.com',
+) -> List[dict]:
+    """Get captured payment details.
+    Args:
+        access_token (str): A required access token.
+        capture_id (str): The captured payment ID.
+        base (str): The base API URL, with the live URL as the default.
+    Returns:
+        (list): A list of PayPal subscriptions.   
+    """
+    url = f'{base}/v2/payments/captures/{capture_id}'
+    authorization = {'Authorization': f'Bearer {access_token}'}
+    headers = {**HEADERS, **authorization}
+    response = requests.get(url, headers=headers)
+    return response.json()
+
+
+# Future work: Refund captured payment
+# /v2/payments/captures/{capture_id}/refund
+
+# Future work: Show details for authorized payment
+# /v2/payments/authorizations/{authorization_id}
+
+# Future work: Capture authorized payment
+# /v2/payments/authorizations/{authorization_id}/capture
+
+# Future work: Reauthorize authorized payment
+# /v2/payments/authorizations/{authorization_id}/reauthorize
+
+# Future work: Void authorized payment
+# /v2/payments/authorizations/{authorization_id}/void
+
+# Future work: Show refund details
+# /v2/payments/refunds/{refund_id}
+
+#------------------------------------------------------------------------------
 # Subscriptions
 #------------------------------------------------------------------------------
 
@@ -216,3 +259,16 @@ def get_paypal_subscription_plans( #pylint: disable=too-many-arguments
     response = requests.get(url, params=params, headers=headers)
     body = response.json()
     return body['plans']
+
+
+#------------------------------------------------------------------------------
+# TODO: Invoicing
+# https://developer.paypal.com/api/invoicing/v2/
+#------------------------------------------------------------------------------
+
+
+#------------------------------------------------------------------------------
+# TODO: Payouts
+# https://developer.paypal.com/api/payments.payouts-batch/v1/
+#------------------------------------------------------------------------------
+
